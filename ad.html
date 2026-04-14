@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据管理平台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+  /* Layout */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: #001529; flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto; position: relative; z-index: 10; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 52px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Sidebar */
+  .logo { padding: 18px 20px; color: #fff; font-size: 16px; font-weight: 600; border-bottom: 1px solid #1e3a5f; letter-spacing: 1px; }
+  .logo span { color: #1890ff; }
+  .nav-group { padding: 12px 0; }
+  .nav-group-title { color: #6b8cae; font-size: 11px; padding: 6px 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #8fb3d4; cursor: pointer; transition: all .2s; font-size: 13px; }
+  .nav-item:hover { background: #1e3a5f; color: #fff; }
+  .nav-item.active { background: #1890ff; color: #fff; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Topbar */
+  .breadcrumb { color: #666; font-size: 13px; }
+  .breadcrumb span { color: #1890ff; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* Cards */
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 18px; font-weight: 600; color: #262626; }
+  .page-desc { color: #8c8c8c; font-size: 13px; margin-top: 4px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #f0f0f0; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #262626; display: flex; align-items: center; gap: 8px; }
+  .card-title .tag { font-size: 11px; font-weight: 400; background: #e6f4ff; color: #1890ff; padding: 2px 8px; border-radius: 10px; }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid #f0f0f0; }
+  .stat-label { color: #8c8c8c; font-size: 13px; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #262626; }
+  .stat-change { font-size: 12px; margin-top: 6px; }
+  .stat-change.up { color: #52c41a; }
+  .stat-change.down { color: #ff4d4f; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; background: #fafafa; color: #595959; font-weight: 500; border-bottom: 1px solid #f0f0f0; font-size: 13px; white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; color: #262626; font-size: 13px; }
+  tr:hover td { background: #fafffe; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+  .badge-green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .badge-blue { background: #e6f4ff; color: #1890ff; border: 1px solid #91caff; }
+  .badge-gray { background: #f5f5f5; color: #8c8c8c; border: 1px solid #d9d9d9; }
+  .badge-orange { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .badge-purple { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+  .link { color: #1890ff; cursor: pointer; }
+  .link:hover { text-decoration: underline; }
+
+  /* Drawer */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 900; }
+  .drawer-overlay.open { display: block; }
+  .drawer { position: fixed; top: 0; right: -440px; width: 440px; height: 100vh; background: #fff; z-index: 901; box-shadow: -4px 0 16px rgba(0,0,0,.12); transition: right .25s ease; display: flex; flex-direction: column; }
+  .drawer.open { right: 0; }
+  .drawer-header { padding: 18px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .drawer-title { font-size: 16px; font-weight: 600; color: #262626; }
+  .drawer-close { cursor: pointer; color: #8c8c8c; font-size: 20px; line-height: 1; padding: 4px; }
+  .drawer-close:hover { color: #333; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .drawer-section { margin-bottom: 20px; }
+  .drawer-section-title { font-size: 12px; color: #8c8c8c; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .prop-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 6px; border: 1px solid #f0f0f0; margin-bottom: 6px; background: #fafafa; }
+  .prop-item-name { font-size: 13px; font-weight: 500; color: #262626; }
+  .prop-item-id { font-size: 11px; color: #8c8c8c; font-family: monospace; margin-top: 2px; }
+  .prop-item-right { display: flex; align-items: center; gap: 8px; }
+  .prop-required { font-size: 11px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffa39e; padding: 1px 6px; border-radius: 4px; }
+  .prop-optional { font-size: 11px; color: #8c8c8c; background: #f5f5f5; border: 1px solid #d9d9d9; padding: 1px 6px; border-radius: 4px; }
+
+  /* 数据类型单选按钮 */
+  .ep-type-btn { display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #d9d9d9;border-radius:6px;cursor:pointer;font-size:13px;color:#595959;background:#fff;transition:all .15s; }
+  .ep-type-btn:has(input:checked) { border-color:#1890ff;color:#1890ff;background:#e6f4ff; }
+  .ep-type-btn input { display:none; }
+
+  /* 枚举值 tag */
+  .enum-val-tag { display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:4px;padding:3px 9px;font-size:12px;color:#595959; }
+  .enum-val-tag span { cursor:pointer;color:#8c8c8c; }
+  .enum-val-tag span:hover { color:#ff4d4f; }
+
+  /* 属性值行 */
+  .enum-row { display:grid;grid-template-columns:1fr 1.5fr 28px;gap:8px;align-items:center; }
+  .enum-row input { padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;outline:none;font-family:inherit;width:100%; }
+  .enum-row input:focus { border-color:#1890ff; }
+  .enum-row input::placeholder { color:#bfbfbf; }
+  .enum-row-del { width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#bfbfbf;font-size:18px;border-radius:4px;flex-shrink:0; }
+  .enum-row-del:hover { color:#ff4d4f;background:#fff1f0; }
+  .enum-row-header { font-size:12px;color:#8c8c8c;margin-bottom:4px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-family: inherit; transition: all .2s; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #fff; color: #595959; border: 1px solid #d9d9d9; }
+  .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { background: #fff; color: #ff4d4f; border: 1px solid #d9d9d9; }
+  .btn-danger:hover { border-color: #ff4d4f; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; outline: none; }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: #1890ff; }
+  .filter-bar input { width: 200px; }
+
+  /* Analysis config */
+  .analysis-layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  .config-panel { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #f0f0f0; }
+  .config-section { margin-bottom: 20px; }
+  .config-label { font-size: 12px; color: #8c8c8c; margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  .event-tag { display: inline-flex; align-items: center; gap: 6px; background: #e6f4ff; color: #1890ff; padding: 4px 10px; border-radius: 6px; font-size: 13px; margin: 3px; cursor: pointer; }
+  .event-tag .remove { color: #69b1ff; font-size: 16px; line-height: 1; }
+  .metric-select { width: 100%; padding: 7px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; }
+  .date-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .date-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #d9d9d9; font-size: 12px; cursor: pointer; background: #fff; color: #595959; }
+  .date-btn.active { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+  .result-panel { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #f0f0f0; }
+  .chart-container { position: relative; height: 280px; }
+
+  /* Funnel */
+  .funnel-wrap { display: flex; gap: 24px; }
+  .funnel-chart { flex: 1; }
+  .funnel-step { position: relative; margin-bottom: 6px; cursor: pointer; }
+  .funnel-bar-wrap { display: flex; align-items: center; gap: 12px; }
+  .funnel-bar { height: 52px; border-radius: 6px; display: flex; align-items: center; padding: 0 16px; color: #fff; font-weight: 600; font-size: 15px; transition: opacity .2s; position: relative; overflow: hidden; }
+  .funnel-bar:hover { opacity: .88; }
+  .funnel-meta { min-width: 160px; }
+  .funnel-step-name { font-size: 13px; color: #595959; margin-bottom: 3px; }
+  .funnel-nums { display: flex; gap: 12px; }
+  .funnel-num { font-size: 12px; color: #8c8c8c; }
+  .funnel-num strong { color: #262626; font-size: 14px; }
+  .funnel-arrow { text-align: center; color: #8c8c8c; font-size: 12px; padding: 2px 0; margin-left: 172px; }
+  .funnel-detail { background: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #f0f0f0; width: 240px; flex-shrink: 0; }
+
+  /* Retention matrix */
+  .retention-matrix { overflow-x: auto; }
+  .retention-matrix table { min-width: 700px; }
+  .retention-matrix th { text-align: center; font-size: 12px; }
+  .retention-matrix td { text-align: center; font-size: 13px; font-weight: 500; }
+  .ret-cell { display: inline-block; padding: 6px 8px; border-radius: 4px; min-width: 52px; }
+
+  /* Sankey placeholder */
+  .sankey-wrap { background: #fafafa; border-radius: 8px; border: 1px dashed #d9d9d9; padding: 24px; min-height: 320px; display: flex; flex-direction: column; }
+  .sankey-svg { flex: 1; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+  .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: #595959; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab:hover { color: #1890ff; }
+  .tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 500; }
+
+  /* Page visibility */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 48px; color: #bfbfbf; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* Chips */
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid #d9d9d9; font-size: 12px; cursor: pointer; background: #fff; color: #595959; }
+  .chip.active { background: #1890ff; border-color: #1890ff; color: #fff; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 28px; width: 520px; max-width: 90vw; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 13px; color: #595959; margin-bottom: 6px; display: block; }
+  .form-label.required::before { content: '* '; color: #ff4d4f; }
+  .form-input { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; outline: none; font-family: inherit; }
+  .form-input:focus { border-color: #1890ff; }
+  .form-select { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; outline: none; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .prop-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .prop-tag { padding: 4px 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; cursor: pointer; background: #fff; }
+  .prop-tag.checked { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+
+  /* 已选属性 tag */
+  .selected-prop-tag { display:inline-flex;align-items:center;gap:4px;background:#e6f4ff;color:#1890ff;border:1px solid #91caff;border-radius:4px;padding:3px 9px;font-size:12px; }
+
+  /* 快选 tag */
+  .quick-prop-tag { display:inline-block;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;transition:all .15s; }
+  .quick-prop-tag:hover { border-color:#1890ff;color:#1890ff;background:#e6f4ff; }
+  .quick-prop-tag.used { opacity:.35;cursor:not-allowed;pointer-events:none; }
+
+  /* 搜索下拉 */
+  .prop-option { padding:9px 14px;cursor:pointer;font-size:13px;color:#262626;display:flex;justify-content:space-between;align-items:center; }
+  .prop-option:hover { background:#f5f5f5; }
+  .prop-option-id { font-size:11px;color:#8c8c8c;font-family:monospace; }
+
+  /* ===== 投放管理模块 ===== */
+  .ad-stat-card { background:#fff;border-radius:8px;padding:18px 20px;border:1px solid #f0f0f0; }
+  .ad-stat-card.warn { border-color:#faad14;background:#fffbe6; }
+  .ad-stat-card.danger { border-color:#ff4d4f;background:#fff1f0; }
+  .ad-badge-ok { background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-badge-warn { background:#fff7e6;color:#d46b08;border:1px solid #ffd591;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-badge-danger { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-alert-banner { background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px; }
+  .ad-plan-row { cursor:pointer; }
+  .ad-plan-row:hover td { background:#f0f7ff !important; }
+  .nav-badge { background:#ff4d4f;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:auto;font-weight:600; }
+  /* AI 分析卡片 */
+  .ai-card { background:linear-gradient(135deg,#f0f5ff 0%,#fff 60%);border:1px solid #adc6ff;border-radius:10px;padding:20px;margin-bottom:16px; }
+  #adInsightTabsWrap { overflow-x:auto;overflow-y:hidden;flex:1;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none; }
+  #adInsightTabsWrap::-webkit-scrollbar { display:none; }
+  .ai-card-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px; }
+  .ai-card-title { display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#262626; }
+  .ai-severity-high { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600; }
+  .ai-severity-mid { background:#fff7e6;color:#d46b08;border:1px solid #ffd591;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600; }
+  .ai-section-title { font-size:11px;font-weight:700;color:#8c8c8c;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;margin-top:14px;display:flex;align-items:center;gap:8px; }
+  .ai-section-title::after { content:'';flex:1;height:1px;background:#ebebeb; }
+  .ai-diagnosis { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #e6e9f0;font-size:13px;color:#262626;line-height:1.65; }
+  .ai-issue { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0f0f0;margin-bottom:8px;border-left:3px solid transparent; }
+  .ai-issue.danger { border-left-color:#ff4d4f; }
+  .ai-issue.warn { border-left-color:#faad14; }
+  .ai-issue-header { display:flex;align-items:center;gap:10px;margin-bottom:5px; }
+  .ai-issue-metric { font-weight:600;color:#262626;font-size:13px; }
+  .ai-issue-delta { font-size:12px;font-weight:600;color:#ff4d4f; }
+  .ai-issue-vals { display:flex;gap:16px;margin-bottom:5px; }
+  .ai-issue-val { font-size:12px;color:#8c8c8c; }
+  .ai-issue-val strong { color:#262626; }
+  .ai-issue-analysis { font-size:12px;color:#595959;line-height:1.55; }
+  .ai-rec { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0f0f0;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start; }
+  .ai-rec-priority { flex-shrink:0;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px; }
+  .ai-rec-priority.p0 { background:#fff1f0;color:#cf1322; }
+  .ai-rec-priority.p1 { background:#fff7e6;color:#d46b08; }
+  .ai-rec-priority.p2 { background:#f6ffed;color:#389e0d; }
+  .ai-rec-action { font-weight:600;font-size:13px;color:#262626;margin-bottom:3px; }
+  .ai-rec-reason { font-size:12px;color:#8c8c8c;margin-bottom:3px; }
+  .ai-rec-effect { font-size:12px;color:#1890ff; }
+  .ai-risk { background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:10px 14px;display:flex;gap:8px;font-size:13px;color:#595959;line-height:1.5; }
+  .ai-loading { text-align:center;padding:40px;color:#8c8c8c; }
+  .ai-loading-spinner { display:inline-block;width:28px;height:28px;border:3px solid #f0f0f0;border-top-color:#1890ff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  /* 获客漏斗 */
+  .acq-step { margin-bottom:6px; }
+  .acq-bar-row { display:flex;align-items:center;gap:14px; }
+  .acq-bar { height:40px;border-radius:6px;display:flex;align-items:center;padding:0 14px;color:#fff;font-size:13px;font-weight:600;transition:opacity .15s; }
+  .acq-bar:hover { opacity:.85; }
+  .acq-meta { flex:1; }
+  .acq-label { font-size:13px;color:#595959; }
+  .acq-nums { display:flex;gap:14px;margin-top:2px; }
+  .acq-num { font-size:12px;color:#8c8c8c; }
+  .acq-num strong { color:#262626;font-weight:600; }
+  .acq-rate { font-size:12px;font-weight:600;color:#ff7a45; }
+  .acq-arrow { padding:3px 0 3px 168px;color:#d9d9d9;font-size:12px;display:flex;flex-direction:column;gap:2px; }
+  .acq-arrow .acq-rate-plan { color:#595959;font-weight:600;font-size:12px; }
+  .acq-arrow .acq-rate-avg { color:#8c8c8c;font-size:11px; }
+  /* 预警中心 */
+  .alert-th-row { display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f5f5f5; }
+  .alert-th-label { flex:1;font-size:13px;color:#262626; }
+  .alert-th-sub { font-size:12px;color:#8c8c8c;margin-top:2px; }
+  .alert-th-input { width:70px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;text-align:right;outline:none;color:#333; }
+  .alert-th-input:focus { border-color:#1890ff; }
+  .alert-th-unit { font-size:13px;color:#8c8c8c;white-space:nowrap; }
+  /* 历史对比表 */
+  .hist-table th { background:#fafafa;font-size:12px;color:#8c8c8c;font-weight:500;padding:9px 14px;text-align:right; }
+  .hist-table th:first-child { text-align:left; }
+  .hist-table td { padding:10px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;text-align:right; }
+  .hist-table td:first-child { text-align:left;color:#595959; }
+  .hist-table td.today { font-weight:600;color:#262626; }
+  .hist-table td.warn-val { color:#d46b08;font-weight:600; }
+  /* 报告卡片 */
+  .report-card { background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .2s; }
+  .report-card:hover { box-shadow:0 2px 14px rgba(0,0,0,.08);border-color:#d9d9d9; }
+  .report-finding { display:flex;align-items:flex-start;gap:7px;font-size:13px;color:#595959;margin-bottom:5px;line-height:1.5; }
+</style>
+
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">AI 智能<span>中台</span></div>
+    <div style="padding:0 12px 12px">
+      <a href="prototype.html" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8c8c8c;text-decoration:none;padding:6px 8px;border-radius:4px;border:1px solid #e8e8e8;background:#fafafa">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回数据管理
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">投放管理</div>
+      <div class="nav-item active" onclick="showPage('ad-overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        投放总览
+      </div>
+      <div class="nav-item" onclick="openAdPlan('健康追踪_相似人群_C')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        账户分析
+      </div>
+      <div class="nav-item" onclick="showPage('ad-thresholds',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/></svg>
+        阈值管理
+      </div>
+      <div class="nav-item" onclick="showPage('ad-alerts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        预警中心
+        <span class="nav-badge">2</span>
+      </div>
+      <div class="nav-item" onclick="showPage('ad-reports',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        分析报告
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb" id="breadcrumb">投放管理 / <span>投放总览</span></div>
+      <div class="topbar-right">
+        <div style="color:#8c8c8c;font-size:13px;">测试环境</div>
+        <div class="avatar">PM</div>
+      </div>
+    </div>
+    <div class="content">
+      <!-- ===== 投放总览 ===== -->
+      <div class="page active" id="page-ad-overview">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">投放总览</div>
+            <div class="page-desc">巨量引擎账户实时数据 · 最后同步：今日 14:38 · 自动刷新每5分钟</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="metric-select" id="adProductFilter" style="width:130px" onchange="filterAdByProduct(this.value)">
+              <option value="健康追踪仪" selected>健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+            <select class="metric-select" id="adOptimizerFilter" style="width:110px" onchange="filterAdRows()">
+              <option value="">全部优化师</option>
+              <option value="张伟">张伟</option>
+              <option value="李娜">李娜</option>
+              <option value="王芳">王芳</option>
+            </select>
+            <input type="date" id="adDateFilter" class="metric-select" value="2026-04-13" style="width:130px;cursor:pointer">
+          </div>
+        </div>
+
+        <!-- 指标卡 -->
+        <div class="stats-row" style="grid-template-columns:repeat(6,1fr);margin-bottom:16px">
+          <div class="ad-stat-card" id="adCard1">
+            <div class="stat-label">今日总消耗</div>
+            <div class="stat-value" id="adCardSpend">¥42,580</div>
+            <div class="stat-change down" style="color:#ff4d4f">↑ 8.2% 较昨日</div>
+          </div>
+          <div class="ad-stat-card" id="adCard2">
+            <div class="stat-label" style="display:flex;align-items:center;gap:6px">订成成本 <span id="adCostTag" style="font-size:11px;color:#d46b08;background:#ffe58f;padding:1px 5px;border-radius:3px">超阈值</span></div>
+            <div class="stat-value" id="adCardCost" style="color:#d46b08">¥30.2</div>
+            <div class="stat-change" id="adCostChange" style="color:#ff4d4f">↑ 15.3% 较昨日</div>
+            <div id="adCostThreshold" style="font-size:11px;color:#d46b08;margin-top:4px">当前阈值 ¥35</div>
+          </div>
+          <div class="ad-stat-card" id="adCard3">
+            <div class="stat-label">订成量</div>
+            <div class="stat-value" id="adCardSub">1,326</div>
+            <div class="stat-change up">↑ 3.1% 较昨日</div>
+            <div style="font-size:11px;color:#8c8c8c;margin-top:4px">有效 = 订阅后10分钟不取消</div>
+          </div>
+          <div class="ad-stat-card" id="adCard4">
+            <div class="stat-label" style="display:flex;align-items:center;gap:6px">首日取订率 <span id="adCancelTag" style="font-size:11px;color:#d46b08;background:#ffe58f;padding:1px 5px;border-radius:3px">超阈值</span></div>
+            <div class="stat-value" id="adCardCancel" style="color:#d46b08">18.6%</div>
+            <div class="stat-change" id="adCancelChange" style="color:#ff4d4f">↑ +3.1pp 较昨日</div>
+            <div id="adCancelThreshold" style="font-size:11px;color:#d46b08;margin-top:4px">当前阈值 20%</div>
+          </div>
+          <div class="ad-stat-card" id="adCard5" style="border-left:3px solid #d3adf7">
+            <div class="stat-label" style="display:flex;align-items:center;gap:6px">关键行为成本 <span style="font-size:11px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;padding:1px 5px;border-radius:3px">回传</span></div>
+            <div class="stat-value" id="adCardKeyBehavCost">¥10.1</div>
+            <div class="stat-change" id="adKeyBehavCostChange" style="color:#52c41a">↓ 2.3% 较昨日</div>
+            <div style="font-size:11px;color:#8c8c8c;margin-top:4px">消耗 ÷ 回传关键行为量</div>
+          </div>
+          <div class="ad-stat-card" id="adCard6" style="border-left:3px solid #d3adf7">
+            <div class="stat-label" style="display:flex;align-items:center;gap:6px">关键行为量 <span style="font-size:11px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;padding:1px 5px;border-radius:3px">回传</span></div>
+            <div class="stat-value" id="adCardKeyBehavCount">3,241</div>
+            <div class="stat-change" id="adKeyBehavCountChange" style="color:#52c41a">↑ 5.1% 较昨日</div>
+            <div style="font-size:11px;color:#8c8c8c;margin-top:4px">已回传至巨量引擎的事件总数</div>
+          </div>
+        </div>
+
+        <!-- 分时趋势图 -->
+        <div class="card" id="adTrendCard">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="font-size:14px;font-weight:600;color:#262626">分时趋势 <span style="font-weight:400;font-size:13px;color:#8c8c8c">· 今日 vs 昨日</span></div>
+            <div style="display:flex;gap:6px" id="adTrendTabs">
+              <span onclick="switchAdTrend(this,'spend')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#2f54eb;color:#fff;border:1px solid #2f54eb">消耗</span>
+              <span onclick="switchAdTrend(this,'cost')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">订成成本</span>
+              <span onclick="switchAdTrend(this,'sub')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">订成量</span>
+              <span onclick="switchAdTrend(this,'cancel')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">首日取订率</span>
+              <span onclick="switchAdTrend(this,'keyBehavCost')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d3adf7">关键行为成本</span>
+              <span onclick="switchAdTrend(this,'keyBehavCount')" style="padding:3px 10px;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d3adf7">关键行为量</span>
+            </div>
+          </div>
+          <div style="height:200px"><canvas id="adTrendChart"></canvas></div>
+          <div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:#8c8c8c;justify-content:flex-end">
+            <span style="display:flex;align-items:center;gap:5px">
+              <span style="display:inline-block;width:18px;height:2px;background:#2f54eb;flex-shrink:0"></span>今日
+            </span>
+            <span style="display:flex;align-items:center;gap:5px">
+              <svg width="18" height="4" style="flex-shrink:0"><line x1="0" y1="2" x2="18" y2="2" stroke="#bfbfbf" stroke-width="2" stroke-dasharray="4 3"/></svg>昨日
+            </span>
+          </div>
+        </div>
+
+        <!-- AI 今日洞察 -->
+        <div class="ai-card" id="adInsightCard">
+          <div class="ai-card-header" style="margin-bottom:10px">
+            <div class="ai-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2f54eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              今日 AI 投放洞察
+              <span id="adInsightStatusBadge" style="margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500"></span>
+            </div>
+            <div style="font-size:12px;color:#8c8c8c">每小时更新 · 最新 <span id="adInsightLatestHour">14:00</span></div>
+          </div>
+          <!-- 小时历史 tabs -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+            <span style="font-size:11px;color:#bfbfbf;flex-shrink:0">历史</span>
+            <button onclick="scrollInsightTabs(-1)" style="flex-shrink:0;width:22px;height:22px;border:1px solid #e8e8e8;border-radius:4px;background:#fafafa;cursor:pointer;font-size:14px;color:#8c8c8c;padding:0;line-height:22px">‹</button>
+            <div id="adInsightTabsWrap">
+              <div id="adInsightTabs" style="display:flex;gap:4px;flex-wrap:nowrap"></div>
+            </div>
+            <button onclick="scrollInsightTabs(1)" style="flex-shrink:0;width:22px;height:22px;border:1px solid #e8e8e8;border-radius:4px;background:#fafafa;cursor:pointer;font-size:14px;color:#8c8c8c;padding:0;line-height:22px">›</button>
+          </div>
+          <!-- 核心指标变化 -->
+          <div id="adInsightMetrics" style="display:flex;gap:0;margin-bottom:12px;background:#fafafa;border-radius:6px;padding:10px 14px"></div>
+          <!-- 洞察内容 -->
+          <div id="adInsightBody"></div>
+          <!-- 历史提示 -->
+          <div id="adInsightHistoryNote" style="font-size:11px;color:#bfbfbf;margin-top:8px;text-align:right"></div>
+        </div>
+
+      </div>
+
+      <!-- ===== 计划详情 ===== -->
+      <div class="page" id="page-ad-plan">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-default btn-sm" onclick="showPage('ad-overview',document.querySelector('[onclick*=ad-overview]'))">← 返回总览</button>
+            <div>
+              <div class="page-title" id="adPlanName">健康追踪_相似人群_C</div>
+              <div class="page-desc">巨量引擎 · 目标转化出价 · 最后同步：14:38</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <select class="metric-select" style="width:100px"><option>今日</option><option>昨日</option><option>近7天</option></select>
+            <button class="btn btn-primary btn-sm" id="aiAnalysisBtn" onclick="triggerAIAnalysis()">AI 智能分析</button>
+          </div>
+        </div>
+
+        <!-- 核心指标 -->
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px">
+          <div class="ad-stat-card">
+            <div class="stat-label" style="font-size:12px">今日消耗</div>
+            <div style="font-size:22px;font-weight:700;color:#262626">¥6,100</div>
+            <div class="stat-change down" style="color:#ff4d4f;font-size:12px">↑ 5.2% vs 昨日</div>
+          </div>
+          <div class="ad-stat-card warn">
+            <div class="stat-label" style="font-size:12px;display:flex;gap:4px;align-items:center">订成成本 <span style="font-size:10px;color:#d46b08;background:#ffe58f;padding:1px 4px;border-radius:3px">超阈值</span></div>
+            <div style="font-size:22px;font-weight:700;color:#d46b08">¥45</div>
+            <div style="font-size:12px;color:#d46b08;margin-top:4px">阈值 ¥35 | 超 28.6%</div>
+          </div>
+          <div class="ad-stat-card">
+            <div class="stat-label" style="font-size:12px">订成量</div>
+            <div style="font-size:22px;font-weight:700;color:#262626">136</div>
+            <div style="font-size:12px;color:#8c8c8c;margin-top:4px">10分钟存活率 73.9%</div>
+          </div>
+          <div class="ad-stat-card warn">
+            <div class="stat-label" style="font-size:12px;display:flex;gap:4px;align-items:center">首日取订率 <span style="font-size:10px;color:#d46b08;background:#ffe58f;padding:1px 4px;border-radius:3px">超阈值</span></div>
+            <div style="font-size:22px;font-weight:700;color:#d46b08">28%</div>
+            <div style="font-size:12px;color:#d46b08;margin-top:4px">阈值 20% | 超 8pp</div>
+          </div>
+          <div class="ad-stat-card" style="border-left:3px solid #d3adf7">
+            <div class="stat-label" style="font-size:12px;display:flex;gap:4px;align-items:center">关键行为成本 <span style="font-size:10px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;padding:1px 4px;border-radius:3px">回传</span></div>
+            <div style="font-size:22px;font-weight:700;color:#262626">¥11.2</div>
+            <div style="font-size:12px;color:#8c8c8c;margin-top:4px">↑ 3.1% vs 昨日</div>
+          </div>
+          <div class="ad-stat-card" style="border-left:3px solid #d3adf7">
+            <div class="stat-label" style="font-size:12px;display:flex;gap:4px;align-items:center">关键行为量 <span style="font-size:10px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;padding:1px 4px;border-radius:3px">回传</span></div>
+            <div style="font-size:22px;font-weight:700;color:#262626">544</div>
+            <div style="font-size:12px;color:#8c8c8c;margin-top:4px">↑ 2.8% vs 昨日</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:16px">
+          <!-- 获客漏斗 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title" style="margin-bottom:14px">获客转化漏斗 <span class="tag">今日</span></div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#1890ff;width:100%">280,000</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px">
+                <div class="acq-label">展示量</div>
+              </div>
+            </div>
+            <div class="acq-arrow">
+              <div>↓ CTR <span class="acq-rate-plan">2.93%</span></div>
+              <div class="acq-rate-avg">大盘均值 3.8% <span style="color:#ff4d4f">▼低</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#36cfc9;width:85%">8,200</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px"><div class="acq-label">点击数</div></div>
+            </div>
+            <div class="acq-arrow">
+              <div>↓ 激活率 <span class="acq-rate-plan">50%</span></div>
+              <div class="acq-rate-avg">大盘均值 45% <span style="color:#52c41a">▲高</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#73d13d;width:72%">4,100</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px"><div class="acq-label">端内激活</div></div>
+            </div>
+            <div class="acq-arrow">
+              <div>↓ 有效用户率 <span class="acq-rate-plan">50%</span></div>
+              <div class="acq-rate-avg">大盘均值 52% <span style="color:#fa8c16">▼低</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#ffc53d;width:56%">2,050</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px"><div class="acq-label">有效用户量 <span style="font-size:11px;color:#8c8c8c">（应用管理中设置打点事件）</span></div></div>
+            </div>
+            <div class="acq-arrow">
+              <div>↓ 订阅率 <span class="acq-rate-plan">8.98%</span></div>
+              <div class="acq-rate-avg">大盘均值 7.2% <span style="color:#52c41a">▲高</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#ff7a45;width:40%">184</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px"><div class="acq-label">订阅量</div></div>
+            </div>
+            <div class="acq-arrow">
+              <div>↓ 10分钟存活率 <span class="acq-rate-plan">73.9%</span></div>
+              <div class="acq-rate-avg">大盘均值 68% <span style="color:#52c41a">▲高</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#d46b08;width:30%">136</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px">
+                <div class="acq-label">订成用户量 <span style="font-size:11px;color:#8c8c8c">（核心成本指标）</span></div>
+              </div>
+            </div>
+            <div class="acq-arrow" style="color:#ff4d4f">
+              <div>↓ 首日取消率 <span class="acq-rate-plan" style="color:#ff4d4f">28% <span style="font-weight:600">⚠</span></span></div>
+              <div class="acq-rate-avg">大盘均值 18% <span style="color:#ff4d4f">▲高</span></div>
+            </div>
+            <div class="acq-step">
+              <div class="acq-bar-row">
+                <div class="acq-bar" style="background:#52c41a;width:22%">98</div>
+              </div>
+              <div class="acq-meta" style="margin-top:4px">
+                <div class="acq-label">取订用户量</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 历史对比 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">历史数据对比</div>
+            <div class="table-wrap">
+              <table class="hist-table">
+                <thead>
+                  <tr>
+                    <th>指标</th>
+                    <th>今日</th>
+                    <th>昨日均值</th>
+                    <th>较昨日</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>消耗</td><td class="today">¥6,100</td><td>¥5,800</td><td style="color:#ff4d4f;font-weight:600">↑ 5.2%</td></tr>
+                  <tr><td>订成成本</td><td class="today warn-val">¥45</td><td>¥32</td><td style="color:#ff4d4f;font-weight:600">↑ 40.6%</td></tr>
+                  <tr><td>订成量</td><td class="today">136</td><td>181</td><td style="color:#ff4d4f;font-weight:600">↓ 24.9%</td></tr>
+                  <tr><td>首日取订率</td><td class="today warn-val">28%</td><td>18.2%</td><td style="color:#ff4d4f;font-weight:600">↑ 53.8%</td></tr>
+                  <tr><td>关键行为成本</td><td class="today">¥11.2</td><td>¥9.8</td><td style="color:#ff4d4f;font-weight:600">↑ 14.3%</td></tr>
+                  <tr><td>关键行为量</td><td class="today">544</td><td>589</td><td style="color:#ff4d4f;font-weight:600">↓ 7.6%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid #f0f0f0;padding-top:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+                <div style="font-size:13px;font-weight:600;color:#262626">分时趋势 <span style="font-weight:400;font-size:12px;color:#8c8c8c">· 今日 vs 昨日</span></div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap" id="planTrendTabs">
+                  <span onclick="switchPlanTrend(this,'spend')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#2f54eb;color:#fff;border:1px solid #2f54eb">消耗</span>
+                  <span onclick="switchPlanTrend(this,'cost')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">订成成本</span>
+                  <span onclick="switchPlanTrend(this,'sub')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">订成量</span>
+                  <span onclick="switchPlanTrend(this,'cancel')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d9d9d9">首日取订率</span>
+                  <span onclick="switchPlanTrend(this,'keyBehavCost')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d3adf7">关键行为成本</span>
+                  <span onclick="switchPlanTrend(this,'keyBehavCount')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;background:#fff;color:#595959;border:1px solid #d3adf7">关键行为量</span>
+                </div>
+              </div>
+              <div style="height:180px"><canvas id="planTrendChart"></canvas></div>
+              <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#8c8c8c;justify-content:flex-end">
+                <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:16px;height:2px;background:#2f54eb;flex-shrink:0"></span>今日</span>
+                <span style="display:flex;align-items:center;gap:4px"><svg width="16" height="4" style="flex-shrink:0"><line x1="0" y1="2" x2="16" y2="2" stroke="#bfbfbf" stroke-width="2" stroke-dasharray="4 3"/></svg>昨日</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 分析区 -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">Claude AI 智能诊断</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div style="font-size:12px;color:#8c8c8c" id="aiTriggerInfo">触发方式：手动分析</div>
+              <button class="btn btn-primary btn-sm" id="aiAnalysisBtn2" onclick="triggerAIAnalysis()">开始 AI 分析</button>
+            </div>
+          </div>
+          <div id="aiAnalysisArea">
+            <div style="text-align:center;padding:40px;color:#bfbfbf;border:1px dashed #e8e8e8;border-radius:8px">
+              <div style="font-size:24px;margin-bottom:8px">🤖</div>
+              <div style="font-size:13px">点击「开始 AI 分析」，Claude 将综合分析当前计划的成本、质量和分时数据</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 预警中心 ===== -->
+      <div class="page" id="page-ad-alerts">
+        <div class="page-header">
+          <div class="page-title">预警中心</div>
+          <div class="page-desc">配置关键指标阈值，超标后自动触发 Claude AI 分析</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:16px">
+          <!-- 阈值配置 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              阈值配置
+            </div>
+            <div style="font-size:12px;color:#8c8c8c;margin-bottom:16px;background:#f0f5ff;border-radius:6px;padding:8px 10px">超过阈值后，系统自动调用 Claude 对该计划进行深度分析并生成告警</div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">适用范围</div>
+            <div class="alert-th-row" style="flex-direction:column;align-items:stretch;gap:6px">
+              <div><div class="alert-th-label">适用产品</div><div class="alert-th-sub">选择此规则生效的产品</div></div>
+              <select id="alertProduct" class="form-select" style="width:100%" onchange="onAlertProductChange()">
+                <option value="健康追踪仪" selected>健康追踪仪</option>
+                <option value="健康管家Pro">健康管家 Pro</option>
+                <option value="运动助手">运动助手</option>
+              </select>
+            </div>
+            <div class="alert-th-row" style="flex-direction:column;align-items:stretch;gap:6px;margin-top:4px">
+              <div><div class="alert-th-label">投放账户</div><div class="alert-th-sub">默认对所有账户生效，可指定账户 ID 圈定范围</div></div>
+              <div style="display:flex;gap:6px">
+                <span id="acctModeAll" onclick="switchAcctMode('all')" style="flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #1890ff;background:#e6f4ff;color:#1890ff;font-weight:500;transition:all .15s">所有账户</span>
+                <span id="acctModeCustom" onclick="switchAcctMode('custom')" style="flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#595959;font-weight:500;transition:all .15s">指定账户</span>
+              </div>
+              <div id="acctCustomPanel" style="display:none">
+                <div style="display:flex;gap:6px">
+                  <input id="acctIdInput" class="form-input" type="text" placeholder="输入账户 ID，回车添加" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addAcctId()}">
+                  <button class="btn btn-primary btn-sm" onclick="addAcctId()" style="flex-shrink:0">添加</button>
+                </div>
+                <div id="acctTagsWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+                <div id="acctEmptyHint" style="font-size:11px;color:#bfbfbf;margin-top:6px">添加账户 ID 后，规则仅对这些账户生效</div>
+              </div>
+            </div>
+
+            <div style="height:1px;background:#f0f0f0;margin:14px 0"></div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">成本类</div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">有效订阅成本上限</div><div class="alert-th-sub">单计划有效订阅成本超出时触发</div></div>
+              <input class="alert-th-input" type="number" value="35">
+              <div class="alert-th-unit">元</div>
+            </div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">订阅成本上限</div><div class="alert-th-sub">（含10分钟取消）</div></div>
+              <input class="alert-th-input" type="number" value="50">
+              <div class="alert-th-unit">元</div>
+            </div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">时段成本环比上限</div><div class="alert-th-sub">相邻时段成本增幅超出时触发</div></div>
+              <input class="alert-th-input" type="number" value="30">
+              <div class="alert-th-unit">%</div>
+            </div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-top:16px;margin-bottom:8px;letter-spacing:.5px">质量类</div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">首日取消率上限</div><div class="alert-th-sub">当日取消率（10分钟窗口后）</div></div>
+              <input class="alert-th-input" type="number" value="20">
+              <div class="alert-th-unit">%</div>
+            </div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">10分钟取消率上限</div><div class="alert-th-sub">订阅后10分钟内取消比例</div></div>
+              <input class="alert-th-input" type="number" value="35">
+              <div class="alert-th-unit">%</div>
+            </div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-top:16px;margin-bottom:8px;letter-spacing:.5px">消耗类</div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">单计划日消耗上限</div><div class="alert-th-sub">超出后暂停并通知</div></div>
+              <input class="alert-th-input" type="number" value="10000">
+              <div class="alert-th-unit">元</div>
+            </div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-top:16px;margin-bottom:8px;letter-spacing:.5px">定时分析</div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">每日定时全账户分析</div><div class="alert-th-sub">自动生成投放诊断报告</div></div>
+              <input class="alert-th-input" type="text" value="09:00" style="width:56px">
+              <div class="alert-th-unit">每日</div>
+            </div>
+            <div class="alert-th-row">
+              <div><div class="alert-th-label">实时巡检间隔</div><div class="alert-th-sub">轮询各计划核心指标</div></div>
+              <input class="alert-th-input" type="number" value="30">
+              <div class="alert-th-unit">分钟</div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px">保存配置</button>
+          </div>
+
+          <!-- 告警记录 -->
+          <div>
+            <div class="tabs" style="margin-bottom:16px">
+              <div class="tab active" onclick="switchAlertTab(this,'current')">当前告警 <span style="background:#ff4d4f;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:4px">2</span></div>
+              <div class="tab" onclick="switchAlertTab(this,'history')">历史记录</div>
+            </div>
+
+            <div id="alertTabCurrent">
+              <div class="card" style="margin-bottom:10px;border-left:4px solid #ff4d4f">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                      <span class="ad-badge-danger">严重</span>
+                      <span style="font-weight:600;font-size:14px">健康追踪_行为定向_E</span>
+                      <span style="font-size:12px;color:#8c8c8c">今日 12:30 触发</span>
+                    </div>
+                    <div style="font-size:13px;color:#595959;margin-bottom:8px">
+                      有效订阅成本 <strong style="color:#cf1322">¥61</strong>，超出阈值 <strong>¥35</strong>，偏差 <strong style="color:#cf1322">+74.3%</strong>
+                    </div>
+                    <div style="font-size:12px;color:#8c8c8c">触发原因：每30分钟巡检 · 连续3次超阈值</div>
+                  </div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-default btn-sm" onclick="openAdPlan('健康追踪_行为定向_E')">查看详情</button>
+                    <button class="btn btn-primary btn-sm" onclick="showAlertAnalysis('E')">查看 AI 分析</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="margin-bottom:10px;border-left:4px solid #faad14">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                      <span class="ad-badge-warn">预警</span>
+                      <span style="font-weight:600;font-size:14px">健康追踪_相似人群_C</span>
+                      <span style="font-size:12px;color:#8c8c8c">今日 14:15 触发</span>
+                    </div>
+                    <div style="font-size:13px;color:#595959;margin-bottom:8px">
+                      首日取消率 <strong style="color:#d46b08">28%</strong>，超出阈值 <strong>20%</strong>，偏差 <strong style="color:#d46b08">+8pp</strong> &nbsp;·&nbsp; 有效订阅成本 <strong style="color:#d46b08">¥45</strong>，超出阈值 <strong>¥35</strong>
+                    </div>
+                    <div style="font-size:12px;color:#8c8c8c">触发原因：每30分钟巡检 · 成本+取消率双指标同时超阈值</div>
+                  </div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-default btn-sm" onclick="openAdPlan('健康追踪_相似人群_C')">查看详情</button>
+                    <button class="btn btn-primary btn-sm" onclick="openAdPlan('健康追踪_相似人群_C');setTimeout(triggerAIAnalysis,300)">查看 AI 分析</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="alertTabHistory" style="display:none">
+              <div class="card">
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>时间</th><th>计划</th><th>触发指标</th><th>当前值</th><th>阈值</th><th>偏差</th><th>触发方式</th><th>AI 分析</th></tr></thead>
+                    <tbody>
+                      <tr><td>今日 14:15</td><td>相似人群_C</td><td>首日取消率 + 有效订阅成本</td><td>28% / ¥45</td><td>20% / ¥35</td><td style="color:#d46b08">+8pp / +28.6%</td><td><span class="badge badge-orange">巡检触发</span></td><td><span class="link">已生成</span></td></tr>
+                      <tr><td>今日 12:30</td><td>行为定向_E</td><td>有效订阅成本</td><td>¥61</td><td>¥35</td><td style="color:#cf1322">+74.3%</td><td><span class="badge badge-orange">巡检触发</span></td><td><span class="link">已生成</span></td></tr>
+                      <tr><td>今日 09:00</td><td>全账户</td><td>日报分析</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-blue">定时触发</span></td><td><span class="link">已生成</span></td></tr>
+                      <tr><td>昨日 21:45</td><td>行为定向_E</td><td>有效订阅成本</td><td>¥58</td><td>¥35</td><td style="color:#d46b08">+65.7%</td><td><span class="badge badge-orange">巡检触发</span></td><td><span class="link">已生成</span></td></tr>
+                      <tr><td>昨日 09:00</td><td>全账户</td><td>日报分析</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-blue">定时触发</span></td><td><span class="link">已生成</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 阈值管理 ===== -->
+      <div class="page" id="page-ad-thresholds">
+        <div class="page-header">
+          <div class="page-title">阈值管理</div>
+          <div class="page-desc">配置各产品有效用户事件绑定与核心指标阈值区间，区间判定联动投放总览与账户分析</div>
+        </div>
+
+        <!-- 产品切换 -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <span class="chip active" onclick="switchThProduct(this,'健康追踪仪')">健康追踪仪</span>
+          <span class="chip" onclick="switchThProduct(this,'健康管家Pro')">健康管家 Pro</span>
+          <span class="chip" onclick="switchThProduct(this,'运动助手')">运动助手</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- 左：有效用户事件绑定 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              有效用户定义
+              <span class="tag" id="thProductTag">健康追踪仪</span>
+            </div>
+            <div style="font-size:12px;color:#8c8c8c;margin-bottom:16px;background:#f0f5ff;border-radius:6px;padding:8px 10px">
+              有效用户 = 完成指定打点事件的用户。绑定事件后，获客漏斗中的「有效用户量」将基于此事件统计。
+            </div>
+
+            <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">已绑定事件</div>
+            <div id="thBoundEvents"></div>
+
+            <div style="margin-top:12px;font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">添加事件</div>
+            <div style="display:flex;gap:6px">
+              <select id="thEventSelect" class="form-select" style="flex:1">
+                <option value="">选择事件...</option>
+                <option value="app_register">app_register（注册完成）</option>
+                <option value="complete_tutorial">complete_tutorial（完成新手引导）</option>
+                <option value="first_health_check">first_health_check（首次健康检测）</option>
+                <option value="add_device">add_device（绑定设备）</option>
+                <option value="subscribe_trial">subscribe_trial（开始试用订阅）</option>
+                <option value="purchase_complete">purchase_complete（完成购买）</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="addThEvent()">绑定</button>
+            </div>
+
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+              <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">有效用户判定逻辑</div>
+              <div style="display:flex;gap:6px;margin-bottom:12px">
+                <span id="thLogicAnd" onclick="switchThLogic('and')" style="flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #1890ff;background:#e6f4ff;color:#1890ff;font-weight:500">全部满足（AND）</span>
+                <span id="thLogicOr" onclick="switchThLogic('or')" style="flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#595959;font-weight:500">任一满足（OR）</span>
+              </div>
+              <div style="font-size:12px;color:#8c8c8c;line-height:1.6" id="thLogicDesc">用户需完成所有已绑定事件，才被统计为「有效用户」</div>
+            </div>
+          </div>
+
+          <!-- 右：指标阈值区间 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              指标阈值区间
+              <span class="tag" id="thProductTag2">健康追踪仪</span>
+            </div>
+            <div style="font-size:12px;color:#8c8c8c;margin-bottom:16px;background:#f0f5ff;border-radius:6px;padding:8px 10px">
+              定义正常 / 警告 / 严重三档区间，用于投放总览洞察和账户分析中的状态判定。
+            </div>
+
+            <!-- 订成成本 -->
+            <div style="margin-bottom:20px">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                订成成本
+                <span style="font-size:11px;color:#8c8c8c;font-weight:400">单次有效订阅的获客成本</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#389e0d;font-weight:600;margin-bottom:6px">正常</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">≤</span>
+                    <input type="number" value="35" class="alert-th-input" style="width:60px;text-align:center" id="thCostNormal">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+                <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#d46b08;font-weight:600;margin-bottom:6px">警告</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <input type="number" value="35" class="alert-th-input" style="width:60px;text-align:center" id="thCostWarnMin">
+                    <span style="font-size:12px;color:#8c8c8c">~</span>
+                    <input type="number" value="50" class="alert-th-input" style="width:60px;text-align:center" id="thCostWarnMax">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+                <div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#cf1322;font-weight:600;margin-bottom:6px">严重</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">></span>
+                    <input type="number" value="50" class="alert-th-input" style="width:60px;text-align:center" id="thCostDanger">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:6px;height:4px;border-radius:2px;display:flex;overflow:hidden">
+                <div style="flex:35;background:#52c41a"></div>
+                <div style="flex:15;background:#faad14"></div>
+                <div style="flex:50;background:#ff4d4f"></div>
+              </div>
+            </div>
+
+            <!-- 首日取订率 -->
+            <div style="margin-bottom:20px">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                首日取订率
+                <span style="font-size:11px;color:#8c8c8c;font-weight:400">首日取消订阅占比（越低越好）</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#389e0d;font-weight:600;margin-bottom:6px">正常</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">≤</span>
+                    <input type="number" value="18" class="alert-th-input" style="width:60px;text-align:center" id="thCancelNormal">
+                    <span style="font-size:12px;color:#8c8c8c">%</span>
+                  </div>
+                </div>
+                <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#d46b08;font-weight:600;margin-bottom:6px">警告</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <input type="number" value="18" class="alert-th-input" style="width:60px;text-align:center" id="thCancelWarnMin">
+                    <span style="font-size:12px;color:#8c8c8c">~</span>
+                    <input type="number" value="28" class="alert-th-input" style="width:60px;text-align:center" id="thCancelWarnMax">
+                    <span style="font-size:12px;color:#8c8c8c">%</span>
+                  </div>
+                </div>
+                <div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#cf1322;font-weight:600;margin-bottom:6px">严重</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">></span>
+                    <input type="number" value="28" class="alert-th-input" style="width:60px;text-align:center" id="thCancelDanger">
+                    <span style="font-size:12px;color:#8c8c8c">%</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:6px;height:4px;border-radius:2px;display:flex;overflow:hidden">
+                <div style="flex:18;background:#52c41a"></div>
+                <div style="flex:10;background:#faad14"></div>
+                <div style="flex:72;background:#ff4d4f"></div>
+              </div>
+            </div>
+
+            <!-- 关键行为成本 -->
+            <div style="margin-bottom:20px">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                关键行为成本
+                <span style="font-size:11px;color:#8c8c8c;font-weight:400">回传关键行为的单次成本</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#389e0d;font-weight:600;margin-bottom:6px">正常</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">≤</span>
+                    <input type="number" value="10" class="alert-th-input" style="width:60px;text-align:center" id="thKeyBehavNormal">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+                <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#d46b08;font-weight:600;margin-bottom:6px">警告</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <input type="number" value="10" class="alert-th-input" style="width:60px;text-align:center" id="thKeyBehavWarnMin">
+                    <span style="font-size:12px;color:#8c8c8c">~</span>
+                    <input type="number" value="15" class="alert-th-input" style="width:60px;text-align:center" id="thKeyBehavWarnMax">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+                <div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;padding:12px;text-align:center">
+                  <div style="font-size:11px;color:#cf1322;font-weight:600;margin-bottom:6px">严重</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                    <span style="font-size:12px;color:#8c8c8c">></span>
+                    <input type="number" value="15" class="alert-th-input" style="width:60px;text-align:center" id="thKeyBehavDanger">
+                    <span style="font-size:12px;color:#8c8c8c">元</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:6px;height:4px;border-radius:2px;display:flex;overflow:hidden">
+                <div style="flex:10;background:#52c41a"></div>
+                <div style="flex:5;background:#faad14"></div>
+                <div style="flex:85;background:#ff4d4f"></div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveThresholds()">保存阈值配置</button>
+          </div>
+        </div>
+
+        <!-- 阈值预览 -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            当前生效阈值一览
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>产品</th>
+                  <th>有效用户事件</th>
+                  <th>订成成本</th>
+                  <th>首日取订率</th>
+                  <th>关键行为成本</th>
+                </tr>
+              </thead>
+              <tbody id="thSummaryBody">
+                <tr>
+                  <td style="font-weight:500">健康追踪仪</td>
+                  <td><span style="font-size:12px;color:#1890ff;background:#e6f4ff;border:1px solid #91caff;border-radius:4px;padding:2px 8px">first_health_check</span></td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥35</span>
+                    <span class="ad-badge-warn">¥35~50</span>
+                    <span class="ad-badge-danger">>¥50</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤18%</span>
+                    <span class="ad-badge-warn">18~28%</span>
+                    <span class="ad-badge-danger">>28%</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥10</span>
+                    <span class="ad-badge-warn">¥10~15</span>
+                    <span class="ad-badge-danger">>¥15</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500">健康管家 Pro</td>
+                  <td><span style="font-size:12px;color:#1890ff;background:#e6f4ff;border:1px solid #91caff;border-radius:4px;padding:2px 8px">complete_tutorial</span></td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥28</span>
+                    <span class="ad-badge-warn">¥28~40</span>
+                    <span class="ad-badge-danger">>¥40</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤15%</span>
+                    <span class="ad-badge-warn">15~25%</span>
+                    <span class="ad-badge-danger">>25%</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥8</span>
+                    <span class="ad-badge-warn">¥8~12</span>
+                    <span class="ad-badge-danger">>¥12</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-weight:500">运动助手</td>
+                  <td><span style="font-size:12px;color:#1890ff;background:#e6f4ff;border:1px solid #91caff;border-radius:4px;padding:2px 8px">app_register</span></td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥30</span>
+                    <span class="ad-badge-warn">¥30~45</span>
+                    <span class="ad-badge-danger">>¥45</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤16%</span>
+                    <span class="ad-badge-warn">16~25%</span>
+                    <span class="ad-badge-danger">>25%</span>
+                  </td>
+                  <td>
+                    <span class="ad-badge-ok">≤¥9</span>
+                    <span class="ad-badge-warn">¥9~13</span>
+                    <span class="ad-badge-danger">>¥13</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:12px;color:#8c8c8c;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px;line-height:1.6">
+            <strong>联动说明：</strong>投放总览「今日 AI 投放洞察」中各账户的
+            <span class="ad-badge-ok" style="font-size:11px">表现正常</span>
+            <span class="ad-badge-warn" style="font-size:11px">警告</span>
+            <span class="ad-badge-danger" style="font-size:11px">严重</span>
+            状态判定，以及账户分析中的指标卡预警标签，均基于此处配置的区间。
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 分析报告 ===== -->
+      <div class="page" id="page-ad-reports">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">分析报告</div>
+            <div class="page-desc">Claude AI 生成的投放诊断报告，包含定时报告和告警触发报告</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <select class="metric-select" style="width:120px"><option>全部类型</option><option>定时报告</option><option>告警报告</option></select>
+            <select class="metric-select" style="width:120px"><option>近7天</option><option>近30天</option></select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <!-- 报告卡片 1 -->
+          <div class="report-card" onclick="openAdPlan('健康追踪_相似人群_C');setTimeout(triggerAIAnalysis,300)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-10 14:15</span>
+              <span class="ad-badge-warn">告警触发</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">相似人群_C · 成本+取消率双预警</div>
+            <div class="report-finding">有效订阅成本 ¥45，超阈值 28.6%，主因晚间时段竞价激烈</div>
+            <div class="report-finding">首日取消率 28%，较历史均值偏高 9.8pp，晚间用户质量差</div>
+            <div class="report-finding">建议暂停 20:00-24:00 时段，预期成本下降至 ¥36</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">3 条建议 · 1 条风险预警</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+
+          <!-- 报告卡片 2 -->
+          <div class="report-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-10 12:30</span>
+              <span class="ad-badge-danger">告警触发</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">行为定向_E · 成本严重超标</div>
+            <div class="report-finding">有效订阅成本 ¥61，超阈值 74%，严重消耗预算</div>
+            <div class="report-finding">10分钟存活率仅 68%，远低于账户均值 75.7%</div>
+            <div class="report-finding">建议立即暂停或大幅降价，该计划投放效率最低</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">2 条建议 · 2 条风险预警</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+
+          <!-- 报告卡片 3 -->
+          <div class="report-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-10 09:00</span>
+              <span class="badge badge-blue">定时日报</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 今日投放早报</div>
+            <div class="report-finding">精准健康_B 表现最优（成本 ¥29），建议放量 20%</div>
+            <div class="report-finding">行为定向_E 成本连续2日偏高，需调整出价策略</div>
+            <div class="report-finding">整体有效订阅成本较上周上涨 12%，关注趋势</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 4 条建议</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+
+          <!-- 报告卡片 4 -->
+          <div class="report-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-09 09:00</span>
+              <span class="badge badge-blue">定时日报</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 昨日投放日报</div>
+            <div class="report-finding">行为定向_E 晚间成本飙升至 ¥58，较均值偏高 65%</div>
+            <div class="report-finding">账户整体首日取消率 18.6%，在合理区间内</div>
+            <div class="report-finding">宽泛兴趣_A 与精准健康_B 共同贡献了 61% 的有效订阅</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 3 条建议</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+
+          <!-- 报告卡片 5 -->
+          <div class="report-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-09 21:45</span>
+              <span class="ad-badge-warn">告警触发</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">行为定向_E · 昨晚成本异常</div>
+            <div class="report-finding">21:00-24:00 时段有效订阅成本 ¥78，为全天最高</div>
+            <div class="report-finding">该时段首日取消率高达 41%，获客质量极差</div>
+            <div class="report-finding">建议次日设置时段屏蔽：20:00-24:00</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">2 条建议 · 1 条风险预警</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+
+          <!-- 报告卡片 6 -->
+          <div class="report-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;color:#8c8c8c">2026-04-08 09:00</span>
+              <span class="badge badge-blue">定时日报</span>
+            </div>
+            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 2026-04-08 日报</div>
+            <div class="report-finding">整体有效订阅成本 ¥31.8，接近近期最优水平</div>
+            <div class="report-finding">竞品用户_D 首日取消率下降至 19%，策略调整有效</div>
+            <div class="report-finding">建议维持当前出价策略，重点关注宽泛兴趣_A 放量空间</div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
+              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 2 条建议</span>
+              <span class="link" style="font-size:12px">查看完整分析 →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const breadcrumbs = {
+  'ad-overview': '投放管理 / <span>投放总览</span>',
+  'ad-plan':     '投放管理 / <span>账户分析</span>',
+  'ad-alerts':   '投放管理 / <span>预警中心</span>',
+  'ad-thresholds':'投放管理 / <span>阈值管理</span>',
+  'ad-reports':  '投放管理 / <span>分析报告</span>',
+}
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('page-' + id).classList.add('active')
+  document.getElementById('breadcrumb').innerHTML = breadcrumbs[id]
+  if (el) el.classList.add('active')
+  if (id === 'ad-plan') setTimeout(initPlanTrendChart, 80)
+  if (id === 'ad-overview') {
+    filterAdByProduct(document.getElementById('adProductFilter').value || '健康追踪仪')
+    setTimeout(initAdTrendChart, 80)
+  }
+}
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open') })
+  })
+})
+function filterAdRows() {
+  const optimizer = document.getElementById('adOptimizerFilter').value
+  const product   = document.getElementById('adProductFilter')?.value || '健康追踪仪'
+  document.querySelectorAll('#adPlanTableBody .ad-plan-row').forEach(tr => {
+    const matchProduct   = !product   || tr.dataset.product   === product
+    const matchOptimizer = !optimizer || tr.dataset.optimizer === optimizer
+    tr.style.display = (matchProduct && matchOptimizer) ? '' : 'none'
+  })
+}
+
+// ══════════════════════════════════════════
+//  投放管理模块 JS
+// ══════════════════════════════════════════
+
+let planTrendChartObj = null
+let planTrendMetric = 'spend'
+
+// 各计划模拟数据
+const adPlanData = {
+  '健康追踪_宽泛兴趣_A':  { cost: 32, cancelRate: 18, survival: 78, spend: 9200, validSub: 288 },
+  '健康追踪_精准健康_B':  { cost: 29, cancelRate: 15, survival: 82, spend: 7400, validSub: 255 },
+  '健康追踪_相似人群_C':  { cost: 45, cancelRate: 28, survival: 74, spend: 6100, validSub: 136, warn: true },
+  '健康追踪_竞品用户_D':  { cost: 41, cancelRate: 25, survival: 76, spend: 5200, validSub: 127 },
+  '健康追踪_行为定向_E':  { cost: 61, cancelRate: 38, survival: 68, spend: 4580, validSub: 75,  danger: true },
+  '健康管家_精准用户_F':  { cost: 24, cancelRate: 12, survival: 92, spend: 4800, validSub: 201 },
+  '健康管家_兴趣扩展_G':  { cost: 20, cancelRate: 16, survival: 88, spend: 3200, validSub: 160 },
+  '运动助手_运动人群_H':  { cost: 25, cancelRate: 14, survival: 86, spend: 2100, validSub: 84 },
+}
+
+function openAdPlan(name) {
+  document.getElementById('adPlanName').textContent = name
+  // 重置 AI 分析区
+  document.getElementById('aiAnalysisArea').innerHTML = `
+    <div style="text-align:center;padding:40px;color:#bfbfbf;border:1px dashed #e8e8e8;border-radius:8px">
+      <div style="font-size:24px;margin-bottom:8px">🤖</div>
+      <div style="font-size:13px">点击「开始 AI 分析」，Claude 将综合分析当前计划的成本、质量和分时数据</div>
+    </div>`
+  const btn2 = document.getElementById('aiAnalysisBtn2')
+  if (btn2) { btn2.textContent = '开始 AI 分析'; btn2.disabled = false }
+  showPage('ad-plan', document.querySelector('.nav-item[onclick*="openAdPlan"]'))
+}
+
+function initPlanTrendChart() {
+  const ctx = document.getElementById('planTrendChart')
+  if (!ctx) return
+  if (planTrendChartObj) { planTrendChartObj.destroy(); planTrendChartObj = null }
+  planTrendMetric = 'spend'
+  const purpleMetrics = new Set(['keyBehavCost','keyBehavCount'])
+  document.querySelectorAll('#planTrendTabs span').forEach(s => {
+    const m = (s.getAttribute('onclick') || '').match(/'(\w+)'\)$/)?.[1]
+    s.style.background = '#fff'; s.style.color = '#595959'
+    s.style.borderColor = purpleMetrics.has(m) ? '#d3adf7' : '#d9d9d9'
+  })
+  const firstTab = document.querySelector('#planTrendTabs span')
+  if (firstTab) { firstTab.style.background = '#2f54eb'; firstTab.style.color = '#fff'; firstTab.style.borderColor = '#2f54eb' }
+  const d = adTrendDataset['spend']
+  planTrendChartObj = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: adTrendHours,
+      datasets: [
+        { label:'今日', data:d.today, borderColor:'#2f54eb', backgroundColor:'rgba(47,84,235,0.06)',
+          borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:true, tension:0.35, spanGaps:false },
+        { label:'昨日', data:d.yesterday, borderColor:'#bfbfbf', backgroundColor:'transparent',
+          borderWidth:1.5, borderDash:[4,3], pointRadius:0, pointHoverRadius:4, fill:false, tension:0.35 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ callbacks:{ label: c => {
+          const v = c.raw
+          return ' ' + c.dataset.label + ': ' + (v !== null ? adTrendPrefix[planTrendMetric] + v + adTrendSuffix[planTrendMetric] : '—')
+        }}}
+      },
+      scales: {
+        x:{ grid:{ display:false }, ticks:{ font:{size:11}, color:'#8c8c8c', maxTicksLimit:12, maxRotation:0 }},
+        y:{ grid:{ color:'#f5f5f5' }, ticks:{ font:{size:11}, color:'#8c8c8c' }}
+      }
+    }
+  })
+}
+
+function switchPlanTrend(el, metric) {
+  planTrendMetric = metric
+  const purpleMetrics = new Set(['keyBehavCost','keyBehavCount'])
+  document.querySelectorAll('#planTrendTabs span').forEach(s => {
+    const m = (s.getAttribute('onclick') || '').match(/'(\w+)'\)$/)?.[1]
+    s.style.background = '#fff'; s.style.color = '#595959'
+    s.style.borderColor = purpleMetrics.has(m) ? '#d3adf7' : '#d9d9d9'
+  })
+  el.style.background = purpleMetrics.has(metric) ? '#722ed1' : '#2f54eb'
+  el.style.color = '#fff'
+  el.style.borderColor = purpleMetrics.has(metric) ? '#722ed1' : '#2f54eb'
+  if (planTrendChartObj) {
+    const d = adTrendDataset[metric]
+    planTrendChartObj.data.datasets[0].data = d.today
+    planTrendChartObj.data.datasets[1].data = d.yesterday
+    planTrendChartObj.update()
+  }
+}
+
+function triggerAIAnalysis() {
+  const area = document.getElementById('aiAnalysisArea')
+  const btn  = document.getElementById('aiAnalysisBtn2') || document.getElementById('aiAnalysisBtn')
+  if (btn) { btn.disabled = true; btn.textContent = '分析中...' }
+  document.getElementById('aiTriggerInfo') && (document.getElementById('aiTriggerInfo').textContent = '触发方式：手动触发 · ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}))
+
+  area.innerHTML = `<div class="ai-loading"><div class="ai-loading-spinner"></div><div style="font-size:13px">Claude 正在分析计划数据...</div><div style="font-size:12px;color:#bfbfbf;margin-top:6px">分时环比 · 昨日同比 · 核心指标异常检测</div></div>`
+
+  setTimeout(() => {
+    area.innerHTML = buildAIResult()
+    if (btn) { btn.disabled = false; btn.textContent = '重新分析' }
+  }, 2400)
+}
+
+function buildAIResult() {
+  const planName = document.getElementById('adPlanName')?.textContent || ''
+  const isE = planName.includes('行为定向_E')
+
+  // 4 核心指标 × 分时环比 + 昨日同比
+  const metrics = isE ? [
+    { name: '消耗',       current: '¥2,870', hourUp: true,  hourVal: '+15.3%', hourWarn: false, dayUp: true,  dayVal: '+23.1%', dayWarn: false },
+    { name: '订成成本',   current: '¥61',    hourUp: true,  hourVal: '+12.4%', hourWarn: true,  dayUp: true,  dayVal: '+74.3%', dayWarn: true  },
+    { name: '订成量',     current: '47',     hourUp: false, hourVal: '-8.6%',  hourWarn: true,  dayUp: false, dayVal: '-22.5%', dayWarn: true  },
+    { name: '首日取订率', current: '38%',    hourUp: true,  hourVal: '+3.2pp', hourWarn: true,  dayUp: true,  dayVal: '+18pp',  dayWarn: true  }
+  ] : [
+    { name: '消耗',       current: '¥4,320', hourUp: true,  hourVal: '+8.2%',  hourWarn: false, dayUp: true,  dayVal: '+12.4%', dayWarn: false },
+    { name: '订成成本',   current: '¥45',    hourUp: true,  hourVal: '+5.1%',  hourWarn: true,  dayUp: true,  dayVal: '+28.6%', dayWarn: true  },
+    { name: '订成量',     current: '136',    hourUp: false, hourVal: '-3.2%',  hourWarn: false, dayUp: false, dayVal: '-9.3%',  dayWarn: true  },
+    { name: '首日取订率', current: '28%',    hourUp: true,  hourVal: '+1.8pp', hourWarn: true,  dayUp: true,  dayVal: '+8pp',   dayWarn: true  }
+  ]
+
+  const severity      = isE ? '严重风险' : '中等风险'
+  const severityClass = isE ? 'ai-severity-high' : 'ai-severity-mid'
+
+  const metricRows = metrics.map(m => {
+    const anyWarn   = m.hourWarn || m.dayWarn
+    const dot       = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${anyWarn ? '#ff4d4f' : '#52c41a'};margin-right:5px;vertical-align:middle;margin-top:-1px"></span>`
+    const hourColor = m.hourWarn ? '#cf1322' : (m.hourUp ? '#595959' : '#52c41a')
+    const dayColor  = m.dayWarn  ? '#cf1322' : (m.dayUp  ? '#595959' : '#52c41a')
+    const badge     = (warn) => warn ? `<span style="font-size:10px;color:#fff;background:#ff4d4f;border-radius:3px;padding:1px 4px;margin-left:5px;vertical-align:middle">异常</span>` : ''
+    return `<tr style="border-bottom:1px solid #f5f5f5">
+      <td style="padding:9px 12px;font-size:13px;color:#262626;font-weight:${anyWarn?'600':'400'};white-space:nowrap">${dot}${m.name}</td>
+      <td style="padding:9px 12px;font-size:13px;font-weight:600;color:${anyWarn?'#cf1322':'#262626'};white-space:nowrap">${m.current}</td>
+      <td style="padding:9px 12px;white-space:nowrap">
+        <span style="font-size:13px;font-weight:600;color:${hourColor}">${m.hourUp?'↑':'↓'} ${m.hourVal}</span>${badge(m.hourWarn)}
+      </td>
+      <td style="padding:9px 12px;white-space:nowrap">
+        <span style="font-size:13px;font-weight:600;color:${dayColor}">${m.dayUp?'↑':'↓'} ${m.dayVal}</span>${badge(m.dayWarn)}
+      </td>
+    </tr>`
+  }).join('')
+
+  const diagnosis = isE
+    ? '该计划核心指标全面恶化：消耗持续放量但订成量大幅下滑，订成成本超阈值 74%；分时环比与昨日同比双维度均呈同向恶化，排除偶发波动可能，属系统性问题。首日取订率 38%（昨日同比 +18pp），超阈值近一倍，人群包质量存在严重隐患，建议立即暂停。'
+    : '订成成本与首日取订率已构成双重预警：分时环比显示本时段较上一时段仍在恶化（成本 +5.1%、取订率 +1.8pp），昨日同比差距更为显著（成本 +28.6%、取订率 +8pp）。消耗持续放量但订成量开始下滑，预算利用效率下降。目前处于可干预窗口期，建议及时调整出价与时段策略。'
+
+  const now = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+
+  return `
+  <div class="ai-card" style="margin-bottom:0">
+    <div class="ai-card-header">
+      <div class="ai-card-title">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2f54eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Claude 智能诊断
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="${severityClass}">${severity}</span>
+        <span style="font-size:12px;color:#8c8c8c">${now}</span>
+      </div>
+    </div>
+
+    <div class="ai-section-title">核心指标诊断</div>
+    <div style="border:1px solid #f0f0f0;border-radius:6px;overflow:hidden;margin-bottom:14px">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#fafafa;border-bottom:1px solid #f0f0f0">
+            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">指标</th>
+            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">当前值</th>
+            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">分时环比 <span style="font-size:11px;font-weight:400;color:#bfbfbf">vs 上时段</span></th>
+            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">昨日同比 <span style="font-size:11px;font-weight:400;color:#bfbfbf">vs 昨日同时段</span></th>
+          </tr>
+        </thead>
+        <tbody>${metricRows}</tbody>
+      </table>
+    </div>
+
+    <div class="ai-section-title">综合诊断</div>
+    <div class="ai-diagnosis">${diagnosis}</div>
+
+    <div class="ai-section-title">优化建议</div>
+    <div class="ai-rec">
+      <div class="ai-rec-priority p0">P0</div>
+      <div>
+        <div class="ai-rec-action">${isE ? '立即暂停该计划，排查人群包' : '压缩 20:00-24:00 时段预算比例'}</div>
+        <div class="ai-rec-reason">${isE ? '分时环比与昨日同比双维度持续恶化，无好转迹象，继续投放将加速预算损耗。' : '分时数据显示晚间时段订成成本与取订率显著高于日间，压缩该时段可快速改善整体 ROI。'}</div>
+        <div class="ai-rec-effect">→ 预期：${isE ? '立即停止损耗，分析完成后针对性重启' : '订成成本预计回落至 ¥36-38，取订率恢复至 18-20%'}</div>
+      </div>
+    </div>
+    <div class="ai-rec">
+      <div class="ai-rec-priority p1">P1</div>
+      <div>
+        <div class="ai-rec-action">${isE ? '更换人群包为「精准健康兴趣」标签' : '目标转化出价降低 10-15%'}</div>
+        <div class="ai-rec-reason">${isE ? '行为定向人群与产品匹配度低；精准健康_B 昨日同比成本仅 +3.2%，同口径下表现明显更优。' : '当前出价偏高吸引低意向用户，适度降价可在保量前提下筛选更高质量订阅用户。'}</div>
+        <div class="ai-rec-effect">→ 预期：${isE ? '7日内订成成本有望回落至 ¥35-42' : '7日内首日取订率恢复至历史均值（约 18%）'}</div>
+      </div>
+    </div>
+    <div class="ai-rec">
+      <div class="ai-rec-priority p2">P2</div>
+      <div>
+        <div class="ai-rec-action">添加「已取消订阅用户」排除包</div>
+        <div class="ai-rec-reason">高取消率部分原因可能是曾取消的老用户被重复触达，排除后可提升新用户占比并改善取订率基线。</div>
+        <div class="ai-rec-effect">→ 预期：减少 10-15% 无效曝光消耗</div>
+      </div>
+    </div>
+
+    <div class="ai-section-title">风险预警</div>
+    <div class="ai-risk">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cf1322" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div>若下一时段（15:00）分时环比仍未收窄，且首日取订率持续上升至 <strong>${isE ? '45%' : '35%'}</strong> 以上，建议${isE ? '立即下线并向团队上报' : '暂停整个计划并进行人群包复审，避免低质量用户拉低整体 LTV 基线'}。</div>
+    </div>
+  </div>`
+}
+
+function switchAlertTab(el, tab) {
+  document.querySelectorAll('#page-ad-alerts .tab').forEach(t => t.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('alertTabCurrent').style.display  = tab === 'current'  ? 'block' : 'none'
+  document.getElementById('alertTabHistory').style.display  = tab === 'history'  ? 'block' : 'none'
+}
+
+function showAlertAnalysis(planKey) {
+  const planMap = { E: '健康追踪_行为定向_E', C: '健康追踪_相似人群_C' }
+  openAdPlan(planMap[planKey] || '健康追踪_相似人群_C')
+  setTimeout(triggerAIAnalysis, 400)
+}
+
+const adProductStats = {
+  '健康追踪仪': {
+    spend: '¥32,480', cost: '36.9', costWarn: true, costThreshold: '¥35',
+    sub: '881', cancel: '21.4%', cancelWarn: true, cancelThreshold: '20%',
+    keyBehavCost: '10.1', keyBehavCount: '3,214', keyBehavCostChange: '↓ 2.3% 较昨日', keyBehavCountChange: '↑ 5.1% 较昨日',
+    count: 5
+  },
+  '健康管家Pro': {
+    spend: '¥8,000', cost: '22.5', costWarn: false, costThreshold: '¥28',
+    sub: '361', cancel: '13.8%', cancelWarn: false, cancelThreshold: '18%',
+    keyBehavCost: '5.5', keyBehavCount: '1,452', keyBehavCostChange: '↓ 1.1% 较昨日', keyBehavCountChange: '↑ 3.8% 较昨日',
+    count: 2
+  },
+  '运动助手': {
+    spend: '¥2,100', cost: '25.0', costWarn: false, costThreshold: '¥30',
+    sub: '84', cancel: '14.0%', cancelWarn: false, cancelThreshold: '18%',
+    keyBehavCost: '5.0', keyBehavCount: '420', keyBehavCostChange: '↑ 0.8% 较昨日', keyBehavCountChange: '↑ 2.4% 较昨日',
+    count: 1
+  }
+}
+
+
+function filterAdByProduct(product) {
+  // 更新指标卡
+  const s = adProductStats[product] || adProductStats['健康追踪仪']
+  document.getElementById('adCardSpend').textContent = s.spend
+  document.getElementById('adCardSub').textContent = s.sub
+
+  // Cost card
+  const costEl = document.getElementById('adCardCost')
+  const card2 = document.getElementById('adCard2')
+  const costTag = document.getElementById('adCostTag')
+  costEl.textContent = '¥' + s.cost
+  document.getElementById('adCostThreshold').textContent = '当前阈值 ' + s.costThreshold
+  if (s.costWarn) {
+    card2.className = 'ad-stat-card warn'
+    costEl.style.color = '#d46b08'
+    costTag.style.display = ''
+  } else {
+    card2.className = 'ad-stat-card'
+    costEl.style.color = '#262626'
+    costTag.style.display = 'none'
+  }
+
+  // Cancel card
+  const cancelEl = document.getElementById('adCardCancel')
+  const card4 = document.getElementById('adCard4')
+  const cancelTag = document.getElementById('adCancelTag')
+  cancelEl.textContent = s.cancel
+  document.getElementById('adCancelThreshold').textContent = '当前阈值 ' + s.cancelThreshold
+  if (s.cancelWarn) {
+    card4.className = 'ad-stat-card warn'
+    cancelEl.style.color = '#d46b08'
+    cancelTag.style.display = ''
+  } else {
+    card4.className = 'ad-stat-card'
+    cancelEl.style.color = '#262626'
+    cancelTag.style.display = 'none'
+  }
+
+  // 关键行为回传指标
+  document.getElementById('adCardKeyBehavCost').textContent = '¥' + s.keyBehavCost
+  document.getElementById('adCardKeyBehavCount').textContent = s.keyBehavCount
+  document.getElementById('adKeyBehavCostChange').textContent = s.keyBehavCostChange
+  document.getElementById('adKeyBehavCountChange').textContent = s.keyBehavCountChange
+
+  // 指标卡更新完毕
+}
+
+// 进入投放总览时初始化为第一个产品
+filterAdByProduct('健康追踪仪')
+
+// ─── AI 投放洞察 · 每小时数据 ───────────────────────────────────
+const adInsightData = {
+  '06': {
+    status: 'normal', statusText: '整体正常', statusBg: '#f6ffed', statusColor: '#389e0d',
+    spend: '¥830',
+    metrics: [
+      { label: '消耗',       value: '+2.1%',  up: true,  warn: false, prev: null,       prevUp: null,  prevWarn: false },
+      { label: '订成成本',   value: '-1.3%',  up: false, warn: false, prev: null,       prevUp: null,  prevWarn: false },
+      { label: '订成量',     value: '+3.0%',  up: true,  warn: false, prev: null,       prevUp: null,  prevWarn: false },
+      { label: '首日取订率', value: '-0.3pp', up: false, warn: false, prev: null,       prevUp: null,  prevWarn: false }
+    ],
+    alerts: [],
+    normals: ['健康追踪_主账户', '健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '07': {
+    status: 'normal', statusText: '整体正常', statusBg: '#f6ffed', statusColor: '#389e0d',
+    spend: '¥2,140',
+    metrics: [
+      { label: '消耗',       value: '+1.8%',  up: true,  warn: false, prev: '-0.3pp', prevUp: false, prevWarn: false },
+      { label: '订成成本',   value: '-2.1%',  up: false, warn: false, prev: '-0.8pp', prevUp: false, prevWarn: false },
+      { label: '订成量',     value: '+4.2%',  up: true,  warn: false, prev: '+1.2pp', prevUp: true,  prevWarn: false },
+      { label: '首日取订率', value: '-0.5pp', up: false, warn: false, prev: '-0.2pp', prevUp: false, prevWarn: false }
+    ],
+    alerts: [],
+    normals: ['健康追踪_主账户', '健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '08': {
+    status: 'normal', statusText: '整体正常', statusBg: '#f6ffed', statusColor: '#389e0d',
+    spend: '¥3,560',
+    metrics: [
+      { label: '消耗',       value: '+3.2%',  up: true,  warn: false, prev: '+1.4pp', prevUp: true,  prevWarn: false },
+      { label: '订成成本',   value: '-1.0%',  up: false, warn: false, prev: '+1.1pp', prevUp: true,  prevWarn: false },
+      { label: '订成量',     value: '+5.1%',  up: true,  warn: false, prev: '+0.9pp', prevUp: true,  prevWarn: false },
+      { label: '首日取订率', value: '-0.8pp', up: false, warn: false, prev: '-0.3pp', prevUp: false, prevWarn: false }
+    ],
+    alerts: [],
+    normals: ['健康追踪_主账户', '健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '09': {
+    status: 'normal', statusText: '整体正常', statusBg: '#f6ffed', statusColor: '#389e0d',
+    spend: '¥4,210',
+    metrics: [
+      { label: '消耗',       value: '+8.2%',  up: true,  warn: false, prev: null },
+      { label: '订成成本',   value: '+2.1%',  up: true,  warn: false, prev: null },
+      { label: '订成量',     value: '+5.3%',  up: true,  warn: false, prev: null },
+      { label: '首日取订率', value: '-0.5pp', up: false, warn: false, prev: null }
+    ],
+    alerts: [],
+    normals: ['健康追踪_主账户', '健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '10': {
+    status: 'normal', statusText: '整体正常', statusBg: '#f6ffed', statusColor: '#389e0d',
+    spend: '¥7,830',
+    metrics: [
+      { label: '消耗',       value: '+7.5%',  up: true,  warn: false, prev: '-0.7pp', prevUp: false, prevWarn: false },
+      { label: '订成成本',   value: '+4.2%',  up: true,  warn: false, prev: '+2.1pp', prevUp: true,  prevWarn: false },
+      { label: '订成量',     value: '+3.8%',  up: true,  warn: false, prev: '-1.5pp', prevUp: false, prevWarn: false },
+      { label: '首日取订率', value: '+0.8pp', up: true,  warn: false, prev: '+1.3pp', prevUp: true,  prevWarn: false }
+    ],
+    alerts: [],
+    normals: ['健康追踪_主账户', '健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '11': {
+    status: 'warn', statusText: '需关注', statusBg: '#fff7e6', statusColor: '#d46b08',
+    spend: '¥13,560',
+    metrics: [
+      { label: '消耗',       value: '+9.3%',  up: true,  warn: false, prev: '+1.8pp', prevUp: true,  prevWarn: false },
+      { label: '订成成本',   value: '+8.5%',  up: true,  warn: true,  prev: '+4.3pp', prevUp: true,  prevWarn: true  },
+      { label: '订成量',     value: '-1.2%',  up: false, warn: false, prev: '-5.0pp', prevUp: false, prevWarn: true  },
+      { label: '首日取订率', value: '+1.5pp', up: true,  warn: true,  prev: '+0.7pp', prevUp: true,  prevWarn: false }
+    ],
+    alerts: [
+      { level: 'warn', accountId: '7312048521', accountName: '健康追踪_主账户', issue: '订成成本较昨日上涨 8.5%，行为定向类计划出价可能偏高，需排查' }
+    ],
+    normals: ['健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '12': {
+    status: 'warn', statusText: '需关注', statusBg: '#fff7e6', statusColor: '#d46b08',
+    spend: '¥19,040',
+    metrics: [
+      { label: '消耗',       value: '+10.8%', up: true,  warn: true,  prev: '+1.5pp', prevUp: true,  prevWarn: false },
+      { label: '订成成本',   value: '+10.1%', up: true,  warn: true,  prev: '+1.6pp', prevUp: true,  prevWarn: false },
+      { label: '订成量',     value: '-2.4%',  up: false, warn: false, prev: '-1.2pp', prevUp: false, prevWarn: false },
+      { label: '首日取订率', value: '+2.0pp', up: true,  warn: true,  prev: '+0.5pp', prevUp: true,  prevWarn: false }
+    ],
+    alerts: [
+      { level: 'warn', accountId: '7312048521', accountName: '健康追踪_主账户', issue: '订成成本持续上升至 +10.1%，首日取订率同步走高，建议检查出价策略' }
+    ],
+    normals: ['健康追踪_信息流', '健康追踪_搜索', '健康追踪_品牌']
+  },
+  '13': {
+    status: 'danger', statusText: '需立即处理', statusBg: '#fff1f0', statusColor: '#cf1322',
+    spend: '¥26,710',
+    metrics: [
+      { label: '消耗',       value: '+11.9%', up: true,  warn: true,  prev: '+1.1pp', prevUp: true,  prevWarn: false },
+      { label: '订成成本',   value: '+13.6%', up: true,  warn: true,  prev: '+3.5pp', prevUp: true,  prevWarn: true  },
+      { label: '订成量',     value: '-2.9%',  up: false, warn: true,  prev: '-0.5pp', prevUp: false, prevWarn: false },
+      { label: '首日取订率', value: '+2.7pp', up: true,  warn: true,  prev: '+0.7pp', prevUp: true,  prevWarn: false }
+    ],
+    alerts: [
+      { level: 'danger', accountId: '7312048521', accountName: '健康追踪_主账户', issue: '订成成本超阈值 54%，行为定向类计划消耗持续恶化，拖低整体效率' },
+      { level: 'warn',   accountId: '7318923641', accountName: '健康追踪_信息流', issue: '首日取订率升至 21.1%，超设定阈值，相似人群计划质量待核查' }
+    ],
+    normals: ['健康追踪_搜索', '健康追踪_品牌']
+  },
+  '14': {
+    status: 'danger', statusText: '需立即处理', statusBg: '#fff1f0', statusColor: '#cf1322',
+    spend: '¥32,480',
+    metrics: [
+      { label: '消耗',       value: '+12.4%', up: true,  warn: true,  prev: '+0.5pp', prevUp: true,  prevWarn: false },
+      { label: '订成成本',   value: '+15.3%', up: true,  warn: true,  prev: '+1.7pp', prevUp: true,  prevWarn: false },
+      { label: '订成量',     value: '-3.1%',  up: false, warn: true,  prev: '-0.2pp', prevUp: false, prevWarn: false },
+      { label: '首日取订率', value: '+3.1pp', up: true,  warn: true,  prev: '+0.4pp', prevUp: true,  prevWarn: false }
+    ],
+    alerts: [
+      { level: 'danger', accountId: '7312048521', accountName: '健康追踪_主账户', issue: '订成成本超阈值 74%，高消耗计划订成转化严重不足（消耗占 19%，订成仅 8%）' },
+      { level: 'warn',   accountId: '7318923641', accountName: '健康追踪_信息流', issue: '首日取订率 22.1%，超设定阈值 20%，晚间时段问题突出' }
+    ],
+    normals: ['健康追踪_搜索', '健康追踪_品牌']
+  }
+}
+const adInsightHours = ['06','07','08','09','10','11','12','13','14']
+
+function scrollInsightTabs(dir) {
+  const wrap = document.getElementById('adInsightTabsWrap')
+  if (wrap) wrap.scrollBy({ left: dir * 130, behavior: 'smooth' })
+}
+
+function renderAdInsight(hour) {
+  const d = adInsightData[hour]
+  if (!d) return
+
+  // 状态 badge
+  const badge = document.getElementById('adInsightStatusBadge')
+  badge.textContent = d.statusText
+  badge.style.background = d.statusBg
+  badge.style.color = d.statusColor
+
+  // 最新时间
+  document.getElementById('adInsightLatestHour').textContent = hour + ':00'
+
+  // Tabs（带状态小圆点 + 消耗）
+  const dotColor = { normal: '#52c41a', warn: '#faad14', danger: '#ff4d4f' }
+  document.getElementById('adInsightTabs').innerHTML = adInsightHours.map(h => {
+    const isActive = h === hour
+    const hd = adInsightData[h]
+    const dc = dotColor[hd.status]
+    const textClr = isActive ? '#fff' : '#595959'
+    const spendClr = isActive ? 'rgba(255,255,255,0.8)' : '#8c8c8c'
+    return `<span onclick="renderAdInsight('${h}')" style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;padding:4px 10px;border-radius:5px;border:1px solid ${isActive ? '#2f54eb' : '#d9d9d9'};background:${isActive ? '#2f54eb' : '#fff'}">
+      <span style="font-size:12px;color:${textClr};white-space:nowrap">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dc};margin-right:3px;vertical-align:middle;margin-top:-2px"></span>${h}:00
+      </span>
+      <span style="font-size:11px;color:${spendClr};margin-top:1px">${hd.spend}</span>
+    </span>`
+  }).join('')
+
+  // 激活 tab 滚入视野
+  requestAnimationFrame(() => {
+    const wrap = document.getElementById('adInsightTabsWrap')
+    const activeTab = document.querySelector('#adInsightTabs span[style*="2f54eb"]')
+    if (wrap && activeTab) {
+      const wrapRect = wrap.getBoundingClientRect()
+      const tabRect  = activeTab.getBoundingClientRect()
+      if (tabRect.left < wrapRect.left || tabRect.right > wrapRect.right) {
+        activeTab.scrollIntoView({ inline: 'nearest', behavior: 'smooth', block: 'nearest' })
+      }
+    }
+  })
+
+  // 指标变化行（昨日 + 上时段 双维度对比）
+  document.getElementById('adInsightMetrics').innerHTML = d.metrics.map((m, i) => {
+    const mainColor = m.warn ? '#cf1322' : '#52c41a'
+    const arrow = m.up ? '↑' : '↓'
+    const sep = i < d.metrics.length - 1 ? 'border-right:1px solid #e8e8e8;margin-right:14px;padding-right:14px' : ''
+    let prevHtml = ''
+    if (m.prev !== null && m.prev !== undefined) {
+      const pArrow = m.prevUp ? '↑' : '↓'
+      const pColor = m.prevWarn ? '#d46b08' : '#8c8c8c'
+      prevHtml = `<div style="font-size:11px;color:${pColor};margin-top:3px">${pArrow} ${m.prev} <span style="color:#bfbfbf">vs上时段</span></div>`
+    } else {
+      prevHtml = `<div style="font-size:11px;color:#d9d9d9;margin-top:3px">— vs上时段</div>`
+    }
+    return `<div style="${sep}">
+      <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px">${m.label}</div>
+      <div style="font-size:15px;font-weight:700;color:${mainColor}">${arrow} ${m.value} <span style="font-size:10px;font-weight:400;color:#bfbfbf">vs昨日</span></div>
+      ${prevHtml}
+    </div>`
+  }).join('')
+
+  // 洞察内容
+  let html = ''
+  if (d.alerts.length > 0) {
+    html += `<div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:6px;letter-spacing:.5px">⚠ 需关注（${d.alerts.length} 条）</div>`
+    d.alerts.forEach(a => {
+      const bg      = a.level === 'danger' ? '#fff1f0' : '#fff7e6'
+      const clr     = a.level === 'danger' ? '#cf1322' : '#d46b08'
+      const badgeBg = a.level === 'danger' ? '#ff4d4f' : '#faad14'
+      const badgeTx = a.level === 'danger' ? '严重' : '警告'
+      html += `<div style="background:${bg};border-radius:6px;padding:9px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="min-width:0">
+          <div style="font-size:11px;color:${clr};opacity:.8;margin-bottom:4px">
+            ${a.accountName}<span style="font-size:10px;color:#bfbfbf;margin-left:6px">ID: ${a.accountId}</span>
+          </div>
+          <div style="font-size:12px;color:${clr}">
+            <span style="font-size:10px;font-weight:700;color:#fff;background:${badgeBg};border-radius:3px;padding:1px 5px;margin-right:6px;vertical-align:middle">${badgeTx}</span>${a.issue}
+          </div>
+        </div>
+        <button onclick="showPage('ad-plan', document.querySelector('[onclick*=ad-plan]'))" style="flex-shrink:0;padding:3px 10px;font-size:12px;color:#2f54eb;background:#fff;border:1px solid #2f54eb;border-radius:4px;cursor:pointer;white-space:nowrap">账户洞察</button>
+      </div>`
+    })
+  }
+  if (d.normals.length > 0) {
+    const mt = d.alerts.length > 0 ? 'margin-top:10px;' : ''
+    html += `<div style="font-size:12px;font-weight:600;color:#8c8c8c;${mt}margin-bottom:6px;letter-spacing:.5px">✓ 表现正常（${d.normals.length} 个账户）</div>`
+    html += `<div style="background:#f6ffed;border-radius:6px;padding:9px 12px;font-size:12px;color:#389e0d">${d.normals.join('　·　')}</div>`
+  }
+  document.getElementById('adInsightBody').innerHTML = html
+
+  // 历史提示
+  const note = document.getElementById('adInsightHistoryNote')
+  note.textContent = hour !== '14' ? `当前查看 ${hour}:00 历史洞察 · 点击 14:00 返回最新` : ''
+}
+
+renderAdInsight('14')
+setTimeout(initAdTrendChart, 80)
+filterAdByProduct('健康追踪仪')
+
+// ─── 分时趋势图 ──────────────────────────────────────────────────
+const N = null
+const adTrendHours = ['00:00','01:00','02:00','03:00','04:00','05:00','06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00']
+const adTrendDataset = {
+  spend: {
+    today:     [420,280,190,150,120,160,380,980,1620,2050,2380,2650,2820,2960,3080,N,N,N,N,N,N,N,N,N],
+    yesterday: [380,250,170,130,110,150,340,920,1540,1880,2140,2380,2550,2680,2810,3050,3260,3510,3680,3450,2980,2560,2080,1540]
+  },
+  cost: {
+    today:     [28.1,27.4,26.8,27.2,26.5,27.8,29.1,30.4,31.2,32.8,33.6,34.9,36.1,37.4,38.8,N,N,N,N,N,N,N,N,N],
+    yesterday: [27.2,26.8,26.1,26.5,25.9,26.7,28.3,29.6,30.1,31.4,32.2,32.8,33.5,33.7,33.3,33.8,33.2,32.8,32.1,31.6,31.2,30.8,30.4,30.1]
+  },
+  sub: {
+    today:     [15,10,7,6,5,6,13,32,52,63,71,76,78,79,79,N,N,N,N,N,N,N,N,N],
+    yesterday: [14,9,7,5,4,6,12,31,51,60,67,73,76,80,84,91,98,107,114,109,96,83,68,51]
+  },
+  cancel: {
+    today:     [16.2,15.8,15.4,15.6,15.1,15.9,16.8,17.4,18.2,19.1,20.4,21.2,21.8,22.4,22.1,N,N,N,N,N,N,N,N,N],
+    yesterday: [15.8,15.4,15.1,15.3,14.9,15.6,16.4,17.1,17.8,18.4,18.9,19.2,19.6,19.4,19.1,19.5,18.9,18.4,18.1,17.8,17.5,17.2,16.9,16.7]
+  },
+  keyBehavCost: {
+    today:     [8.2,7.9,7.6,7.8,7.5,8.0,8.6,9.1,9.4,9.8,10.1,10.4,10.6,10.9,11.2,N,N,N,N,N,N,N,N,N],
+    yesterday: [8.0,7.7,7.4,7.6,7.3,7.8,8.4,8.9,9.2,9.5,9.8,10.0,10.2,10.3,10.2,10.4,10.3,10.1,9.9,9.7,9.5,9.4,9.2,9.0]
+  },
+  keyBehavCount: {
+    today:     [51,34,25,19,16,20,44,108,172,209,236,255,266,272,275,N,N,N,N,N,N,N,N,N],
+    yesterday: [47,31,23,17,15,19,40,103,167,198,219,238,250,260,276,293,316,347,372,356,314,272,226,171]
+  }
+}
+const adTrendLabel = { spend:'消耗 (¥)', cost:'订成成本 (¥)', sub:'订成量', cancel:'首日取订率 (%)', keyBehavCost:'关键行为成本 (¥)', keyBehavCount:'关键行为量' }
+const adTrendPrefix = { spend:'¥', cost:'¥', sub:'', cancel:'', keyBehavCost:'¥', keyBehavCount:'' }
+const adTrendSuffix = { spend:'', cost:'', sub:'', cancel:'%', keyBehavCost:'', keyBehavCount:'' }
+
+let adTrendChartObj = null
+let adTrendMetric = 'spend'
+
+function initAdTrendChart() {
+  if (adTrendChartObj) return
+  const ctx = document.getElementById('adTrendChart')
+  if (!ctx) return
+  const d = adTrendDataset[adTrendMetric]
+  adTrendChartObj = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: adTrendHours,
+      datasets: [
+        {
+          label: '今日',
+          data: d.today,
+          borderColor: '#2f54eb',
+          backgroundColor: 'rgba(47,84,235,0.06)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: true,
+          tension: 0.35,
+          spanGaps: false
+        },
+        {
+          label: '昨日',
+          data: d.yesterday,
+          borderColor: '#bfbfbf',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: false,
+          tension: 0.35
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const m = adTrendMetric
+              const v = ctx.raw
+              return ' ' + ctx.dataset.label + ': ' + (v !== null ? adTrendPrefix[m] + v + adTrendSuffix[m] : '—')
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#8c8c8c', maxTicksLimit: 12, maxRotation: 0 }
+        },
+        y: {
+          grid: { color: '#f5f5f5' },
+          ticks: { font: { size: 11 }, color: '#8c8c8c' }
+        }
+      }
+    }
+  })
+}
+
+// ─── 阈值管理页面 ──────────────────────────────────────────────
+const thProductConfig = {
+  '健康追踪仪': {
+    events: ['first_health_check'],
+    logic: 'and',
+    cost: [35, 50],
+    cancel: [18, 28],
+    keyBehav: [10, 15]
+  },
+  '健康管家Pro': {
+    events: ['complete_tutorial'],
+    logic: 'and',
+    cost: [28, 40],
+    cancel: [15, 25],
+    keyBehav: [8, 12]
+  },
+  '运动助手': {
+    events: ['app_register'],
+    logic: 'or',
+    cost: [30, 45],
+    cancel: [16, 25],
+    keyBehav: [9, 13]
+  }
+}
+let currentThProduct = '健康追踪仪'
+
+const eventNameMap = {
+  app_register: '注册完成',
+  complete_tutorial: '完成新手引导',
+  first_health_check: '首次健康检测',
+  add_device: '绑定设备',
+  subscribe_trial: '开始试用订阅',
+  purchase_complete: '完成购买'
+}
+
+function switchThProduct(el, product) {
+  currentThProduct = product
+  document.querySelectorAll('#page-ad-thresholds .chip').forEach(c => c.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('thProductTag').textContent = product
+  document.getElementById('thProductTag2').textContent = product
+  const cfg = thProductConfig[product]
+  renderThBoundEvents()
+  switchThLogic(cfg.logic)
+  document.getElementById('thCostNormal').value = cfg.cost[0]
+  document.getElementById('thCostWarnMin').value = cfg.cost[0]
+  document.getElementById('thCostWarnMax').value = cfg.cost[1]
+  document.getElementById('thCostDanger').value = cfg.cost[1]
+  document.getElementById('thCancelNormal').value = cfg.cancel[0]
+  document.getElementById('thCancelWarnMin').value = cfg.cancel[0]
+  document.getElementById('thCancelWarnMax').value = cfg.cancel[1]
+  document.getElementById('thCancelDanger').value = cfg.cancel[1]
+  document.getElementById('thKeyBehavNormal').value = cfg.keyBehav[0]
+  document.getElementById('thKeyBehavWarnMin').value = cfg.keyBehav[0]
+  document.getElementById('thKeyBehavWarnMax').value = cfg.keyBehav[1]
+  document.getElementById('thKeyBehavDanger').value = cfg.keyBehav[1]
+}
+
+function renderThBoundEvents() {
+  const cfg = thProductConfig[currentThProduct]
+  const wrap = document.getElementById('thBoundEvents')
+  if (cfg.events.length === 0) {
+    wrap.innerHTML = '<div style="font-size:12px;color:#bfbfbf;padding:8px 0">暂未绑定事件</div>'
+    return
+  }
+  wrap.innerHTML = cfg.events.map(e => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #f0f0f0;border-radius:6px;margin-bottom:6px;background:#fafafa">
+    <div>
+      <div style="font-size:13px;font-weight:500;color:#262626">${eventNameMap[e] || e}</div>
+      <div style="font-size:11px;color:#8c8c8c;font-family:monospace">${e}</div>
+    </div>
+    <span onclick="removeThEvent('${e}')" style="cursor:pointer;color:#bfbfbf;font-size:16px;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='#ff4d4f';this.style.background='#fff1f0'" onmouseout="this.style.color='#bfbfbf';this.style.background='transparent'">&times;</span>
+  </div>`).join('')
+}
+
+function addThEvent() {
+  const sel = document.getElementById('thEventSelect')
+  const val = sel.value
+  if (!val) return
+  const cfg = thProductConfig[currentThProduct]
+  if (cfg.events.includes(val)) { sel.value = ''; return }
+  cfg.events.push(val)
+  sel.value = ''
+  renderThBoundEvents()
+}
+
+function removeThEvent(eventId) {
+  const cfg = thProductConfig[currentThProduct]
+  cfg.events = cfg.events.filter(e => e !== eventId)
+  renderThBoundEvents()
+}
+
+function switchThLogic(logic) {
+  const cfg = thProductConfig[currentThProduct]
+  cfg.logic = logic
+  const andBtn = document.getElementById('thLogicAnd')
+  const orBtn = document.getElementById('thLogicOr')
+  const desc = document.getElementById('thLogicDesc')
+  if (logic === 'and') {
+    andBtn.style.borderColor = '#1890ff'; andBtn.style.background = '#e6f4ff'; andBtn.style.color = '#1890ff'
+    orBtn.style.borderColor = '#d9d9d9'; orBtn.style.background = '#fff'; orBtn.style.color = '#595959'
+    desc.textContent = '用户需完成所有已绑定事件，才被统计为「有效用户」'
+  } else {
+    orBtn.style.borderColor = '#1890ff'; orBtn.style.background = '#e6f4ff'; orBtn.style.color = '#1890ff'
+    andBtn.style.borderColor = '#d9d9d9'; andBtn.style.background = '#fff'; andBtn.style.color = '#595959'
+    desc.textContent = '用户完成任意一个已绑定事件，即被统计为「有效用户」'
+  }
+}
+
+function saveThresholds() {
+  const cfg = thProductConfig[currentThProduct]
+  cfg.cost = [+document.getElementById('thCostNormal').value, +document.getElementById('thCostWarnMax').value]
+  cfg.cancel = [+document.getElementById('thCancelNormal').value, +document.getElementById('thCancelWarnMax').value]
+  cfg.keyBehav = [+document.getElementById('thKeyBehavNormal').value, +document.getElementById('thKeyBehavWarnMax').value]
+
+  const btn = document.querySelector('#page-ad-thresholds .btn-primary:last-child')
+  if (btn) { btn.textContent = '已保存 ✓'; setTimeout(() => btn.textContent = '保存阈值配置', 1500) }
+}
+
+// 初始化
+renderThBoundEvents()
+
+// ─── 阈值配置：产品 & 账户 ─────────────────────────────────────
+let alertAcctMode = 'all'
+let alertAcctIds = []
+
+function onAlertProductChange() {
+  // 切换产品时重置账户设置
+  alertAcctIds = []
+  renderAcctTags()
+  switchAcctMode('all')
+}
+
+function switchAcctMode(mode) {
+  alertAcctMode = mode
+  const allBtn = document.getElementById('acctModeAll')
+  const customBtn = document.getElementById('acctModeCustom')
+  const panel = document.getElementById('acctCustomPanel')
+  if (mode === 'all') {
+    allBtn.style.borderColor = '#1890ff'; allBtn.style.background = '#e6f4ff'; allBtn.style.color = '#1890ff'
+    customBtn.style.borderColor = '#d9d9d9'; customBtn.style.background = '#fff'; customBtn.style.color = '#595959'
+    panel.style.display = 'none'
+  } else {
+    customBtn.style.borderColor = '#1890ff'; customBtn.style.background = '#e6f4ff'; customBtn.style.color = '#1890ff'
+    allBtn.style.borderColor = '#d9d9d9'; allBtn.style.background = '#fff'; allBtn.style.color = '#595959'
+    panel.style.display = 'block'
+    document.getElementById('acctIdInput').focus()
+  }
+}
+
+function addAcctId() {
+  const input = document.getElementById('acctIdInput')
+  const val = input.value.trim()
+  if (!val) return
+  if (alertAcctIds.includes(val)) { input.value = ''; return }
+  alertAcctIds.push(val)
+  input.value = ''
+  renderAcctTags()
+}
+
+function removeAcctId(id) {
+  alertAcctIds = alertAcctIds.filter(v => v !== id)
+  renderAcctTags()
+}
+
+function renderAcctTags() {
+  const wrap = document.getElementById('acctTagsWrap')
+  const hint = document.getElementById('acctEmptyHint')
+  if (alertAcctIds.length === 0) {
+    wrap.innerHTML = ''
+    hint.style.display = ''
+    return
+  }
+  hint.style.display = 'none'
+  wrap.innerHTML = alertAcctIds.map(id => `<span style="display:inline-flex;align-items:center;gap:4px;background:#e6f4ff;color:#1890ff;border:1px solid #91caff;border-radius:4px;padding:3px 9px;font-size:12px">${id}<span onclick="removeAcctId('${id}')" style="cursor:pointer;color:#69b1ff;font-size:14px;line-height:1">&times;</span></span>`).join('')
+}
+
+function switchAdTrend(el, metric) {
+  adTrendMetric = metric
+  const purpleMetrics = new Set(['keyBehavCost','keyBehavCount'])
+  document.querySelectorAll('#adTrendTabs span').forEach(s => {
+    const m = (s.getAttribute('onclick') || '').match(/'(\w+)'\)$/)?.[1]
+    s.style.background = '#fff'
+    s.style.color = '#595959'
+    s.style.borderColor = purpleMetrics.has(m) ? '#d3adf7' : '#d9d9d9'
+  })
+  el.style.background = purpleMetrics.has(metric) ? '#722ed1' : '#2f54eb'
+  el.style.color = '#fff'
+  el.style.borderColor = purpleMetrics.has(metric) ? '#722ed1' : '#2f54eb'
+  if (adTrendChartObj) {
+    const d = adTrendDataset[metric]
+    adTrendChartObj.data.datasets[0].data = d.today
+    adTrendChartObj.data.datasets[1].data = d.yesterday
+    adTrendChartObj.update()
+  }
+}
+
+</script>
+
+</body>
+</html>

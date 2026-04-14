@@ -1,0 +1,2841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据管理平台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+  /* Layout */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: #001529; flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto; position: relative; z-index: 10; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 52px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Sidebar */
+  .logo { padding: 18px 20px; color: #fff; font-size: 16px; font-weight: 600; border-bottom: 1px solid #1e3a5f; letter-spacing: 1px; }
+  .logo span { color: #1890ff; }
+  .nav-group { padding: 12px 0; }
+  .nav-group-title { color: #6b8cae; font-size: 11px; padding: 6px 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #8fb3d4; cursor: pointer; transition: all .2s; font-size: 13px; }
+  .nav-item:hover { background: #1e3a5f; color: #fff; }
+  .nav-item.active { background: #1890ff; color: #fff; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Topbar */
+  .breadcrumb { color: #666; font-size: 13px; }
+  .breadcrumb span { color: #1890ff; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* Cards */
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 18px; font-weight: 600; color: #262626; }
+  .page-desc { color: #8c8c8c; font-size: 13px; margin-top: 4px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #f0f0f0; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #262626; display: flex; align-items: center; gap: 8px; }
+  .card-title .tag { font-size: 11px; font-weight: 400; background: #e6f4ff; color: #1890ff; padding: 2px 8px; border-radius: 10px; }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid #f0f0f0; }
+  .stat-label { color: #8c8c8c; font-size: 13px; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #262626; }
+  .stat-change { font-size: 12px; margin-top: 6px; }
+  .stat-change.up { color: #52c41a; }
+  .stat-change.down { color: #ff4d4f; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; background: #fafafa; color: #595959; font-weight: 500; border-bottom: 1px solid #f0f0f0; font-size: 13px; white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; color: #262626; font-size: 13px; }
+  tr:hover td { background: #fafffe; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+  .badge-green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .badge-blue { background: #e6f4ff; color: #1890ff; border: 1px solid #91caff; }
+  .badge-gray { background: #f5f5f5; color: #8c8c8c; border: 1px solid #d9d9d9; }
+  .badge-orange { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .badge-purple { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+  .link { color: #1890ff; cursor: pointer; }
+  .link:hover { text-decoration: underline; }
+
+  /* Drawer */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 900; }
+  .drawer-overlay.open { display: block; }
+  .drawer { position: fixed; top: 0; right: -440px; width: 440px; height: 100vh; background: #fff; z-index: 901; box-shadow: -4px 0 16px rgba(0,0,0,.12); transition: right .25s ease; display: flex; flex-direction: column; }
+  .drawer.open { right: 0; }
+  .drawer-header { padding: 18px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .drawer-title { font-size: 16px; font-weight: 600; color: #262626; }
+  .drawer-close { cursor: pointer; color: #8c8c8c; font-size: 20px; line-height: 1; padding: 4px; }
+  .drawer-close:hover { color: #333; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .drawer-section { margin-bottom: 20px; }
+  .drawer-section-title { font-size: 12px; color: #8c8c8c; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .prop-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 6px; border: 1px solid #f0f0f0; margin-bottom: 6px; background: #fafafa; }
+  .prop-item-name { font-size: 13px; font-weight: 500; color: #262626; }
+  .prop-item-id { font-size: 11px; color: #8c8c8c; font-family: monospace; margin-top: 2px; }
+  .prop-item-right { display: flex; align-items: center; gap: 8px; }
+  .prop-required { font-size: 11px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffa39e; padding: 1px 6px; border-radius: 4px; }
+  .prop-optional { font-size: 11px; color: #8c8c8c; background: #f5f5f5; border: 1px solid #d9d9d9; padding: 1px 6px; border-radius: 4px; }
+
+  /* 数据类型单选按钮 */
+  .ep-type-btn { display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #d9d9d9;border-radius:6px;cursor:pointer;font-size:13px;color:#595959;background:#fff;transition:all .15s; }
+  .ep-type-btn:has(input:checked) { border-color:#1890ff;color:#1890ff;background:#e6f4ff; }
+  .ep-type-btn input { display:none; }
+
+  /* 枚举值 tag */
+  .enum-val-tag { display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:4px;padding:3px 9px;font-size:12px;color:#595959; }
+  .enum-val-tag span { cursor:pointer;color:#8c8c8c; }
+  .enum-val-tag span:hover { color:#ff4d4f; }
+
+  /* 属性值行 */
+  .enum-row { display:grid;grid-template-columns:1fr 1.5fr 28px;gap:8px;align-items:center; }
+  .enum-row input { padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;outline:none;font-family:inherit;width:100%; }
+  .enum-row input:focus { border-color:#1890ff; }
+  .enum-row input::placeholder { color:#bfbfbf; }
+  .enum-row-del { width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#bfbfbf;font-size:18px;border-radius:4px;flex-shrink:0; }
+  .enum-row-del:hover { color:#ff4d4f;background:#fff1f0; }
+  .enum-row-header { font-size:12px;color:#8c8c8c;margin-bottom:4px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-family: inherit; transition: all .2s; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #fff; color: #595959; border: 1px solid #d9d9d9; }
+  .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { background: #fff; color: #ff4d4f; border: 1px solid #d9d9d9; }
+  .btn-danger:hover { border-color: #ff4d4f; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; outline: none; }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: #1890ff; }
+  .filter-bar input { width: 200px; }
+
+  /* Analysis config */
+  .analysis-layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  .config-panel { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #f0f0f0; }
+  .config-section { margin-bottom: 20px; }
+  .config-label { font-size: 12px; color: #8c8c8c; margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  .event-tag { display: inline-flex; align-items: center; gap: 6px; background: #e6f4ff; color: #1890ff; padding: 4px 10px; border-radius: 6px; font-size: 13px; margin: 3px; cursor: pointer; }
+  .event-tag .remove { color: #69b1ff; font-size: 16px; line-height: 1; }
+  .metric-select { width: 100%; padding: 7px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; }
+  .date-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .date-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #d9d9d9; font-size: 12px; cursor: pointer; background: #fff; color: #595959; }
+  .date-btn.active { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+  .result-panel { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #f0f0f0; }
+  .chart-container { position: relative; height: 280px; }
+
+  /* Funnel */
+  .funnel-wrap { display: flex; gap: 24px; }
+  .funnel-chart { flex: 1; }
+  .funnel-step { position: relative; margin-bottom: 6px; cursor: pointer; }
+  .funnel-bar-wrap { display: flex; align-items: center; gap: 12px; }
+  .funnel-bar { height: 52px; border-radius: 6px; display: flex; align-items: center; padding: 0 16px; color: #fff; font-weight: 600; font-size: 15px; transition: opacity .2s; position: relative; overflow: hidden; }
+  .funnel-bar:hover { opacity: .88; }
+  .funnel-meta { min-width: 160px; }
+  .funnel-step-name { font-size: 13px; color: #595959; margin-bottom: 3px; }
+  .funnel-nums { display: flex; gap: 12px; }
+  .funnel-num { font-size: 12px; color: #8c8c8c; }
+  .funnel-num strong { color: #262626; font-size: 14px; }
+  .funnel-arrow { text-align: center; color: #8c8c8c; font-size: 12px; padding: 2px 0; margin-left: 172px; }
+  .funnel-detail { background: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #f0f0f0; width: 240px; flex-shrink: 0; }
+
+  /* Retention matrix */
+  .retention-matrix { overflow-x: auto; }
+  .retention-matrix table { min-width: 700px; }
+  .retention-matrix th { text-align: center; font-size: 12px; }
+  .retention-matrix td { text-align: center; font-size: 13px; font-weight: 500; }
+  .ret-cell { display: inline-block; padding: 6px 8px; border-radius: 4px; min-width: 52px; }
+
+  /* Sankey placeholder */
+  .sankey-wrap { background: #fafafa; border-radius: 8px; border: 1px dashed #d9d9d9; padding: 24px; min-height: 320px; display: flex; flex-direction: column; }
+  .sankey-svg { flex: 1; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+  .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: #595959; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab:hover { color: #1890ff; }
+  .tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 500; }
+
+  /* Page visibility */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 48px; color: #bfbfbf; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* Chips */
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid #d9d9d9; font-size: 12px; cursor: pointer; background: #fff; color: #595959; }
+  .chip.active { background: #1890ff; border-color: #1890ff; color: #fff; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 28px; width: 520px; max-width: 90vw; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 13px; color: #595959; margin-bottom: 6px; display: block; }
+  .form-label.required::before { content: '* '; color: #ff4d4f; }
+  .form-input { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; outline: none; font-family: inherit; }
+  .form-input:focus { border-color: #1890ff; }
+  .form-select { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; outline: none; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .prop-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .prop-tag { padding: 4px 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; cursor: pointer; background: #fff; }
+  .prop-tag.checked { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+
+  /* 已选属性 tag */
+  .selected-prop-tag { display:inline-flex;align-items:center;gap:4px;background:#e6f4ff;color:#1890ff;border:1px solid #91caff;border-radius:4px;padding:3px 9px;font-size:12px; }
+
+  /* 快选 tag */
+  .quick-prop-tag { display:inline-block;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#595959;transition:all .15s; }
+  .quick-prop-tag:hover { border-color:#1890ff;color:#1890ff;background:#e6f4ff; }
+  .quick-prop-tag.used { opacity:.35;cursor:not-allowed;pointer-events:none; }
+
+  /* 搜索下拉 */
+  .prop-option { padding:9px 14px;cursor:pointer;font-size:13px;color:#262626;display:flex;justify-content:space-between;align-items:center; }
+  .prop-option:hover { background:#f5f5f5; }
+  .prop-option-id { font-size:11px;color:#8c8c8c;font-family:monospace; }
+
+  /* ===== 投放管理模块 ===== */
+  .ad-stat-card { background:#fff;border-radius:8px;padding:18px 20px;border:1px solid #f0f0f0; }
+  .ad-stat-card.warn { border-color:#faad14;background:#fffbe6; }
+  .ad-stat-card.danger { border-color:#ff4d4f;background:#fff1f0; }
+  .ad-badge-ok { background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-badge-warn { background:#fff7e6;color:#d46b08;border:1px solid #ffd591;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-badge-danger { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;display:inline-block; }
+  .ad-alert-banner { background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px; }
+  .ad-plan-row { cursor:pointer; }
+  .ad-plan-row:hover td { background:#f0f7ff !important; }
+  .nav-badge { background:#ff4d4f;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:auto;font-weight:600; }
+  /* AI 分析卡片 */
+  .ai-card { background:linear-gradient(135deg,#f0f5ff 0%,#fff 60%);border:1px solid #adc6ff;border-radius:10px;padding:20px;margin-bottom:16px; }
+  .ai-card-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px; }
+  .ai-card-title { display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#262626; }
+  .ai-severity-high { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600; }
+  .ai-severity-mid { background:#fff7e6;color:#d46b08;border:1px solid #ffd591;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600; }
+  .ai-section-title { font-size:11px;font-weight:700;color:#8c8c8c;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;margin-top:14px;display:flex;align-items:center;gap:8px; }
+  .ai-section-title::after { content:'';flex:1;height:1px;background:#ebebeb; }
+  .ai-diagnosis { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #e6e9f0;font-size:13px;color:#262626;line-height:1.65; }
+  .ai-issue { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0f0f0;margin-bottom:8px;border-left:3px solid transparent; }
+  .ai-issue.danger { border-left-color:#ff4d4f; }
+  .ai-issue.warn { border-left-color:#faad14; }
+  .ai-issue-header { display:flex;align-items:center;gap:10px;margin-bottom:5px; }
+  .ai-issue-metric { font-weight:600;color:#262626;font-size:13px; }
+  .ai-issue-delta { font-size:12px;font-weight:600;color:#ff4d4f; }
+  .ai-issue-vals { display:flex;gap:16px;margin-bottom:5px; }
+  .ai-issue-val { font-size:12px;color:#8c8c8c; }
+  .ai-issue-val strong { color:#262626; }
+  .ai-issue-analysis { font-size:12px;color:#595959;line-height:1.55; }
+  .ai-rec { background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0f0f0;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start; }
+  .ai-rec-priority { flex-shrink:0;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px; }
+  .ai-rec-priority.p0 { background:#fff1f0;color:#cf1322; }
+  .ai-rec-priority.p1 { background:#fff7e6;color:#d46b08; }
+  .ai-rec-priority.p2 { background:#f6ffed;color:#389e0d; }
+  .ai-rec-action { font-weight:600;font-size:13px;color:#262626;margin-bottom:3px; }
+  .ai-rec-reason { font-size:12px;color:#8c8c8c;margin-bottom:3px; }
+  .ai-rec-effect { font-size:12px;color:#1890ff; }
+  .ai-risk { background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:10px 14px;display:flex;gap:8px;font-size:13px;color:#595959;line-height:1.5; }
+  .ai-loading { text-align:center;padding:40px;color:#8c8c8c; }
+  .ai-loading-spinner { display:inline-block;width:28px;height:28px;border:3px solid #f0f0f0;border-top-color:#1890ff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  /* 获客漏斗 */
+  .acq-step { margin-bottom:6px; }
+  .acq-bar-row { display:flex;align-items:center;gap:14px; }
+  .acq-bar { height:40px;border-radius:6px;display:flex;align-items:center;padding:0 14px;color:#fff;font-size:13px;font-weight:600;transition:opacity .15s; }
+  .acq-bar:hover { opacity:.85; }
+  .acq-meta { flex:1; }
+  .acq-label { font-size:13px;color:#595959; }
+  .acq-nums { display:flex;gap:14px;margin-top:2px; }
+  .acq-num { font-size:12px;color:#8c8c8c; }
+  .acq-num strong { color:#262626;font-weight:600; }
+  .acq-rate { font-size:12px;font-weight:600;color:#ff7a45; }
+  .acq-arrow { padding:2px 0 2px 168px;color:#d9d9d9;font-size:12px; }
+  /* 预警中心 */
+  .alert-th-row { display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f5f5f5; }
+  .alert-th-label { flex:1;font-size:13px;color:#262626; }
+  .alert-th-sub { font-size:12px;color:#8c8c8c;margin-top:2px; }
+  .alert-th-input { width:70px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;text-align:right;outline:none;color:#333; }
+  .alert-th-input:focus { border-color:#1890ff; }
+  .alert-th-unit { font-size:13px;color:#8c8c8c;white-space:nowrap; }
+  /* 历史对比表 */
+  .hist-table th { background:#fafafa;font-size:12px;color:#8c8c8c;font-weight:500;padding:9px 14px;text-align:right; }
+  .hist-table th:first-child { text-align:left; }
+  .hist-table td { padding:10px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;text-align:right; }
+  .hist-table td:first-child { text-align:left;color:#595959; }
+  .hist-table td.today { font-weight:600;color:#262626; }
+  .hist-table td.warn-val { color:#d46b08;font-weight:600; }
+  /* 报告卡片 */
+  .report-card { background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .2s; }
+  .report-card:hover { box-shadow:0 2px 14px rgba(0,0,0,.08);border-color:#d9d9d9; }
+  .report-finding { display:flex;align-items:flex-start;gap:7px;font-size:13px;color:#595959;margin-bottom:5px;line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">AI 智能<span>中台</span></div>
+    <div class="nav-group">
+      <div class="nav-group-title">元数据管理</div>
+      <div class="nav-item active" onclick="showPage('events',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        一般事件
+      </div>
+      <div class="nav-item" onclick="showPage('event-props',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+        事件属性
+      </div>
+      <div class="nav-item" onclick="showPage('user-props',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        用户属性
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">用户分析</div>
+      <div class="nav-item" onclick="showPage('custom',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        自定义分析
+      </div>
+      <div class="nav-item" onclick="showPage('funnel',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        转化分析
+      </div>
+      <div class="nav-item" onclick="showPage('retention',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        留存分析
+      </div>
+      <div class="nav-item" onclick="showPage('distribution',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="18" y="12" width="4" height="9"/></svg>
+        分布分析
+      </div>
+      <div class="nav-item" onclick="showPage('path',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 12h4l4-5M11 12l4 5"/></svg>
+        用户路径
+      </div>
+      <div class="nav-item" onclick="showPage('saved',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        我的分析
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">投放管理</div>
+      <a href="ad.html" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:13px;color:#595959;text-decoration:none;transition:background .15s">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        进入投放管理 →
+      </a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb" id="breadcrumb">元数据管理 / <span>一般事件</span></div>
+      <div class="topbar-right">
+        <div style="color:#8c8c8c;font-size:13px;">测试环境</div>
+        <div class="avatar">PM</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== 一般事件 ===== -->
+      <div class="page active" id="page-events">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="page-title">一般事件</div>
+            <div class="page-desc">管理所有业务事件，创建即上线，SDK 和 API 立即可接受该事件上报</div>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-event')">+ 创建事件</button>
+        </div>
+        <div class="card">
+          <div class="filter-bar">
+            <input type="text" placeholder="搜索事件名称 / 事件 ID">
+            <select><option>全部状态</option><option>已上线</option><option>已停用</option></select>
+            <select><option>全部分类</option><option>页面浏览</option><option>交互行为</option><option>业务转化</option></select>
+            <select id="appFilter"><option>全部 App</option><option>电商主站 App</option><option>买家助手小程序</option><option>商家管理后台</option></select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>事件显示名</th>
+                  <th>事件 ID</th>
+                  <th>所属 App</th>
+                  <th>分类</th>
+                  <th>状态</th>
+                  <th>关联属性数</th>
+                  <th>创建人</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>用户注册</td><td style="font-family:monospace;color:#595959">user_register</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('用户注册', 'user_register')">8</span></td><td>李明</td><td>2026-03-01</td><td><span class="link" onclick="openEditModal('用户注册','user_register','电商主站 App','业务转化','客户端','注册成功后触发',['register_source','referral_code','register_method'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>完成支付</td><td style="font-family:monospace;color:#595959">payment_success</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('完成支付', 'payment_success')">12</span></td><td>李明</td><td>2026-03-01</td><td><span class="link" onclick="openEditModal('完成支付','payment_success','电商主站 App','业务转化','服务端','支付完成后由服务端上报',['amount','order_id','product_id','coupon_type','is_first_purchase','pay_method'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>浏览商品详情</td><td style="font-family:monospace;color:#595959">view_product_detail</td><td><span class="badge badge-orange">买家助手小程序</span></td><td><span class="badge badge-orange">页面浏览</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('浏览商品详情', 'view_product_detail')">5</span></td><td>王芳</td><td>2026-03-05</td><td><span class="link" onclick="openEditModal('浏览商品详情','view_product_detail','买家助手小程序','页面浏览','客户端','进入商品详情页时触发',['product_id','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>加入购物车</td><td style="font-family:monospace;color:#595959">add_to_cart</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('加入购物车', 'add_to_cart')">6</span></td><td>王芳</td><td>2026-03-05</td><td><span class="link" onclick="openEditModal('加入购物车','add_to_cart','电商主站 App','交互行为','客户端','点击加入购物车按钮时触发',['product_id','product_category','item_count'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>点击首页 Banner</td><td style="font-family:monospace;color:#595959">click_home_banner</td><td><span class="badge badge-orange">买家助手小程序</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('点击首页 Banner', 'click_home_banner')">4</span></td><td>张伟</td><td>2026-03-10</td><td><span class="link" onclick="openEditModal('点击首页 Banner','click_home_banner','买家助手小程序','交互行为','客户端','点击首页轮播 Banner 时触发',['page_name','banner_position','target_url'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>搜索商品</td><td style="font-family:monospace;color:#595959">search_product</td><td><span class="badge badge-blue">商家管理后台</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('搜索商品', 'search_product')">3</span></td><td>张伟</td><td>2026-03-12</td><td><span class="link" onclick="openEditModal('搜索商品','search_product','商家管理后台','交互行为','客户端','触发搜索时上报',['search_keyword','result_count'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>提交订单</td><td style="font-family:monospace;color:#595959">submit_order</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('提交订单', 'submit_order')">9</span></td><td>李明</td><td>2026-03-15</td><td><span class="link" onclick="openEditModal('提交订单','submit_order','电商主站 App','业务转化','服务端','提交订单成功后触发',['order_id','amount','item_count','product_category','coupon_type'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>旧版点击事件</td><td style="font-family:monospace;color:#595959">old_btn_click</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-gray">已停用</span></td><td><span style="color:#8c8c8c">2</span></td><td>陈刚</td><td>2025-12-01</td><td><span class="link" style="color:#8c8c8c">已停用</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 事件属性 ===== -->
+      <div class="page" id="page-event-props">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="page-title">事件属性</div>
+            <div class="page-desc">全局属性库，事件创建时引用，避免重复定义</div>
+          </div>
+          <button class="btn btn-primary" onclick="openEventPropModal()">+ 创建属性</button>
+        </div>
+        <div class="card">
+          <div class="filter-bar">
+            <input type="text" placeholder="搜索属性名 / 属性 ID">
+            <select><option>全部数据类型</option><option>字符串</option><option>数字</option><option>日期</option></select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>属性显示名</th><th>属性 ID</th><th>数据类型</th><th>属性值数</th><th>被引用事件数</th><th>创建人</th><th>创建时间</th><th>操作</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>支付金额</td><td style="font-family:monospace;color:#595959">amount</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>4</td><td>李明</td><td>2026-03-01</td><td><span class="link" onclick="openEventPropModal('支付金额','amount','数字','','4','')">编辑</span></td></tr>
+                <tr><td>商品 ID</td><td style="font-family:monospace;color:#595959">product_id</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>6</td><td>王芳</td><td>2026-03-02</td><td><span class="link" onclick="openEventPropModal('商品 ID','product_id','字符串','','6','商品的唯一标识符')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>商品分类</td><td style="font-family:monospace;color:#595959">product_category</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('商品分类','product_category','字符串','电子产品,服装,食品,家居,运动,图书,美妆,其他','3','商品所属一级分类')">8 个值</span></td><td>3</td><td>王芳</td><td>2026-03-02</td><td><span class="link" onclick="openEventPropModal('商品分类','product_category','字符串','电子产品,服装,食品,家居,运动,图书,美妆,其他','3','商品所属一级分类')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>页面名称</td><td style="font-family:monospace;color:#595959">page_name</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>12</td><td>张伟</td><td>2026-03-05</td><td><span class="link" onclick="openEventPropModal('页面名称','page_name','字符串','','12','触发事件时所在的页面名称')">编辑</span></td></tr>
+                <tr><td>订单 ID</td><td style="font-family:monospace;color:#595959">order_id</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>3</td><td>李明</td><td>2026-03-08</td><td><span class="link" onclick="openEventPropModal('订单 ID','order_id','字符串','','3','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>是否首次购买</td><td style="font-family:monospace;color:#595959">is_first_purchase</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('是否首次购买','is_first_purchase','字符串','是,否','2','用户是否为首次完成购买行为')">2 个值</span></td><td>2</td><td>张伟</td><td>2026-03-10</td><td><span class="link" onclick="openEventPropModal('是否首次购买','is_first_purchase','字符串','是,否','2','用户是否为首次完成购买行为')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>优惠券类型</td><td style="font-family:monospace;color:#595959">coupon_type</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('优惠券类型','coupon_type','字符串','满减券,折扣券,免邮券,兑换券','2','使用的优惠券类型')">4 个值</span></td><td>2</td><td>李明</td><td>2026-03-15</td><td><span class="link" onclick="openEventPropModal('优惠券类型','coupon_type','字符串','满减券,折扣券,免邮券,兑换券','2','使用的优惠券类型')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>搜索关键词</td><td style="font-family:monospace;color:#595959">search_keyword</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>1</td><td>张伟</td><td>2026-03-18</td><td><span class="link" onclick="openEventPropModal('搜索关键词','search_keyword','字符串','','1','用户输入的搜索词')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 用户属性 ===== -->
+      <div class="page" id="page-user-props">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="page-title">用户属性</div>
+            <div class="page-desc">描述用户静态或动态特征，可在所有分析模块中作为筛选和分组维度</div>
+          </div>
+          <button class="btn btn-primary" onclick="openUserPropModal()">+ 创建用户属性</button>
+        </div>
+        <div class="card">
+          <div class="card-title">系统内置属性 <span class="tag">不可修改</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>属性名</th><th>字段名</th><th>数据类型</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td colspan="4" style="padding:6px 14px;font-size:12px;color:#8c8c8c;background:#fafafa;font-weight:500;letter-spacing:.5px">— 行为时间 —</td></tr>
+                <tr><td>首次访问时间</td><td style="font-family:monospace;color:#595959">first_visit_time</td><td><span class="badge badge-orange">日期</span></td><td>用户首次触发任意事件的时间</td></tr>
+                <tr><td>最近访问时间</td><td style="font-family:monospace;color:#595959">last_visit_time</td><td><span class="badge badge-orange">日期</span></td><td>用户最近一次触发任意事件的时间</td></tr>
+                <tr><td>累计访问天数</td><td style="font-family:monospace;color:#595959">total_active_days</td><td><span class="badge badge-blue">数字</span></td><td>有行为的自然日去重计数</td></tr>
+                <tr><td>注册时间</td><td style="font-family:monospace;color:#595959">register_time</td><td><span class="badge badge-orange">日期</span></td><td>注册事件触发时间</td></tr>
+                <tr><td colspan="4" style="padding:6px 14px;font-size:12px;color:#8c8c8c;background:#fafafa;font-weight:500;letter-spacing:.5px">— 来源渠道 —</td></tr>
+                <tr><td>首次渠道</td><td style="font-family:monospace;color:#595959">first_channel</td><td><span class="badge badge-gray">字符串</span></td><td>用户首次安装时的归因渠道</td></tr>
+                <tr><td>最近渠道</td><td style="font-family:monospace;color:#595959">latest_channel</td><td><span class="badge badge-gray">字符串</span></td><td>用户最近一次激活的归因渠道</td></tr>
+                <tr><td colspan="4" style="padding:6px 14px;font-size:12px;color:#8c8c8c;background:#fafafa;font-weight:500;letter-spacing:.5px">— 设备与系统 —</td></tr>
+                <tr><td>设备类型</td><td style="font-family:monospace;color:#595959">device_type</td><td><span class="badge badge-gray">字符串</span></td><td>手机型号，如 iPhone 15 Pro、Xiaomi 14</td></tr>
+                <tr><td>操作系统</td><td style="font-family:monospace;color:#595959">os</td><td><span class="badge badge-gray">字符串</span></td><td>iOS / Android</td></tr>
+                <tr><td>操作系统版本</td><td style="font-family:monospace;color:#595959">os_version</td><td><span class="badge badge-gray">字符串</span></td><td>如 iOS 17.4、Android 14</td></tr>
+                <tr><td>App 版本</td><td style="font-family:monospace;color:#595959">app_version</td><td><span class="badge badge-gray">字符串</span></td><td>用户当前使用的 App 版本号，如 3.2.1</td></tr>
+                <tr><td>首次安装版本</td><td style="font-family:monospace;color:#595959">first_app_version</td><td><span class="badge badge-gray">字符串</span></td><td>用户首次安装时的 App 版本，用于新版本效果评估</td></tr>
+                <tr><td>设备语言</td><td style="font-family:monospace;color:#595959">device_language</td><td><span class="badge badge-gray">字符串</span></td><td>设备系统语言，如 zh-CN、en-US</td></tr>
+                <tr><td colspan="4" style="padding:6px 14px;font-size:12px;color:#8c8c8c;background:#fafafa;font-weight:500;letter-spacing:.5px">— 地理位置 —</td></tr>
+                <tr><td>国家 / 地区</td><td style="font-family:monospace;color:#595959">country</td><td><span class="badge badge-gray">字符串</span></td><td>由 IP 解析，如 CN、US</td></tr>
+                <tr><td>城市</td><td style="font-family:monospace;color:#595959">city</td><td><span class="badge badge-gray">字符串</span></td><td>由 IP 解析，如北京、上海</td></tr>
+                <tr><td colspan="4" style="padding:6px 14px;font-size:12px;color:#8c8c8c;background:#fafafa;font-weight:500;letter-spacing:.5px">— 账号信息 —</td></tr>
+                <tr><td>用户 ID</td><td style="font-family:monospace;color:#595959">user_id</td><td><span class="badge badge-gray">字符串</span></td><td>登录用户唯一标识</td></tr>
+                <tr><td>设备 ID</td><td style="font-family:monospace;color:#595959">device_id</td><td><span class="badge badge-gray">字符串</span></td><td>匿名用户标识，与 user_id 做 ID-Mapping</td></tr>
+                <tr><td>注册方式</td><td style="font-family:monospace;color:#595959">register_type</td><td><span class="badge badge-gray">字符串</span></td><td>手机号 / 微信 / Apple ID / 邮箱</td></tr>
+                <tr><td>包名</td><td style="font-family:monospace;color:#595959">app_package_name</td><td><span class="badge badge-gray">字符串</span></td><td>用户安装的 App 包名，如 com.example.app，用于区分同一账号下载的不同 App</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">自定义用户属性</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>属性显示名</th><th>属性 ID</th><th>数据类型</th><th>属性值数</th><th>创建人</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr><td>订阅状态</td><td style="font-family:monospace;color:#595959">subscription_status</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('订阅状态','subscription_status','字符串','试用中,订阅中,已过期,已取消','')">4 个值</span></td><td>李明</td><td><span class="link" onclick="openUserPropModal('订阅状态','subscription_status','字符串','试用中,订阅中,已过期,已取消','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>订阅套餐</td><td style="font-family:monospace;color:#595959">subscription_plan</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('订阅套餐','subscription_plan','字符串','周订阅,月订阅,年订阅','')">3 个值</span></td><td>李明</td><td><span class="link" onclick="openUserPropModal('订阅套餐','subscription_plan','字符串','周订阅,月订阅,年订阅','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>订阅到期时间</td><td style="font-family:monospace;color:#595959">subscription_expire_time</td><td><span class="badge badge-orange">日期</span></td><td>—</td><td>李明</td><td><span class="link" onclick="openUserPropModal('订阅到期时间','subscription_expire_time','日期','','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>累计订阅次数</td><td style="font-family:monospace;color:#595959">total_subscription_count</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>李明</td><td><span class="link" onclick="openUserPropModal('累计订阅次数','total_subscription_count','数字','','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>累计消费金额</td><td style="font-family:monospace;color:#595959">total_revenue</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>李明</td><td><span class="link" onclick="openUserPropModal('累计消费金额','total_revenue','数字','','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>是否曾付费</td><td style="font-family:monospace;color:#595959">is_ever_paid</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('是否曾付费','is_ever_paid','字符串','是,否','')">2 个值</span></td><td>王芳</td><td><span class="link" onclick="openUserPropModal('是否曾付费','is_ever_paid','字符串','是,否','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>试用开始时间</td><td style="font-family:monospace;color:#595959">trial_start_time</td><td><span class="badge badge-orange">日期</span></td><td>—</td><td>王芳</td><td><span class="link" onclick="openUserPropModal('试用开始时间','trial_start_time','日期','','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>付款方式</td><td style="font-family:monospace;color:#595959">payment_method</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('付款方式','payment_method','字符串','支付宝,微信支付,Apple Pay,银行卡','')">4 个值</span></td><td>王芳</td><td><span class="link" onclick="openUserPropModal('付款方式','payment_method','字符串','支付宝,微信支付,Apple Pay,银行卡','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>用户分层</td><td style="font-family:monospace;color:#595959">user_segment</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('用户分层','user_segment','字符串','高价值,潜力,流失风险,沉默','')">4 个值</span></td><td>张伟</td><td><span class="link" onclick="openUserPropModal('用户分层','user_segment','字符串','高价值,潜力,流失风险,沉默','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>取消订阅原因</td><td style="font-family:monospace;color:#595959">cancel_reason</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openUserPropModal('取消订阅原因','cancel_reason','字符串','价格太贵,功能不满意,使用频率低,切换竞品,其他','')">5 个值</span></td><td>张伟</td><td><span class="link" onclick="openUserPropModal('取消订阅原因','cancel_reason','字符串','价格太贵,功能不满意,使用频率低,切换竞品,其他','')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 自定义分析 ===== -->
+      <div class="page" id="page-custom">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">自定义分析</div>
+            <div class="page-desc">自由组合事件与属性，探索事件数据趋势</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveAnalysisModal('custom')">保存分析</button>
+        </div>
+        <div class="analysis-layout">
+          <div class="config-panel">
+            <div class="config-section">
+              <div class="config-label">产品</div>
+              <select class="metric-select" id="customAppSelect" onchange="filterEventsByApp(this.value)">
+                <option value="">全部产品</option>
+                <option value="电商主站 App">电商主站 App</option>
+                <option value="买家助手小程序">买家助手小程序</option>
+                <option value="商家管理后台">商家管理后台</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">选择事件</div>
+              <div id="customSelectedEvents">
+                <span class="event-tag" data-app="电商主站 App">完成支付 <span class="remove" onclick="removeCustomEvent(this)">×</span></span>
+                <span class="event-tag" data-app="电商主站 App">用户注册 <span class="remove" onclick="removeCustomEvent(this)">×</span></span>
+              </div>
+              <div style="margin-top:10px;position:relative">
+                <button class="btn btn-default btn-sm" onclick="toggleEventDropdown()">+ 添加事件</button>
+                <div id="customEventDropdown" style="display:none;position:absolute;top:30px;left:0;width:240px;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:100">
+                  <div style="padding:8px 10px;border-bottom:1px solid #f0f0f0">
+                    <input id="customEventSearch" type="text" placeholder="搜索事件名称..." oninput="filterEventSearch(this.value)" style="width:100%;border:1px solid #d9d9d9;border-radius:4px;padding:5px 8px;font-size:12px;outline:none" />
+                  </div>
+                  <div style="padding:6px 12px 4px;font-size:11px;color:#8c8c8c" id="customDropdownHint">全部产品的事件</div>
+                  <div id="customEventList" style="max-height:180px;overflow-y:auto"></div>
+                </div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">事件属性</div>
+              <div id="customEventFilters" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div style="margin-top:6px;background:#fafafa;border-radius:6px;padding:8px 10px;font-size:12px;color:#8c8c8c;border:1px dashed #e0e0e0;cursor:pointer" onclick="addFilterRow('customEventFilters','event')">+ 添加事件属性筛选</div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">用户范围</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="userScope" value="all" checked style="accent-color:#1890ff"> 全部活跃用户
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="userScope" value="new" style="accent-color:#1890ff"> 当日新增用户
+                  <span style="font-size:11px;color:#8c8c8c">（注册时间 = 事件当天）</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="userScope" value="old" style="accent-color:#1890ff"> 活跃老用户
+                  <span style="font-size:11px;color:#8c8c8c">（注册时间 ≠ 事件当天）</span>
+                </label>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">用户属性筛选</div>
+              <div id="customUserFilters" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div style="margin-top:6px;background:#fafafa;border-radius:6px;padding:8px 10px;font-size:12px;color:#8c8c8c;border:1px dashed #e0e0e0;cursor:pointer" onclick="addFilterRow('customUserFilters','user')">+ 添加用户属性筛选</div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">指标</div>
+              <select class="metric-select"><option>触发用户数 (UV)</option><option>事件数</option><option>人均次数</option><option>触发用户占比</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">时间范围</div>
+              <div class="date-row">
+                <button class="date-btn">今天</button>
+                <button class="date-btn">昨天</button>
+                <button class="date-btn active">过去7天</button>
+                <button class="date-btn">过去30天</button>
+              </div>
+              <div style="margin-top:10px">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:6px">小时区间 <span style="color:#bfbfbf;font-weight:400">（不选则统计全天 0-24 时）</span></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select id="hourFrom" onchange="updateHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 开始</option>
+                    <option>0 时</option><option>1 时</option><option>2 时</option><option>3 时</option>
+                    <option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option>
+                    <option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option>
+                    <option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option>
+                    <option>16 时</option><option value="17 时" selected>17 时</option><option>18 时</option><option>19 时</option>
+                    <option>20 时</option><option>21 时</option><option>22 时</option><option>23 时</option>
+                  </select>
+                  <span style="font-size:12px;color:#8c8c8c;white-space:nowrap">至</span>
+                  <select id="hourTo" onchange="updateHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 结束</option>
+                    <option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option>
+                    <option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option>
+                    <option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option>
+                    <option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option>
+                    <option>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option>
+                    <option>21 时</option><option value="22 时" selected>22 时</option><option>23 时</option><option>24 时</option>
+                  </select>
+                </div>
+                <div id="hourRangeHint" style="display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px">仅统计每天 17:00 - 22:00 的数据</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <select class="metric-select" id="timeGranularity" style="flex:1">
+                  <option>按天</option><option>按周</option><option>按月</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">查询</button>
+          </div>
+          <div>
+            <div class="stats-row" style="grid-template-columns:repeat(2,1fr);margin-bottom:16px">
+              <div class="stat-card"><div class="stat-label">完成支付 UV</div><div class="stat-value">12,480</div><div class="stat-change up">↑ 8.3% 较上周</div></div>
+              <div class="stat-card"><div class="stat-label">用户注册 UV</div><div class="stat-value">3,862</div><div class="stat-change up">↑ 15.2% 较上周</div></div>
+            </div>
+            <div class="result-panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="font-size:14px;font-weight:600;color:#262626">趋势图</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-default btn-sm active">折线图</button>
+                  <button class="btn btn-default btn-sm">柱状图</button>
+                  <button class="btn btn-default btn-sm">导出 PNG</button>
+                </div>
+              </div>
+              <div class="chart-container"><canvas id="customChart"></canvas></div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+                <div style="font-size:14px;font-weight:600" id="detailTableTitle">明细数据</div>
+                <button class="btn btn-default btn-sm">导出 CSV</button>
+              </div>
+              <div id="customDetailTable"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 转化分析 ===== -->
+      <div class="page" id="page-funnel">
+        <div class="page-header" style="display:flex;justify-content:space-between;">
+          <div>
+            <div class="page-title">转化分析</div>
+            <div class="page-desc">多步骤漏斗，分析用户转化路径与流失情况</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveAnalysisModal('funnel')">保存分析</button>
+        </div>
+        <div class="analysis-layout">
+          <div class="config-panel">
+
+            <!-- 产品 -->
+            <div class="config-section">
+              <div class="config-label">产品</div>
+              <select class="metric-select" id="funnelAppSelect" onchange="funnelFilterApp(this.value)">
+                <option value="">全部产品</option>
+                <option value="电商主站 App">电商主站 App</option>
+                <option value="买家助手小程序">买家助手小程序</option>
+                <option value="商家管理后台">商家管理后台</option>
+              </select>
+            </div>
+
+            <!-- 漏斗步骤 -->
+            <div class="config-section">
+              <div class="config-label">漏斗步骤</div>
+              <div id="funnelSteps" style="display:flex;flex-direction:column;gap:6px">
+                <div class="funnel-step-item" data-event="浏览商品详情">
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:8px 12px;font-size:13px">
+                    <span style="color:#1890ff;font-weight:500">① 浏览商品详情</span>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span class="link" style="font-size:12px" onclick="toggleStepFilter(this)">筛选</span>
+                      <span style="color:#bfbfbf;cursor:pointer" onclick="removeFunnelStep(this)">×</span>
+                    </div>
+                  </div>
+                  <div class="step-filter" style="display:none;margin-top:4px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0;display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:11px;color:#8c8c8c">事件属性筛选</div>
+                    <div class="step-filter-rows" style="display:flex;flex-direction:column;gap:4px"></div>
+                    <div style="font-size:12px;color:#1890ff;cursor:pointer" onclick="addStepFilterRow(this)">+ 添加条件</div>
+                  </div>
+                </div>
+                <div class="funnel-step-item" data-event="加入购物车">
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:8px 12px;font-size:13px">
+                    <span style="color:#1890ff;font-weight:500">② 加入购物车</span>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span class="link" style="font-size:12px" onclick="toggleStepFilter(this)">筛选</span>
+                      <span style="color:#bfbfbf;cursor:pointer" onclick="removeFunnelStep(this)">×</span>
+                    </div>
+                  </div>
+                  <div class="step-filter" style="display:none;margin-top:4px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0;display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:11px;color:#8c8c8c">事件属性筛选</div>
+                    <div class="step-filter-rows" style="display:flex;flex-direction:column;gap:4px"></div>
+                    <div style="font-size:12px;color:#1890ff;cursor:pointer" onclick="addStepFilterRow(this)">+ 添加条件</div>
+                  </div>
+                </div>
+                <div class="funnel-step-item" data-event="提交订单">
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:8px 12px;font-size:13px">
+                    <span style="color:#1890ff;font-weight:500">③ 提交订单</span>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span class="link" style="font-size:12px" onclick="toggleStepFilter(this)">筛选</span>
+                      <span style="color:#bfbfbf;cursor:pointer" onclick="removeFunnelStep(this)">×</span>
+                    </div>
+                  </div>
+                  <div class="step-filter" style="display:none;margin-top:4px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0;display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:11px;color:#8c8c8c">事件属性筛选</div>
+                    <div class="step-filter-rows" style="display:flex;flex-direction:column;gap:4px"></div>
+                    <div style="font-size:12px;color:#1890ff;cursor:pointer" onclick="addStepFilterRow(this)">+ 添加条件</div>
+                  </div>
+                </div>
+                <div class="funnel-step-item" data-event="完成支付">
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:8px 12px;font-size:13px">
+                    <span style="color:#1890ff;font-weight:500">④ 完成支付</span>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span class="link" style="font-size:12px" onclick="toggleStepFilter(this)">筛选</span>
+                      <span style="color:#bfbfbf;cursor:pointer" onclick="removeFunnelStep(this)">×</span>
+                    </div>
+                  </div>
+                  <div class="step-filter" style="display:none;margin-top:4px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0;display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:11px;color:#8c8c8c">事件属性筛选</div>
+                    <div class="step-filter-rows" style="display:flex;flex-direction:column;gap:4px"></div>
+                    <div style="font-size:12px;color:#1890ff;cursor:pointer" onclick="addStepFilterRow(this)">+ 添加条件</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 添加步骤 -->
+              <div style="margin-top:8px;position:relative">
+                <button class="btn btn-default btn-sm" onclick="toggleFunnelEventDropdown()" id="funnelAddBtn">+ 添加步骤</button>
+                <div id="funnelEventDropdown" style="display:none;position:absolute;top:30px;left:0;width:240px;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:100">
+                  <div style="padding:8px 10px;border-bottom:1px solid #f0f0f0">
+                    <input id="funnelEventSearch" type="text" placeholder="搜索事件..." oninput="renderFunnelEventList(this.value)"
+                      style="width:100%;border:1px solid #d9d9d9;border-radius:4px;padding:5px 8px;font-size:12px;outline:none" />
+                  </div>
+                  <div id="funnelEventList" style="max-height:180px;overflow-y:auto"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 转化窗口期 -->
+            <div class="config-section">
+              <div class="config-label">转化窗口期</div>
+              <select class="metric-select"><option>7天</option><option>1小时</option><option>6小时</option><option>1天</option><option>3天</option><option>14天</option><option>30天</option></select>
+            </div>
+
+            <!-- 用户范围 -->
+            <div class="config-section">
+              <div class="config-label">用户范围</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="funnelUserScope" value="all" checked style="accent-color:#1890ff"> 全部活跃用户
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="funnelUserScope" value="new" style="accent-color:#1890ff"> 当日新增用户
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="funnelUserScope" value="old" style="accent-color:#1890ff"> 活跃老用户
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="funnelUserScope" value="custom" style="accent-color:#1890ff"> 自定义分群
+                </label>
+                <select id="funnelScopeSegment" class="metric-select" style="display:none">
+                  <option>付费用户分群</option><option>巨量引擎来源用户</option><option>高价值用户 (LTV>500)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 用户属性筛选 -->
+            <div class="config-section">
+              <div class="config-label">用户属性筛选</div>
+              <div id="funnelUserFilters" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div style="margin-top:6px;background:#fafafa;border-radius:6px;padding:8px 10px;font-size:12px;color:#8c8c8c;border:1px dashed #e0e0e0;cursor:pointer" onclick="addFunnelUserFilter()">+ 添加用户属性筛选</div>
+            </div>
+
+            <!-- 分组维度 -->
+            <div class="config-section">
+              <div class="config-label">分组维度</div>
+              <select class="metric-select"><option>不分组</option><option>渠道 (channel)</option><option>城市 (city)</option><option>会员等级 (vip_level)</option><option>用户分层 (user_segment)</option></select>
+            </div>
+
+            <!-- 时间范围 -->
+            <div class="config-section">
+              <div class="config-label">时间范围</div>
+              <div class="date-row">
+                <button class="date-btn active">过去7天</button>
+                <button class="date-btn">过去14天</button>
+                <button class="date-btn">过去30天</button>
+              </div>
+              <div style="margin-top:10px">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:6px">小时区间 <span style="color:#bfbfbf;font-weight:400">（不选则统计全天 0-24 时）</span></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select id="funnelHourFrom" onchange="updateFunnelHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 开始</option>
+                    <option>0 时</option><option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option selected>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option>22 时</option><option>23 时</option>
+                  </select>
+                  <span style="font-size:12px;color:#8c8c8c;white-space:nowrap">至</span>
+                  <select id="funnelHourTo" onchange="updateFunnelHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 结束</option>
+                    <option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option selected>22 时</option><option>23 时</option><option>24 时</option>
+                  </select>
+                </div>
+                <div id="funnelHourRangeHint" style="margin-top:5px;font-size:11px;color:#1890ff">仅统计每天 17:00 - 22:00 的数据</div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;justify-content:center">查询</button>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">漏斗转化图 <span class="tag">过去 7 天 · 转化窗口 7 天</span></div>
+              <div class="funnel-wrap">
+                <div class="funnel-chart">
+                  <!-- Step 1 -->
+                  <div class="funnel-step">
+                    <div class="funnel-bar-wrap">
+                      <div class="funnel-meta">
+                        <div class="funnel-step-name">① 浏览商品详情</div>
+                        <div class="funnel-nums"><div class="funnel-num">到达 <strong>24,680</strong></div><div class="funnel-num">转化 <strong>100%</strong></div></div>
+                      </div>
+                      <div class="funnel-bar" style="width:100%;background:linear-gradient(90deg,#1890ff,#40a9ff)">24,680</div>
+                    </div>
+                  </div>
+                  <div class="funnel-arrow">↓ 步骤转化率 61.4%</div>
+                  <!-- Step 2 -->
+                  <div class="funnel-step">
+                    <div class="funnel-bar-wrap">
+                      <div class="funnel-meta">
+                        <div class="funnel-step-name">② 加入购物车</div>
+                        <div class="funnel-nums"><div class="funnel-num">到达 <strong>15,153</strong></div><div class="funnel-num">转化 <strong>61.4%</strong></div></div>
+                      </div>
+                      <div class="funnel-bar" style="width:61.4%;background:linear-gradient(90deg,#52c41a,#73d13d)">15,153</div>
+                    </div>
+                  </div>
+                  <div class="funnel-arrow">↓ 步骤转化率 58.2%</div>
+                  <!-- Step 3 -->
+                  <div class="funnel-step">
+                    <div class="funnel-bar-wrap">
+                      <div class="funnel-meta">
+                        <div class="funnel-step-name">③ 提交订单</div>
+                        <div class="funnel-nums"><div class="funnel-num">到达 <strong>8,819</strong></div><div class="funnel-num">转化 <strong>35.7%</strong></div></div>
+                      </div>
+                      <div class="funnel-bar" style="width:35.7%;background:linear-gradient(90deg,#faad14,#ffc53d)">8,819</div>
+                    </div>
+                  </div>
+                  <div class="funnel-arrow">↓ 步骤转化率 71.6%</div>
+                  <!-- Step 4 -->
+                  <div class="funnel-step">
+                    <div class="funnel-bar-wrap">
+                      <div class="funnel-meta">
+                        <div class="funnel-step-name">④ 完成支付</div>
+                        <div class="funnel-nums"><div class="funnel-num">到达 <strong>6,314</strong></div><div class="funnel-num">转化 <strong>25.6%</strong></div></div>
+                      </div>
+                      <div class="funnel-bar" style="width:25.6%;background:linear-gradient(90deg,#ff7875,#ff4d4f)">6,314</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="funnel-detail">
+                  <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:#262626">步骤详情 · ③ 提交订单</div>
+                  <div style="margin-bottom:14px">
+                    <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px">转化用户</div>
+                    <div style="font-size:22px;font-weight:700;color:#52c41a">8,819</div>
+                    <div style="font-size:12px;color:#8c8c8c;margin-top:4px">平均转化耗时 4.2 分钟</div>
+                  </div>
+                  <div style="margin-bottom:14px">
+                    <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px">流失用户</div>
+                    <div style="font-size:22px;font-weight:700;color:#ff4d4f">6,334</div>
+                    <div style="margin-top:8px"><span class="link" style="font-size:12px">查看用户路径 →</span></div>
+                  </div>
+                  <div>
+                    <div style="font-size:12px;color:#8c8c8c;margin-bottom:8px">渠道分布</div>
+                    <div style="font-size:12px;display:flex;justify-content:space-between;margin-bottom:5px"><span>巨量引擎</span><span style="color:#1890ff;font-weight:600">43%</span></div>
+                    <div style="font-size:12px;display:flex;justify-content:space-between;margin-bottom:5px"><span>微信生态</span><span style="color:#1890ff;font-weight:600">28%</span></div>
+                    <div style="font-size:12px;display:flex;justify-content:space-between;margin-bottom:5px"><span>自然流量</span><span style="color:#1890ff;font-weight:600">18%</span></div>
+                    <div style="font-size:12px;display:flex;justify-content:space-between"><span>其他</span><span style="color:#1890ff;font-weight:600">11%</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 留存分析 ===== -->
+      <div class="page" id="page-retention">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">留存分析</div>
+            <div class="page-desc">分析用户触发起始事件后的回访留存情况</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveAnalysisModal('retention')">保存分析</button>
+        </div>
+        <div class="analysis-layout">
+          <div class="config-panel">
+                        <div class="config-section">
+              <div class="config-label">产品</div>
+              <select class="metric-select">
+                <option value="">全部产品</option>
+                <option>电商主站 App</option>
+                <option>买家助手小程序</option>
+                <option>商家管理后台</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">起始事件</div>
+              <select class="metric-select"><option>用户注册</option><option>完成支付</option><option>浏览商品详情</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">回访事件</div>
+              <select class="metric-select"><option>完成支付</option><option>用户注册</option><option>浏览商品详情</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">留存粒度</div>
+              <div class="chip-row">
+                <div class="chip active">按天</div>
+                <div class="chip">按周</div>
+                <div class="chip">按月</div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">分组对比</div>
+              <select class="metric-select"><option>不分组</option><option>渠道 (channel)</option><option>城市 (city)</option><option>会员等级 (vip_level)</option><option>用户分层 (user_segment)</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">时间范围</div>
+              <div class="date-row">
+                <button class="date-btn active">过去14天</button>
+                <button class="date-btn">过去30天</button>
+              </div>
+              <div style="margin-top:10px">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:6px">小时区间 <span style="color:#bfbfbf;font-weight:400">（不选则统计全天 0-24 时）</span></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select id="retentionHourFrom" onchange="updateRetentionHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 开始</option>
+                    <option>0 时</option><option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option selected>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option>22 时</option><option>23 时</option>
+                  </select>
+                  <span style="font-size:12px;color:#8c8c8c;white-space:nowrap">至</span>
+                  <select id="retentionHourTo" onchange="updateRetentionHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 结束</option>
+                    <option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option selected>22 时</option><option>23 时</option><option>24 时</option>
+                  </select>
+                </div>
+                <div id="retentionHourRangeHint" style="margin-top:5px;font-size:11px;color:#1890ff">仅统计每天 17:00 - 22:00 的数据</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">查询</button>
+          </div>
+          <div>
+            <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+              <div class="stat-card"><div class="stat-label">起始用户数</div><div class="stat-value">18,240</div></div>
+              <div class="stat-card"><div class="stat-label">次日留存率</div><div class="stat-value" style="color:#1890ff">43.2%</div></div>
+              <div class="stat-card"><div class="stat-label">7日留存率</div><div class="stat-value" style="color:#52c41a">21.8%</div></div>
+              <div class="stat-card"><div class="stat-label">30日留存率</div><div class="stat-value" style="color:#faad14">9.4%</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">留存曲线</div>
+              <div class="chart-container"><canvas id="retentionChart"></canvas></div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="card-title">留存矩阵</div>
+              <div class="retention-matrix">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="text-align:left">日期</th>
+                      <th>起始用户</th>
+                      <th>第1天</th><th>第2天</th><th>第3天</th><th>第7天</th><th>第14天</th><th>第30天</th>
+                    </tr>
+                  </thead>
+                  <tbody id="retentionMatrix"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 分布分析 ===== -->
+      <div class="page" id="page-distribution">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">分布分析</div>
+            <div class="page-desc">分析事件属性的数值分布或用户触发事件的次数分布</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveAnalysisModal('distribution')">保存分析</button>
+        </div>
+        <div class="analysis-layout">
+          <div class="config-panel">
+                        <div class="config-section">
+              <div class="config-label">产品</div>
+              <select class="metric-select">
+                <option value="">全部产品</option>
+                <option>电商主站 App</option>
+                <option>买家助手小程序</option>
+                <option>商家管理后台</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">分析模式</div>
+              <div class="chip-row">
+                <div class="chip active" id="distMode1" onclick="switchDistMode('attr')">属性值分布</div>
+                <div class="chip" id="distMode2" onclick="switchDistMode('count')">次数分布</div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">事件</div>
+              <select class="metric-select"><option>完成支付</option><option>浏览商品详情</option><option>加入购物车</option></select>
+            </div>
+            <div class="config-section" id="distAttrConfig">
+              <div class="config-label">分析属性</div>
+              <select class="metric-select"><option>支付金额 (amount)</option><option>商品 ID</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">区间划分</div>
+              <div class="chip-row">
+                <div class="chip active">自动 10 组</div>
+                <div class="chip">自动 5 组</div>
+                <div class="chip">自动 20 组</div>
+                <div class="chip">自定义</div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">分组对比</div>
+              <select class="metric-select"><option>不分组</option><option>渠道 (channel)</option><option>城市 (city)</option><option>会员等级 (vip_level)</option><option>用户分层 (user_segment)</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">筛选条件</div>
+              <div style="background:#fafafa;border-radius:6px;padding:10px;font-size:12px;color:#8c8c8c;border:1px dashed #e0e0e0;cursor:pointer">+ 添加筛选条件</div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">时间范围</div>
+              <div class="date-row">
+                <button class="date-btn active">过去7天</button>
+                <button class="date-btn">过去30天</button>
+              </div>
+              <div style="margin-top:10px">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:6px">小时区间 <span style="color:#bfbfbf;font-weight:400">（不选则统计全天 0-24 时）</span></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select id="distHourFrom" onchange="updateDistHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 开始</option>
+                    <option>0 时</option><option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option selected>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option>22 时</option><option>23 时</option>
+                  </select>
+                  <span style="font-size:12px;color:#8c8c8c;white-space:nowrap">至</span>
+                  <select id="distHourTo" onchange="updateDistHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 结束</option>
+                    <option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option selected>22 时</option><option>23 时</option><option>24 时</option>
+                  </select>
+                </div>
+                <div id="distHourRangeHint" style="margin-top:5px;font-size:11px;color:#1890ff">仅统计每天 17:00 - 22:00 的数据</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">查询</button>
+          </div>
+          <div>
+            <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+              <div class="stat-card"><div class="stat-label">最小值</div><div class="stat-value">¥1</div></div>
+              <div class="stat-card"><div class="stat-label">中位数</div><div class="stat-value">¥168</div></div>
+              <div class="stat-card"><div class="stat-label">平均值</div><div class="stat-value">¥243</div></div>
+              <div class="stat-card"><div class="stat-label">最大值</div><div class="stat-value">¥9,980</div></div>
+            </div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div class="card-title" style="margin:0">支付金额分布（过去 7 天）</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-default btn-sm active">用户数</button>
+                  <button class="btn btn-default btn-sm">事件数</button>
+                </div>
+              </div>
+              <div class="chart-container"><canvas id="distChart"></canvas></div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <table>
+                <thead><tr><th>区间</th><th>用户数</th><th>占比</th><th>累计占比</th></tr></thead>
+                <tbody>
+                  <tr><td>[0, 100)</td><td>4,823</td><td>38.6%</td><td>38.6%</td></tr>
+                  <tr><td>[100, 200)</td><td>3,102</td><td>24.8%</td><td>63.4%</td></tr>
+                  <tr><td>[200, 300)</td><td>1,856</td><td>14.9%</td><td>78.3%</td></tr>
+                  <tr><td>[300, 500)</td><td>1,204</td><td>9.6%</td><td>87.9%</td></tr>
+                  <tr><td>[500, 1000)</td><td>876</td><td>7.0%</td><td>94.9%</td></tr>
+                  <tr><td>[1000, ∞)</td><td>639</td><td>5.1%</td><td>100%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 用户路径 ===== -->
+      <div class="page" id="page-path">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">用户路径</div>
+            <div class="page-desc">以时间顺序追踪用户在 App 内的操作序列</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openSaveAnalysisModal('path')">保存分析</button>
+        </div>
+        <div class="analysis-layout">
+          <div class="config-panel">
+                        <div class="config-section">
+              <div class="config-label">产品</div>
+              <select class="metric-select">
+                <option value="">全部产品</option>
+                <option>电商主站 App</option>
+                <option>买家助手小程序</option>
+                <option>商家管理后台</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">分析方向</div>
+              <div class="chip-row">
+                <div class="chip active" id="pathMode1" onclick="switchPathMode('start')">起点模式</div>
+                <div class="chip" id="pathMode2" onclick="switchPathMode('end')">终点模式</div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label" id="pathEventLabel">起点事件</div>
+              <select class="metric-select"><option>用户注册</option><option>完成支付</option><option>浏览商品详情</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">路径窗口期</div>
+              <div class="chip-row">
+                <div class="chip">10 分钟</div>
+                <div class="chip active">30 分钟</div>
+                <div class="chip">1 小时</div>
+                <div class="chip">1 天</div>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">展示步数</div>
+              <select class="metric-select"><option>3 步</option><option>4 步</option><option selected>5 步</option><option>6 步</option><option>8 步</option></select>
+            </div>
+            <div class="config-section">
+              <div class="config-label">用户属性筛选</div>
+              <div style="background:#fafafa;border-radius:6px;padding:10px;font-size:12px;color:#8c8c8c;border:1px dashed #e0e0e0;cursor:pointer">+ 添加筛选条件</div>
+            </div>
+            <div class="config-section">
+              <div class="config-label">时间范围</div>
+              <div class="date-row">
+                <button class="date-btn active">过去7天</button>
+                <button class="date-btn">过去30天</button>
+              </div>
+              <div style="margin-top:10px">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:6px">小时区间 <span style="color:#bfbfbf;font-weight:400">（不选则统计全天 0-24 时）</span></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select id="pathHourFrom" onchange="updatePathHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 开始</option>
+                    <option>0 时</option><option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option selected>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option>22 时</option><option>23 时</option>
+                  </select>
+                  <span style="font-size:12px;color:#8c8c8c;white-space:nowrap">至</span>
+                  <select id="pathHourTo" onchange="updatePathHourRange()"
+                    style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:13px;color:#333;background:#fff">
+                    <option value="">-- 结束</option>
+                    <option>1 时</option><option>2 时</option><option>3 时</option><option>4 时</option><option>5 时</option><option>6 时</option><option>7 时</option><option>8 时</option><option>9 时</option><option>10 时</option><option>11 时</option><option>12 时</option><option>13 时</option><option>14 时</option><option>15 时</option><option>16 时</option><option>17 时</option><option>18 时</option><option>19 时</option><option>20 时</option><option>21 时</option><option selected>22 时</option><option>23 时</option><option>24 时</option>
+                  </select>
+                </div>
+                <div id="pathHourRangeHint" style="margin-top:5px;font-size:11px;color:#1890ff">仅统计每天 17:00 - 22:00 的数据</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">查询</button>
+          </div>
+          <div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div class="card-title" style="margin:0">用户路径桑基图 <span class="tag">起点：用户注册 · 3,862 人</span></div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-default btn-sm">保存分群</button>
+                  <button class="btn btn-default btn-sm">导出 CSV</button>
+                </div>
+              </div>
+              <!-- Sankey SVG -->
+              <div class="sankey-wrap" style="background:#fff;border:none;padding:0">
+                <svg id="sankeySvg" width="100%" height="380" viewBox="0 0 800 380"></svg>
+              </div>
+              <div style="margin-top:16px;padding:14px;background:#fafafa;border-radius:8px;border:1px solid #f0f0f0">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#262626">节点说明</div>
+                <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:#595959">
+                  <div><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#1890ff;margin-right:6px;vertical-align:middle"></span>起点事件</div>
+                  <div><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#52c41a;margin-right:6px;vertical-align:middle"></span>后续行为</div>
+                  <div><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#bfbfbf;margin-right:6px;vertical-align:middle"></span>结束节点（会话自然结束）</div>
+                  <div style="color:#8c8c8c">点击任意节点可查看用户属性分布并保存分群</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 我的分析 ===== -->
+      <div class="page" id="page-saved">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">我的分析</div>
+            <div class="page-desc">已保存的分析快照，点击可重新加载配置查看</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid #f0f0f0">
+          <div class="saved-tab active" onclick="filterSaved('all',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid #1890ff;color:#1890ff;font-weight:500">全部</div>
+          <div class="saved-tab" onclick="filterSaved('custom',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">自定义分析</div>
+          <div class="saved-tab" onclick="filterSaved('funnel',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">转化分析</div>
+          <div class="saved-tab" onclick="filterSaved('retention',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">留存分析</div>
+          <div class="saved-tab" onclick="filterSaved('distribution',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">分布分析</div>
+          <div class="saved-tab" onclick="filterSaved('path',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">用户路径</div>
+        </div>
+        <div id="savedList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></div>
+        <div id="savedEmpty" style="display:none;text-align:center;padding:60px;color:#bfbfbf;font-size:14px">暂无保存的分析</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 创建/编辑事件 Modal -->
+<div class="modal-overlay" id="modal-event">
+  <div class="modal" style="width:580px">
+    <div class="modal-title" id="modalEventTitle">创建事件</div>
+    <div class="form-row">
+      <label class="form-label required">事件显示名</label>
+      <input id="fieldEventName" class="form-input" placeholder="如：完成支付">
+    </div>
+    <div class="form-row">
+      <label class="form-label required">事件 ID</label>
+      <input id="fieldEventId" class="form-input" placeholder="如：payment_success（英文+下划线，创建后不可修改）">
+      <div id="fieldEventIdHint" style="font-size:12px;color:#8c8c8c;margin-top:4px;display:none">事件 ID 创建后不可修改</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label required">所属 App</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="fieldAppGroup">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="电商主站 App" class="field-app-cb" onchange="syncFieldAppStyle()" style="accent-color:#1890ff"> 电商主站 App
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="买家助手小程序" class="field-app-cb" onchange="syncFieldAppStyle()" style="accent-color:#1890ff"> 买家助手小程序
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="商家管理后台" class="field-app-cb" onchange="syncFieldAppStyle()" style="accent-color:#1890ff"> 商家管理后台
+        </label>
+      </div>
+      <div style="font-size:12px;color:#8c8c8c;margin-top:5px">App 列表从 AI 智能中台同步，如未找到请先在中台注册 App</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-row">
+        <label class="form-label required">事件分类</label>
+        <select id="fieldCategory" class="form-select">
+          <option>页面浏览</option><option>交互行为</option><option>业务转化</option><option>自定义</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label required">上报方式</label>
+        <select id="fieldReportType" class="form-select"><option>客户端</option><option>服务端</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">关联属性</label>
+      <div id="selectedProps" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;padding:8px;border:1px solid #d9d9d9;border-radius:6px;background:#fafafa;margin-bottom:10px"></div>
+      <div style="position:relative;margin-bottom:10px">
+        <input id="propSearchInput" class="form-input" placeholder="搜索属性名称或 ID，点击添加…" oninput="filterProps(this.value)" onkeydown="handlePropKey(event)" autocomplete="off">
+        <div id="propDropdown" style="display:none;position:absolute;top:36px;left:0;right:0;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:100;max-height:180px;overflow-y:auto"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#8c8c8c;margin-bottom:7px">常用属性快选</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="commonProps">
+          <span class="quick-prop-tag" data-id="page_name" onclick="addPropByTag(this)">页面名称</span>
+          <span class="quick-prop-tag" data-id="product_category" onclick="addPropByTag(this)">商品分类</span>
+          <span class="quick-prop-tag" data-id="coupon_type" onclick="addPropByTag(this)">优惠券类型</span>
+          <span class="quick-prop-tag" data-id="is_first_purchase" onclick="addPropByTag(this)">是否首次购买</span>
+          <span class="quick-prop-tag" data-id="search_keyword" onclick="addPropByTag(this)">搜索关键词</span>
+          <span class="quick-prop-tag" data-id="pay_method" onclick="addPropByTag(this)">支付方式</span>
+          <span class="quick-prop-tag" data-id="item_count" onclick="addPropByTag(this)">商品数量</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">描述</label>
+      <textarea id="fieldDesc" class="form-input" rows="2" placeholder="事件触发时机和业务含义（供开发参考）"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-event')">取消</button>
+      <button class="btn btn-primary" id="modalEventSubmitBtn" onclick="closeModal('modal-event')">创建并上线</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 产品-事件映射 ──
+const appEvents = {
+  '电商主站 App':   ['用户注册', '完成支付', '加入购物车', '提交订单'],
+  '买家助手小程序': ['浏览商品详情', '点击首页 Banner', '搜索商品'],
+  '商家管理后台':   ['搜索商品'],
+}
+const allAppEvents = ['用户注册', '完成支付', '加入购物车', '提交订单', '浏览商品详情', '点击首页 Banner', '搜索商品']
+
+// ── 事件-属性映射 ──
+const eventAttrs = {
+  '用户注册':        ['注册渠道 (reg_channel)', '注册方式 (reg_type)', '平台 (platform)'],
+  '完成支付':        ['支付金额 (amount)', '支付方式 (pay_type)', '商品ID (product_id)', '订单ID (order_id)', '平台 (platform)'],
+  '加入购物车':      ['商品ID (product_id)', '商品分类 (category)', '商品价格 (price)', '平台 (platform)'],
+  '提交订单':        ['订单金额 (order_amount)', '商品数量 (item_count)', '优惠券ID (coupon_id)', '平台 (platform)'],
+  '浏览商品详情':    ['商品ID (product_id)', '商品分类 (category)', '停留时长 (dwell_time)', '平台 (platform)'],
+  '点击首页 Banner': ['Banner ID (banner_id)', 'Banner位置 (position)', '平台 (platform)'],
+  '搜索商品':        ['搜索词 (keyword)', '结果数量 (result_count)', '平台 (platform)'],
+}
+const userAttrOptions = ['注册时间 (register_time)', '首次渠道 (first_channel)', '用户分层 (user_segment)', '订阅状态 (subscription_status)', '订阅套餐 (subscription_plan)', '订阅到期时间 (subscription_expire_time)', '累计订阅次数 (total_subscription_count)', '累计消费金额 (total_revenue)', '是否曾付费 (is_ever_paid)', '试用开始时间 (trial_start_time)', '付款方式 (payment_method)', '取消订阅原因 (cancel_reason)']
+const dateAttrs = new Set(['注册时间 (register_time)', '首次访问时间 (first_visit_time)'])
+const opOptions     = ['等于', '不等于', '包含', '不包含', '大于', '小于', '为空', '不为空']
+const opOptionsDate = ['等于', '不等于', '大于', '小于', '与事件时间同一天', '与事件时间同一周', '为空', '不为空']
+
+// ── 用户范围切换 ──
+document.addEventListener('change', e => {
+  if (e.target.name === 'userScope') {
+    const seg = document.getElementById('userScopeSegment')
+    if (seg) seg.style.display = e.target.value === 'custom' ? 'block' : 'none'
+  }
+})
+
+function getCustomSelectedEventNames() {
+  return [...document.querySelectorAll('#customSelectedEvents .event-tag')].map(t => t.childNodes[0].textContent.trim())
+}
+
+function renderEventDropdown(app) {
+  const list = document.getElementById('customEventList')
+  const hint = document.getElementById('customDropdownHint')
+  const events = app ? (appEvents[app] || []) : allAppEvents
+  const selected = getCustomSelectedEventNames()
+  hint.textContent = app ? `${app} 的事件` : '全部产品的事件'
+  list.innerHTML = events.map(name => {
+    const used = selected.includes(name)
+    return `<div style="padding:9px 14px;font-size:13px;color:${used ? '#bfbfbf' : '#262626'};cursor:${used ? 'not-allowed' : 'pointer'};display:flex;justify-content:space-between;align-items:center"
+      ${used ? '' : `onclick="addCustomEvent('${name}','${app || ''}')"`}>
+      <span>${name}</span>
+      ${used ? '<span style="font-size:11px;color:#bfbfbf">已添加</span>' : ''}
+    </div>`
+  }).join('')
+  if (!events.length) {
+    list.innerHTML = '<div style="padding:12px;text-align:center;color:#bfbfbf;font-size:13px">该产品暂无事件</div>'
+  }
+}
+
+// ── 筛选条件行 ──
+
+function addFilterRow(containerId, type) {
+  const container = document.getElementById(containerId)
+  const row = document.createElement('div')
+  row.style.cssText = 'background:#fafafa;border:1px solid #f0f0f0;border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px'
+
+  if (type === 'event') {
+    // 事件属性：先选事件，再选属性
+    const selectedEvents = getCustomSelectedEventNames()
+    const eventOpts = selectedEvents.length
+      ? selectedEvents.map(e => `<option value="${e}">${e}</option>`).join('')
+      : allAppEvents.map(e => `<option value="${e}">${e}</option>`).join('')
+
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+        <select class="filter-event-sel" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff"
+          onchange="updateEventAttrSelect(this)">
+          <option value="">选择事件</option>
+          ${eventOpts}
+        </select>
+        <span style="cursor:pointer;color:#bfbfbf;font-size:16px;margin-left:4px;line-height:1;flex-shrink:0" onclick="this.closest('.filter-row-wrap').remove()">×</span>
+      </div>
+      <select class="filter-attr-sel" style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#8c8c8c;background:#fff" disabled>
+        <option>— 请先选择事件 —</option>
+      </select>
+      <div style="display:flex;gap:6px">
+        <select style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff">
+          ${opOptions.map(o => `<option>${o}</option>`).join('')}
+        </select>
+        <input type="text" placeholder="输入值" style="flex:1.2;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;min-width:0" />
+      </div>
+    `
+  } else {
+    // 用户属性
+    row.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <select class="user-attr-sel" onchange="updateUserOpSelect(this)" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff">
+          ${userAttrOptions.map(a => `<option>${a}</option>`).join('')}
+        </select>
+        <span style="cursor:pointer;color:#bfbfbf;font-size:16px;margin-left:8px;line-height:1;flex-shrink:0" onclick="this.closest('.filter-row-wrap').remove()">×</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <select class="user-op-sel" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff">
+          ${opOptionsDate.map(o => `<option>${o}</option>`).join('')}
+        </select>
+        <input type="text" placeholder="输入值" class="user-val-input" style="flex:1.2;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;min-width:0" />
+      </div>
+    `
+  }
+
+  row.classList.add('filter-row-wrap')
+  container.appendChild(row)
+}
+
+function updateEventAttrSelect(eventSel) {
+  const row = eventSel.closest('.filter-row-wrap')
+  const attrSel = row.querySelector('.filter-attr-sel')
+  const eventName = eventSel.value
+  const attrs = eventAttrs[eventName] || []
+  if (!eventName || !attrs.length) {
+    attrSel.innerHTML = '<option>— 请先选择事件 —</option>'
+    attrSel.disabled = true
+  } else {
+    attrSel.innerHTML = attrs.map(a => `<option>${a}</option>`).join('')
+    attrSel.disabled = false
+  }
+}
+
+// ── 转化分析 ──
+function funnelFilterApp(app) {
+  document.getElementById('funnelEventSearch').value = ''
+  renderFunnelEventList('')
+}
+
+function toggleFunnelEventDropdown() {
+  const dd = document.getElementById('funnelEventDropdown')
+  const isOpen = dd.style.display === 'block'
+  dd.style.display = isOpen ? 'none' : 'block'
+  if (!isOpen) {
+    renderFunnelEventList('')
+    setTimeout(() => document.getElementById('funnelEventSearch').focus(), 50)
+  }
+}
+
+function renderFunnelEventList(keyword) {
+  const app = document.getElementById('funnelAppSelect').value
+  const events = app ? (appEvents[app] || []) : allAppEvents
+  const filtered = keyword.trim() ? events.filter(e => e.includes(keyword.trim())) : events
+  const usedEvents = [...document.querySelectorAll('#funnelSteps .funnel-step-item')].map(el => el.dataset.event)
+  const list = document.getElementById('funnelEventList')
+  list.innerHTML = ''
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:12px;text-align:center;color:#bfbfbf;font-size:13px">无匹配事件</div>'
+    return
+  }
+  filtered.forEach(name => {
+    const used = usedEvents.includes(name)
+    const item = document.createElement('div')
+    item.style.cssText = `padding:8px 12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;color:${used ? '#bfbfbf' : '#262626'};cursor:${used ? 'default' : 'pointer'}`
+    item.innerHTML = used ? `<span>${name}</span><span style="font-size:11px;color:#bfbfbf">已添加</span>` : `<span>${name}</span>`
+    if (!used) {
+      item.onmouseenter = () => item.style.background = '#f5f5f5'
+      item.onmouseleave = () => item.style.background = ''
+      item.onclick = () => { addFunnelStep(name); document.getElementById('funnelEventSearch').focus() }
+    }
+    list.appendChild(item)
+  })
+}
+
+function addFunnelStep(name) {
+  const steps = document.getElementById('funnelSteps')
+  const count = steps.querySelectorAll('.funnel-step-item').length + 1
+  if (count > 10) { alert('最多 10 个步骤'); return }
+  const item = document.createElement('div')
+  item.className = 'funnel-step-item'
+  item.dataset.event = name
+  item.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:8px 12px;font-size:13px">
+      <span style="color:#1890ff;font-weight:500">${toCircle(count)} ${name}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="link" style="font-size:12px" onclick="toggleStepFilter(this)">筛选</span>
+        <span style="color:#bfbfbf;cursor:pointer" onclick="removeFunnelStep(this)">×</span>
+      </div>
+    </div>
+    <div class="step-filter" style="display:none;margin-top:4px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0;flex-direction:column;gap:6px">
+      <div style="font-size:11px;color:#8c8c8c">事件属性筛选</div>
+      <div class="step-filter-rows" style="display:flex;flex-direction:column;gap:4px"></div>
+      <div style="font-size:12px;color:#1890ff;cursor:pointer" onclick="addStepFilterRow(this)">+ 添加条件</div>
+    </div>
+  `
+  steps.appendChild(item)
+  renderFunnelEventList(document.getElementById('funnelEventSearch').value)
+  renumberFunnelSteps()
+}
+
+function removeFunnelStep(btn) {
+  btn.closest('.funnel-step-item').remove()
+  renumberFunnelSteps()
+  renderFunnelEventList(document.getElementById('funnelEventSearch').value)
+}
+
+function renumberFunnelSteps() {
+  document.querySelectorAll('#funnelSteps .funnel-step-item').forEach((el, i) => {
+    const span = el.querySelector('span[style*="1890ff"]')
+    if (span) span.textContent = `${toCircle(i+1)} ${el.dataset.event}`
+  })
+}
+
+function toCircle(n) {
+  return ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][n-1] || n+'.'
+}
+
+function toggleStepFilter(btn) {
+  const filter = btn.closest('.funnel-step-item').querySelector('.step-filter')
+  const isHidden = filter.style.display === 'none' || filter.style.display === ''
+  filter.style.display = isHidden ? 'flex' : 'none'
+}
+
+function addStepFilterRow(addBtn) {
+  const container = addBtn.previousElementSibling
+  const eventName = addBtn.closest('.funnel-step-item').dataset.event
+  const attrs = eventAttrs[eventName] || ['平台 (platform)', '渠道 (channel)']
+  const row = document.createElement('div')
+  row.style.cssText = 'display:flex;gap:4px;align-items:center'
+  row.innerHTML = `
+    <select style="flex:1.5;border:1px solid #d9d9d9;border-radius:4px;padding:3px 5px;font-size:12px;background:#fff">
+      ${attrs.map(a => `<option>${a}</option>`).join('')}
+    </select>
+    <select style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:3px 5px;font-size:12px;background:#fff">
+      ${opOptions.map(o => `<option>${o}</option>`).join('')}
+    </select>
+    <input type="text" placeholder="值" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:3px 5px;font-size:12px;min-width:0" />
+    <span style="cursor:pointer;color:#bfbfbf;font-size:15px;flex-shrink:0" onclick="this.parentElement.remove()">×</span>
+  `
+  container.appendChild(row)
+}
+
+function addFunnelUserFilter() {
+  const container = document.getElementById('funnelUserFilters')
+  const row = document.createElement('div')
+  row.classList.add('filter-row-wrap')
+  row.style.cssText = 'background:#fafafa;border:1px solid #f0f0f0;border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px'
+  row.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <select class="user-attr-sel" onchange="updateUserOpSelect(this)" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff">
+        ${userAttrOptions.map(a => `<option>${a}</option>`).join('')}
+      </select>
+      <span style="cursor:pointer;color:#bfbfbf;font-size:16px;margin-left:8px;line-height:1;flex-shrink:0" onclick="this.closest('.filter-row-wrap').remove()">×</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <select class="user-op-sel" style="flex:1;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;color:#333;background:#fff">
+        ${opOptionsDate.map(o => `<option>${o}</option>`).join('')}
+      </select>
+      <input type="text" placeholder="输入值" class="user-val-input" style="flex:1.2;border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:12px;min-width:0" />
+    </div>
+  `
+  container.appendChild(row)
+}
+
+// 用户范围切换（漏斗）
+document.addEventListener('change', e => {
+  if (e.target.name === 'funnelUserScope') {
+    const seg = document.getElementById('funnelScopeSegment')
+    if (seg) seg.style.display = e.target.value === 'custom' ? 'block' : 'none'
+  }
+})
+
+// 关闭漏斗事件下拉
+document.addEventListener('click', e => {
+  const dd = document.getElementById('funnelEventDropdown')
+  if (dd && !e.target.closest('#funnelEventDropdown') && !e.target.closest('#funnelAddBtn')) {
+    dd.style.display = 'none'
+  }
+})
+
+// ── 小时区间 ──
+// ── 明细数据表格（按选中事件动态渲染）──
+const detailMockData = {
+  '完成支付':      [2340, 1980, 2650, 2210, 2870, 3100, 1950],
+  '用户注册':      [520,  498,  612,  567,  634,  703,  328],
+  '加入购物车':    [3421, 3102, 3890, 3540, 4012, 4230, 2980],
+  '提交订单':      [1820, 1650, 2100, 1930, 2340, 2560, 1740],
+  '浏览商品详情':  [8920, 8340, 9870, 9120, 10450, 11200, 7830],
+  '点击首页 Banner':[1240, 1105, 1380, 1290, 1560, 1720, 1030],
+  '搜索商品':      [4230, 3980, 4760, 4390, 5120, 5430, 3870],
+}
+const detailDates = ['04-01', '04-02', '04-03', '04-04', '04-05', '04-06', '04-07']
+
+function renderDetailTable() {
+  const events = getCustomSelectedEventNames()
+  const container = document.getElementById('customDetailTable')
+  const title = document.getElementById('detailTableTitle')
+
+  if (!events.length) {
+    title.textContent = '明细数据'
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:#bfbfbf;font-size:13px">请先选择事件</div>'
+    return
+  }
+
+  title.textContent = `明细数据（${events.join(' / ')}）`
+
+  const thead = `<tr><th>日期</th>${events.map(e => `<th>${e}</th>`).join('')}</tr>`
+  const tbody = detailDates.map(date => {
+    const idx = detailDates.indexOf(date)
+    const cells = events.map(e => {
+      const base = (detailMockData[e] || [])[idx] ?? Math.floor(Math.random() * 3000 + 500)
+      return `<td>${base.toLocaleString()}</td>`
+    }).join('')
+    return `<tr><td>${date}</td>${cells}</tr>`
+  }).join('')
+
+  container.innerHTML = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`
+}
+
+function updateHourRange() {
+  const from = document.getElementById('hourFrom').value
+  const to   = document.getElementById('hourTo').value
+  const hint = document.getElementById('hourRangeHint')
+  if (!from && !to) {
+    hint.style.display = 'none'
+    return
+  }
+  const fromH = from ? parseInt(from) : null
+  const toH   = to   ? parseInt(to)   : null
+  if (fromH !== null && toH !== null && fromH >= toH) {
+    hint.textContent = '⚠ 开始时间需早于结束时间'
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#ff4d4f;background:#fff2f0;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null && toH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 - ${toH}:00 的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 起的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else {
+    hint.textContent = `仅统计每天 ${toH}:00 前的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  }
+}
+
+function updateFunnelHourRange() {
+  const from = document.getElementById('funnelHourFrom').value
+  const to   = document.getElementById('funnelHourTo').value
+  const hint = document.getElementById('funnelHourRangeHint')
+  if (!from && !to) { hint.style.display = 'none'; return }
+  const fromH = from ? parseInt(from) : null
+  const toH   = to   ? parseInt(to)   : null
+  if (fromH !== null && toH !== null && fromH >= toH) {
+    hint.textContent = '⚠ 开始时间需早于结束时间'
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#ff4d4f;background:#fff2f0;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null && toH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 - ${toH}:00 的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 起的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else {
+    hint.textContent = `仅统计每天 ${toH}:00 前的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  }
+}
+
+function updateRetentionHourRange() {
+  const from = document.getElementById('retentionHourFrom').value
+  const to   = document.getElementById('retentionHourTo').value
+  const hint = document.getElementById('retentionHourRangeHint')
+  if (!from && !to) { hint.style.display = 'none'; return }
+  const fromH = from ? parseInt(from) : null
+  const toH   = to   ? parseInt(to)   : null
+  if (fromH !== null && toH !== null && fromH >= toH) {
+    hint.textContent = '⚠ 开始时间需早于结束时间'
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#ff4d4f;background:#fff2f0;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null && toH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 - ${toH}:00 的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 起的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else {
+    hint.textContent = `仅统计每天 ${toH}:00 前的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  }
+}
+
+function updateDistHourRange() {
+  const from = document.getElementById('distHourFrom').value
+  const to   = document.getElementById('distHourTo').value
+  const hint = document.getElementById('distHourRangeHint')
+  if (!from && !to) { hint.style.display = 'none'; return }
+  const fromH = from ? parseInt(from) : null
+  const toH   = to   ? parseInt(to)   : null
+  if (fromH !== null && toH !== null && fromH >= toH) {
+    hint.textContent = '⚠ 开始时间需早于结束时间'
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#ff4d4f;background:#fff2f0;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null && toH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 - ${toH}:00 的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 起的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else {
+    hint.textContent = `仅统计每天 ${toH}:00 前的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  }
+}
+
+function updatePathHourRange() {
+  const from = document.getElementById('pathHourFrom').value
+  const to   = document.getElementById('pathHourTo').value
+  const hint = document.getElementById('pathHourRangeHint')
+  if (!from && !to) { hint.style.display = 'none'; return }
+  const fromH = from ? parseInt(from) : null
+  const toH   = to   ? parseInt(to)   : null
+  if (fromH !== null && toH !== null && fromH >= toH) {
+    hint.textContent = '⚠ 开始时间需早于结束时间'
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#ff4d4f;background:#fff2f0;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null && toH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 - ${toH}:00 的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else if (fromH !== null) {
+    hint.textContent = `仅统计每天 ${fromH}:00 起的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  } else {
+    hint.textContent = `仅统计每天 ${toH}:00 前的数据`
+    hint.style.cssText = 'display:block;margin-top:6px;font-size:12px;color:#1890ff;background:#e6f4ff;padding:4px 8px;border-radius:4px'
+  }
+}
+
+function resetGranularity(sel) {
+  if (!sel) return
+  const hourOpt = [...sel.options].find(o => o.value === '按小时')
+  if (hourOpt) sel.removeChild(hourOpt)
+  sel.value = '按天'
+}
+
+function updateUserOpSelect(attrSel) {
+  const row = attrSel.closest('.filter-row-wrap')
+  const opSel = row.querySelector('.user-op-sel')
+  const valInput = row.querySelector('.user-val-input')
+  const isDate = dateAttrs.has(attrSel.value)
+  const opts = isDate ? opOptionsDate : opOptions
+  opSel.innerHTML = opts.map(o => `<option>${o}</option>`).join('')
+  opSel.onchange = () => {
+    const noVal = ['与事件时间同一天', '与事件时间同一周', '为空', '不为空']
+    valInput.style.display = noVal.includes(opSel.value) ? 'none' : ''
+  }
+  // trigger once for initial state
+  const noVal = ['与事件时间同一天', '与事件时间同一周', '为空', '不为空']
+  valInput.style.display = noVal.includes(opSel.value) ? 'none' : ''
+}
+
+function filterEventsByApp(app) {
+  // 清空当前已选事件
+  document.getElementById('customSelectedEvents').innerHTML = ''
+  // 更新下拉
+  renderEventDropdown(app)
+}
+
+function toggleEventDropdown() {
+  const dd = document.getElementById('customEventDropdown')
+  const isOpen = dd.style.display === 'block'
+  if (!isOpen) {
+    const app = document.getElementById('customAppSelect').value
+    document.getElementById('customEventSearch').value = ''
+    renderEventDropdown(app)
+    setTimeout(() => document.getElementById('customEventSearch').focus(), 50)
+  }
+  dd.style.display = isOpen ? 'none' : 'block'
+}
+
+function filterEventSearch(keyword) {
+  const app = document.getElementById('customAppSelect').value
+  const events = app ? (appEvents[app] || []) : allAppEvents
+  const filtered = keyword.trim() ? events.filter(e => e.includes(keyword.trim())) : events
+  const selected = getCustomSelectedEventNames()
+  const list = document.getElementById('customEventList')
+  list.innerHTML = ''
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="padding:12px;text-align:center;color:#bfbfbf;font-size:13px">无匹配事件</div>'
+    return
+  }
+  filtered.forEach(name => {
+    const isAdded = selected.includes(name)
+    const item = document.createElement('div')
+    item.style.cssText = `padding:8px 12px;cursor:${isAdded ? 'default' : 'pointer'};font-size:13px;display:flex;justify-content:space-between;align-items:center;color:${isAdded ? '#bfbfbf' : '#333'}`
+    item.innerHTML = isAdded
+      ? `<span>${name}</span><span style="font-size:11px;color:#bfbfbf">已添加</span>`
+      : `<span>${name}</span>`
+    if (!isAdded) {
+      item.onmouseenter = () => item.style.background = '#f5f5f5'
+      item.onmouseleave = () => item.style.background = ''
+      item.onclick = () => { addCustomEvent(name, app || '全部'); document.getElementById('customEventSearch').focus() }
+    }
+    list.appendChild(item)
+  })
+}
+
+function addCustomEvent(name, app) {
+  const container = document.getElementById('customSelectedEvents')
+  if (getCustomSelectedEventNames().includes(name)) return
+  if (getCustomSelectedEventNames().length >= 5) {
+    alert('最多同时选择 5 个事件')
+    return
+  }
+  const tag = document.createElement('span')
+  tag.className = 'event-tag'
+  tag.dataset.app = app
+  tag.innerHTML = `${name} <span class="remove" onclick="removeCustomEvent(this)">×</span>`
+  container.appendChild(tag)
+  renderEventDropdown(document.getElementById('customAppSelect').value)
+  renderDetailTable()
+}
+
+function removeCustomEvent(x) {
+  x.parentElement.remove()
+  renderEventDropdown(document.getElementById('customAppSelect').value)
+  renderDetailTable()
+}
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('customEventDropdown')
+  if (dd && !e.target.closest('#customEventDropdown') && !e.target.closest('[onclick="toggleEventDropdown()"]')) {
+    dd.style.display = 'none'
+  }
+})
+
+// ── 保存分析 ──
+const typeLabels = { custom:'自定义分析', funnel:'转化分析', retention:'留存分析', distribution:'分布分析', path:'用户路径' }
+const typeColors = { custom:'#1890ff', funnel:'#52c41a', retention:'#fa8c16', distribution:'#722ed1', path:'#eb2f96' }
+let savedAnalyses = [
+  { id:1, type:'custom',       name:'注册用户7日趋势', desc:'用于监控每周注册转化', savedAt:'2026-04-01 10:23', by:'PM' },
+  { id:2, type:'funnel',       name:'购买转化漏斗（Q2）', desc:'浏览→加购→支付全链路', savedAt:'2026-04-03 14:05', by:'PM' },
+  { id:3, type:'retention',    name:'新用户次日留存', desc:'', savedAt:'2026-04-05 09:12', by:'PM' },
+]
+let saveTargetType = ''
+
+function openSaveAnalysisModal(type) {
+  saveTargetType = type
+  document.getElementById('saveAnalysisName').value = ''
+  document.getElementById('saveAnalysisDesc').value = ''
+  openModal('modal-save-analysis')
+}
+
+function confirmSaveAnalysis() {
+  const name = document.getElementById('saveAnalysisName').value.trim()
+  if (!name) { document.getElementById('saveAnalysisName').focus(); return }
+  const desc = document.getElementById('saveAnalysisDesc').value.trim()
+  savedAnalyses.unshift({
+    id: Date.now(),
+    type: saveTargetType,
+    name,
+    desc,
+    savedAt: new Date().toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g,'-'),
+    by: 'PM'
+  })
+  closeModal('modal-save-analysis')
+  renderSavedList('all')
+  // 跳转到我的分析
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  const savedNav = [...document.querySelectorAll('.nav-item')].find(n => n.getAttribute('onclick')?.includes("'saved'"))
+  if (savedNav) savedNav.classList.add('active')
+  showPage('saved', savedNav)
+}
+
+function renderSavedList(type) {
+  const list = document.getElementById('savedList')
+  const empty = document.getElementById('savedEmpty')
+  const items = type === 'all' ? savedAnalyses : savedAnalyses.filter(a => a.type === type)
+  if (!items.length) {
+    list.style.display = 'none'
+    empty.style.display = 'block'
+    return
+  }
+  list.style.display = 'grid'
+  empty.style.display = 'none'
+  list.innerHTML = items.map(a => `
+    <div style="background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s"
+      onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseleave="this.style.boxShadow=''">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:11px;background:${typeColors[a.type]}1a;color:${typeColors[a.type]};padding:2px 8px;border-radius:10px;font-weight:500">${typeLabels[a.type]}</span>
+        <span style="color:#bfbfbf;cursor:pointer;font-size:16px;line-height:1" onclick="deleteSaved(${a.id})">×</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;color:#262626;line-height:1.4">${a.name}</div>
+      ${a.desc ? `<div style="font-size:12px;color:#8c8c8c;line-height:1.5">${a.desc}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span style="font-size:12px;color:#bfbfbf">${a.savedAt} · ${a.by}</span>
+        <button class="btn btn-default btn-sm" onclick="loadSavedAnalysis('${a.type}')">查看</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+function filterSaved(type, el) {
+  document.querySelectorAll('.saved-tab').forEach(t => {
+    t.style.borderBottomColor = 'transparent'
+    t.style.color = '#595959'
+    t.style.fontWeight = '400'
+  })
+  el.style.borderBottomColor = '#1890ff'
+  el.style.color = '#1890ff'
+  el.style.fontWeight = '500'
+  renderSavedList(type)
+}
+
+function deleteSaved(id) {
+  savedAnalyses = savedAnalyses.filter(a => a.id !== id)
+  const activeTab = document.querySelector('.saved-tab[style*="1890ff"]')
+  const type = activeTab ? (activeTab.textContent === '全部' ? 'all' : Object.keys(typeLabels).find(k => typeLabels[k] === activeTab.textContent) || 'all') : 'all'
+  renderSavedList(type)
+}
+
+function loadSavedAnalysis(type) {
+  const navItem = [...document.querySelectorAll('.nav-item')].find(n => n.getAttribute('onclick')?.includes(`'${type}'`))
+  if (navItem) { showPage(type, navItem); navItem.classList.add('active') }
+  document.querySelectorAll('.nav-item').forEach(n => { if (n !== navItem) n.classList.remove('active') })
+}
+
+// ── Navigation ──
+const breadcrumbs = {
+  events: '元数据管理 / <span>一般事件</span>',
+  'event-props': '元数据管理 / <span>事件属性</span>',
+  'user-props': '元数据管理 / <span>用户属性</span>',
+  custom: '用户分析 / <span>自定义分析</span>',
+  funnel: '用户分析 / <span>转化分析</span>',
+  retention: '用户分析 / <span>留存分析</span>',
+  distribution: '用户分析 / <span>分布分析</span>',
+  path: '用户分析 / <span>用户路径</span>',
+  saved: '用户分析 / <span>我的分析</span>',
+}
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('page-' + id).classList.add('active')
+  document.getElementById('breadcrumb').innerHTML = breadcrumbs[id]
+  if (el) el.classList.add('active')
+  if (id === 'saved') renderSavedList('all')
+}
+
+// ── Modal ──
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open') })
+})
+
+// 打开创建弹窗（重置表单）
+document.querySelector('[onclick="openModal(\'modal-event\')"]').onclick = function() {
+  document.getElementById('modalEventTitle').textContent = '创建事件'
+  document.getElementById('modalEventSubmitBtn').textContent = '创建并上线'
+  document.getElementById('fieldEventName').value = ''
+  document.getElementById('fieldEventId').value = ''
+  document.getElementById('fieldEventId').disabled = false
+  document.getElementById('fieldEventIdHint').style.display = 'none'
+  document.querySelectorAll('.field-app-cb').forEach(cb => { cb.checked = false; syncFieldAppStyle() })
+  document.getElementById('fieldCategory').value = '业务转化'
+  document.getElementById('fieldReportType').value = '客户端'
+  document.getElementById('fieldDesc').value = ''
+  document.getElementById('selectedProps').innerHTML = ''
+  document.querySelectorAll('.quick-prop-tag').forEach(t => t.classList.remove('used'))
+  openModal('modal-event')
+}
+
+// 打开编辑弹窗（填充数据）
+function openEditModal(name, id, app, category, reportType, desc, propIds) {
+  document.getElementById('modalEventTitle').textContent = '编辑事件'
+  document.getElementById('modalEventSubmitBtn').textContent = '保存修改'
+  document.getElementById('fieldEventName').value = name
+  document.getElementById('fieldEventId').value = id
+  document.getElementById('fieldEventId').disabled = true
+  document.getElementById('fieldEventIdHint').style.display = 'block'
+  // 填充所属 App 多选
+  const apps = Array.isArray(app) ? app : (app ? [app] : [])
+  document.querySelectorAll('.field-app-cb').forEach(cb => {
+    cb.checked = apps.includes(cb.value)
+  })
+  syncFieldAppStyle()
+  document.getElementById('fieldCategory').value = category
+  document.getElementById('fieldReportType').value = reportType
+  document.getElementById('fieldDesc').value = desc
+
+  // 清空已选属性并重新填充
+  const container = document.getElementById('selectedProps')
+  container.innerHTML = ''
+  document.querySelectorAll('.quick-prop-tag').forEach(t => t.classList.remove('used'))
+  const propMap = {}
+  allProps.forEach(p => propMap[p.id] = p.name)
+  propIds.forEach(pid => {
+    const pname = propMap[pid] || pid
+    addProp(pid, pname)
+  })
+
+  openModal('modal-event')
+}
+
+// ── Mode switches ──
+function switchDistMode(mode) {
+  document.getElementById('distMode1').className = 'chip' + (mode==='attr' ? ' active' : '')
+  document.getElementById('distMode2').className = 'chip' + (mode==='count' ? ' active' : '')
+}
+function switchPathMode(mode) {
+  document.getElementById('pathMode1').className = 'chip' + (mode==='start' ? ' active' : '')
+  document.getElementById('pathMode2').className = 'chip' + (mode==='end' ? ' active' : '')
+  document.getElementById('pathEventLabel').textContent = mode === 'start' ? '起点事件' : '终点事件'
+}
+
+// ── Charts ──
+// Custom analysis chart
+const customCtx = document.getElementById('customChart').getContext('2d')
+new Chart(customCtx, {
+  type: 'line',
+  data: {
+    labels: ['03-27', '03-28', '03-29', '03-30', '03-31', '04-01', '04-02'],
+    datasets: [
+      { label: '完成支付 UV', data: [1680, 1590, 1820, 1740, 1970, 2100, 1580], borderColor: '#1890ff', backgroundColor: 'rgba(24,144,255,.08)', tension: .4, fill: true, pointRadius: 4 },
+      { label: '用户注册 UV', data: [520, 498, 612, 567, 634, 703, 328], borderColor: '#52c41a', backgroundColor: 'rgba(82,196,26,.08)', tension: .4, fill: true, pointRadius: 4 }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, grid: { color: '#f5f5f5' } }, x: { grid: { display: false } } } }
+})
+
+// Retention chart
+const retCtx = document.getElementById('retentionChart').getContext('2d')
+new Chart(retCtx, {
+  type: 'line',
+  data: {
+    labels: ['起始', '第1天', '第2天', '第3天', '第7天', '第14天', '第30天'],
+    datasets: [
+      { label: '整体留存', data: [100, 43, 36, 30, 19, 13, 8], borderColor: '#1890ff', backgroundColor: 'rgba(24,144,255,.08)', tension: .4, fill: true, pointRadius: 4 },
+      { label: '巨量引擎', data: [100, 46, 39, 33, 22, 15, 10], borderColor: '#52c41a', backgroundColor: 'rgba(82,196,26,.06)', tension: .4, fill: false, pointRadius: 4 },
+      { label: '自然流量', data: [100, 38, 31, 25, 14, 9, 5], borderColor: '#faad14', backgroundColor: 'rgba(250,173,20,.06)', tension: .4, fill: false, pointRadius: 4 }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f5f5f5' } }, x: { grid: { display: false } } } }
+})
+
+// Retention matrix
+const matrixData = [
+  { date: '03-20', base: 1840, r: [44, 37, 31, 20, 14, 8] },
+  { date: '03-21', base: 1620, r: [42, 35, 29, 18, 12, 7] },
+  { date: '03-22', base: 2010, r: [46, 39, 33, 22, 15, null] },
+  { date: '03-23', base: 1780, r: [43, 36, 30, 19, null, null] },
+  { date: '03-24', base: 1950, r: [45, 38, 32, null, null, null] },
+  { date: '03-25', base: 2240, r: [47, 40, null, null, null, null] },
+  { date: '03-26', base: 1800, r: [44, null, null, null, null, null] },
+]
+const colors = v => v === null ? '' : v >= 40 ? `background:rgba(24,144,255,${v/100});color:${v>=45?'#fff':'#1890ff'}` : v >= 25 ? `background:rgba(82,196,26,${v/100+.1});color:#389e0d` : v >= 15 ? `background:rgba(250,173,20,${v/80});color:#874d00` : `background:rgba(255,77,79,${v/70});color:#a8071a`
+const tbody = document.getElementById('retentionMatrix')
+matrixData.forEach(row => {
+  const cells = row.r.map(v => v !== null ? `<td><div class="ret-cell" style="${colors(v)}">${v}%</div></td>` : '<td style="color:#d9d9d9">—</td>').join('')
+  tbody.innerHTML += `<tr><td style="text-align:left;font-weight:500">${row.date}</td><td style="font-weight:600">${row.base.toLocaleString()}</td>${cells}</tr>`
+})
+
+// Distribution chart
+const distCtx = document.getElementById('distChart').getContext('2d')
+new Chart(distCtx, {
+  type: 'bar',
+  data: {
+    labels: ['[0,100)', '[100,200)', '[200,300)', '[300,500)', '[500,1000)', '[1000,∞)'],
+    datasets: [{ label: '用户数', data: [4823, 3102, 1856, 1204, 876, 639], backgroundColor: ['#1890ff','#40a9ff','#69c0ff','#91d5ff','#bae7ff','#e6f4ff'], borderRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f5f5f5' } }, x: { grid: { display: false } } } }
+})
+
+// ── Sankey SVG ──
+function drawSankey() {
+  const svg = document.getElementById('sankeySvg')
+  const W = svg.clientWidth || 760, H = 370
+
+  const nodes = [
+    // col 0
+    { id: 'start', label: '用户注册', val: 3862, col: 0, row: 0, color: '#1890ff' },
+    // col 1
+    { id: 'home', label: '首页浏览', val: 1622, col: 1, row: 0, color: '#52c41a' },
+    { id: 'search', label: '搜索商品', val: 1197, col: 1, row: 1, color: '#52c41a' },
+    { id: 'end1', label: '结束', val: 1043, col: 1, row: 2, color: '#bfbfbf' },
+    // col 2
+    { id: 'detail', label: '浏览商品详情', val: 980, col: 2, row: 0, color: '#52c41a' },
+    { id: 'cart', label: '加入购物车', val: 642, col: 2, row: 1, color: '#52c41a' },
+    { id: 'end2', label: '结束', val: 1197, col: 2, row: 2, color: '#bfbfbf' },
+    // col 3
+    { id: 'order', label: '提交订单', val: 743, col: 3, row: 0, color: '#52c41a' },
+    { id: 'end3', label: '结束', val: 879, col: 3, row: 1, color: '#bfbfbf' },
+  ]
+
+  const links = [
+    { s: 'start', t: 'home', val: 1622 },
+    { s: 'start', t: 'search', val: 1197 },
+    { s: 'start', t: 'end1', val: 1043 },
+    { s: 'home', t: 'detail', val: 980 },
+    { s: 'home', t: 'cart', val: 642 },
+    { s: 'search', t: 'detail', val: 720 },
+    { s: 'search', t: 'end2', val: 477 },
+    { s: 'home', t: 'end2', val: 0 },
+    { s: 'detail', t: 'order', val: 743 },
+    { s: 'detail', t: 'end3', val: 957 },
+    { s: 'cart', t: 'order', val: 0 },
+    { s: 'cart', t: 'end3', val: 0 },
+  ]
+
+  const colW = 130, nodeH = 40, gap = 20
+  const colX = [20, 20 + colW + 80, 20 + (colW + 80) * 2, 20 + (colW + 80) * 3]
+
+  // position nodes
+  const colRows = {}
+  nodes.forEach(n => {
+    if (!colRows[n.col]) colRows[n.col] = []
+    colRows[n.col].push(n)
+  })
+  Object.values(colRows).forEach(rows => {
+    const total = rows.reduce((s, n) => s + n.val, 0)
+    const totalH = rows.length * nodeH + (rows.length - 1) * gap
+    let y = (H - totalH) / 2
+    rows.forEach(n => {
+      n.x = colX[n.col]; n.y = y; n.h = nodeH; n.w = colW; y += nodeH + gap
+    })
+  })
+
+  const byId = {}
+  nodes.forEach(n => byId[n.id] = n)
+
+  let html = ''
+  // links
+  links.forEach(l => {
+    if (!l.val) return
+    const s = byId[l.s], t = byId[l.t]
+    const x1 = s.x + s.w, y1 = s.y + s.h / 2
+    const x2 = t.x, y2 = t.y + t.h / 2
+    const cx = (x1 + x2) / 2
+    const w = Math.max(1, l.val / 200)
+    html += `<path d="M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}" stroke="${s.color}" stroke-width="${w}" fill="none" stroke-opacity="0.3"/>`
+  })
+  // nodes
+  nodes.forEach(n => {
+    const pct = n.id === 'start' ? '100%' : ((n.val / 3862 * 100).toFixed(1) + '%')
+    html += `<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="6" fill="${n.color}" opacity="0.9" style="cursor:pointer"/>`
+    html += `<text x="${n.x + n.w / 2}" y="${n.y + 15}" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="PingFang SC,sans-serif">${n.label}</text>`
+    html += `<text x="${n.x + n.w / 2}" y="${n.y + 29}" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="10" font-family="PingFang SC,sans-serif">${n.val.toLocaleString()} (${pct})</text>`
+  })
+
+  svg.innerHTML = html
+}
+
+drawSankey()
+window.addEventListener('resize', drawSankey)
+renderDetailTable()
+</script>
+<!-- 事件属性 创建/编辑 Modal -->
+<div class="modal-overlay" id="modal-event-prop">
+  <div class="modal" style="width:520px">
+    <div class="modal-title" id="epModalTitle">创建事件属性</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-row">
+        <label class="form-label required">属性显示名</label>
+        <input id="epFieldName" class="form-input" placeholder="如：支付金额">
+      </div>
+      <div class="form-row">
+        <label class="form-label required">属性 ID</label>
+        <input id="epFieldId" class="form-input" placeholder="如：amount">
+        <div id="epFieldIdHint" style="font-size:12px;color:#8c8c8c;margin-top:4px;display:none">属性 ID 创建后不可修改</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label required">数据类型</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="epTypeGroup">
+        <label class="ep-type-btn"><input type="radio" name="epType" value="字符串" checked> 字符串</label>
+        <label class="ep-type-btn"><input type="radio" name="epType" value="数字"> 数字</label>
+        <label class="ep-type-btn"><input type="radio" name="epType" value="日期"> 日期</label>
+      </div>
+      <div id="epTypeHint" style="font-size:12px;color:#faad14;margin-top:5px;display:none">
+        已被事件引用，数据类型不可修改
+      </div>
+    </div>
+
+    <!-- 属性值（仅字符串类型显示） -->
+    <div class="form-row" id="epEnumSection">
+      <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span>属性值 <span style="color:#8c8c8c;font-weight:400;font-size:12px">上报值不在列表内将被标记为异常</span></span>
+        <button class="btn btn-default btn-sm" type="button" onclick="addEnumRow()">+ 添加属性值</button>
+      </label>
+      <div id="epEnumRows" style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <!-- 行由 JS 动态生成 -->
+      </div>
+      <div id="epEnumEmpty" style="text-align:center;padding:20px;color:#bfbfbf;font-size:13px;border:1px dashed #e0e0e0;border-radius:6px;margin-top:8px;cursor:pointer" onclick="addEnumRow()">
+        暂无属性值，点击添加
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">适用产品
+        <span style="color:#8c8c8c;font-weight:400;font-size:12px">该属性在哪些产品中有意义（仅作说明，不做强校验）</span>
+      </label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="epAppGroup">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff" id="epApp0">
+          <input type="checkbox" value="" checked onchange="toggleAllApps(this)" style="accent-color:#1890ff"> 全部产品
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="电商主站 App" class="ep-app-cb" onchange="syncAllApps()" style="accent-color:#1890ff"> 电商主站 App
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="买家助手小程序" class="ep-app-cb" onchange="syncAllApps()" style="accent-color:#1890ff"> 买家助手小程序
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="商家管理后台" class="ep-app-cb" onchange="syncAllApps()" style="accent-color:#1890ff"> 商家管理后台
+        </label>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">描述</label>
+      <input id="epFieldDesc" class="form-input" placeholder="属性含义和示例值（供开发参考）">
+    </div>
+
+    <!-- 被引用事件（仅编辑时展示） -->
+    <div class="form-row" id="epRefSection" style="display:none">
+      <label class="form-label">被引用事件</label>
+      <div id="epRefList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-event-prop')">取消</button>
+      <button class="btn btn-primary" id="epSubmitBtn" onclick="closeModal('modal-event-prop')">创建属性</button>
+    </div>
+  </div>
+</div>
+
+<!-- 用户属性 创建/编辑 Modal -->
+<div class="modal-overlay" id="modal-user-prop">
+  <div class="modal" style="width:520px">
+    <div class="modal-title" id="upModalTitle">创建用户属性</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-row">
+        <label class="form-label required">属性显示名</label>
+        <input id="upFieldName" class="form-input" placeholder="如：会员等级">
+      </div>
+      <div class="form-row">
+        <label class="form-label required">属性 ID</label>
+        <input id="upFieldId" class="form-input" placeholder="如：vip_level">
+        <div id="upFieldIdHint" style="font-size:12px;color:#8c8c8c;margin-top:4px;display:none">属性 ID 创建后不可修改</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label required">数据类型</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="upTypeGroup">
+        <label class="ep-type-btn"><input type="radio" name="upType" value="字符串" checked> 字符串</label>
+        <label class="ep-type-btn"><input type="radio" name="upType" value="数字"> 数字</label>
+        <label class="ep-type-btn"><input type="radio" name="upType" value="日期"> 日期</label>
+      </div>
+    </div>
+
+    <!-- 属性值 -->
+    <div class="form-row" id="upEnumSection">
+      <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span>属性值 <span style="color:#8c8c8c;font-weight:400;font-size:12px">上报值不在列表内将被标记为异常</span></span>
+        <button class="btn btn-default btn-sm" type="button" onclick="upAddEnumRow()">+ 添加属性值</button>
+      </label>
+      <div id="upEnumRows" style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <!-- 行由 JS 动态生成 -->
+      </div>
+      <div id="upEnumEmpty" style="text-align:center;padding:20px;color:#bfbfbf;font-size:13px;border:1px dashed #e0e0e0;border-radius:6px;margin-top:8px;cursor:pointer" onclick="upAddEnumRow()">
+        暂无属性值，点击添加
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">描述</label>
+      <input id="upFieldDesc" class="form-input" placeholder="属性含义和示例值（供开发参考）">
+    </div>
+
+    <!-- 属性值数（仅编辑时展示） -->
+    <div class="form-row" id="upEnumCountSection" style="display:none">
+      <div style="font-size:13px;color:#8c8c8c;background:#fafafa;padding:8px 12px;border-radius:6px;border:1px solid #f0f0f0">
+        当前属性值数：<span id="upEnumCountText" style="color:#262626;font-weight:500"></span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-user-prop')">取消</button>
+      <button class="btn btn-primary" id="upSubmitBtn" onclick="closeModal('modal-user-prop')">创建属性</button>
+    </div>
+  </div>
+</div>
+
+            <div class="page-desc">已保存的分析快照，点击可重新加载配置查看</div>
+          </div>
+        </div>
+        <!-- 分类 Tab -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid #f0f0f0;padding-bottom:0">
+          <div class="saved-tab active" onclick="filterSaved('all',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid #1890ff;color:#1890ff;font-weight:500">全部</div>
+          <div class="saved-tab" onclick="filterSaved('custom',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">自定义分析</div>
+          <div class="saved-tab" onclick="filterSaved('funnel',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">转化分析</div>
+          <div class="saved-tab" onclick="filterSaved('retention',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">留存分析</div>
+          <div class="saved-tab" onclick="filterSaved('distribution',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">分布分析</div>
+          <div class="saved-tab" onclick="filterSaved('path',this)" style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;color:#595959">用户路径</div>
+        </div>
+        <div id="savedList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></div>
+        <div id="savedEmpty" style="display:none;text-align:center;padding:60px;color:#bfbfbf;font-size:14px">暂无保存的分析</div>
+      </div>
+
+<!-- ===== 保存分析弹窗 ===== -->
+<div class="modal-overlay" id="modal-save-analysis">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">保存分析</div>
+      <span class="modal-close" onclick="closeModal('modal-save-analysis')">×</span>
+    </div>
+    <div style="padding:20px 24px">
+      <div class="form-row">
+        <label class="form-label">分析名称 <span style="color:#ff4d4f">*</span></label>
+        <input id="saveAnalysisName" class="form-input" placeholder="例：注册-支付转化漏斗（过去7天）" maxlength="40" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">备注说明</label>
+        <textarea id="saveAnalysisDesc" class="form-input" rows="2" placeholder="记录此次分析的目的或结论（选填）"></textarea>
+      </div>
+      <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:10px 12px;font-size:12px;color:#52c41a;margin-top:4px">
+        💡 保存配置参数，查看时实时计算最新数据
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-save-analysis')">取消</button>
+      <button class="btn btn-primary" onclick="confirmSaveAnalysis()">确认保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 关联属性抽屉 -->
+<div class="drawer-overlay" id="propDrawerOverlay" onclick="closePropDrawer()"></div>
+<div class="drawer" id="propDrawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawerTitle">关联属性详情</div>
+      <div style="font-size:12px;color:#8c8c8c;margin-top:3px" id="drawerSubtitle"></div>
+    </div>
+    <div class="drawer-close" onclick="closePropDrawer()">×</div>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<script>
+// ── 关联属性搜索 ──
+const allProps = [
+  { id: 'amount', name: '支付金额', type: 'Float' },
+  { id: 'order_id', name: '订单 ID', type: 'String' },
+  { id: 'product_id', name: '商品 ID', type: 'String' },
+  { id: 'product_category', name: '商品分类', type: 'String' },
+  { id: 'coupon_type', name: '优惠券类型', type: 'String' },
+  { id: 'page_name', name: '页面名称', type: 'String' },
+  { id: 'is_first_purchase', name: '是否首次购买', type: 'Boolean' },
+  { id: 'search_keyword', name: '搜索关键词', type: 'String' },
+  { id: 'pay_method', name: '支付方式', type: 'String' },
+  { id: 'item_count', name: '商品数量', type: 'Integer' },
+  { id: 'banner_position', name: 'Banner 位置', type: 'Integer' },
+  { id: 'target_url', name: '跳转链接', type: 'String' },
+  { id: 'result_count', name: '搜索结果数', type: 'Integer' },
+  { id: 'register_source', name: '注册来源', type: 'String' },
+  { id: 'referral_code', name: '推荐码', type: 'String' },
+]
+
+function getSelectedIds() {
+  return [...document.querySelectorAll('#selectedProps .selected-prop-tag')].map(t => t.dataset.id)
+}
+
+function addProp(id, name) {
+  if (getSelectedIds().includes(id)) return
+  const container = document.getElementById('selectedProps')
+  const tag = document.createElement('span')
+  tag.className = 'selected-prop-tag'
+  tag.dataset.id = id
+  tag.innerHTML = `${name} <span onclick="removeProp(this)" style="cursor:pointer;color:#8c8c8c;margin-left:3px">×</span>`
+  container.appendChild(tag)
+  const quickTag = document.querySelector(`.quick-prop-tag[data-id="${id}"]`)
+  if (quickTag) quickTag.classList.add('used')
+}
+
+function removeProp(x) {
+  const tag = x.parentElement
+  const id = tag.dataset.id
+  tag.remove()
+  const quickTag = document.querySelector(`.quick-prop-tag[data-id="${id}"]`)
+  if (quickTag) quickTag.classList.remove('used')
+}
+
+function addPropByTag(el) {
+  addProp(el.dataset.id, el.textContent.trim())
+}
+
+function filterProps(val) {
+  const dropdown = document.getElementById('propDropdown')
+  if (!val.trim()) { dropdown.style.display = 'none'; return }
+  const selected = getSelectedIds()
+  const matched = allProps.filter(p =>
+    (p.name.includes(val) || p.id.includes(val)) && !selected.includes(p.id)
+  )
+  if (!matched.length) {
+    dropdown.innerHTML = '<div class="prop-option" style="color:#8c8c8c">未找到匹配属性</div>'
+  } else {
+    dropdown.innerHTML = matched.map(p =>
+      `<div class="prop-option" onclick="addProp('${p.id}','${p.name}');document.getElementById('propSearchInput').value='';document.getElementById('propDropdown').style.display='none'">
+        <span>${p.name}</span><span class="prop-option-id">${p.id} · ${p.type}</span>
+      </div>`
+    ).join('')
+  }
+  dropdown.style.display = 'block'
+}
+
+function handlePropKey(e) {
+  if (e.key === 'Escape') document.getElementById('propDropdown').style.display = 'none'
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#propSearchInput') && !e.target.closest('#propDropdown')) {
+    const d = document.getElementById('propDropdown')
+    if (d) d.style.display = 'none'
+  }
+})
+
+// ── 事件属性 被引用事件数据 ──
+const epRefData = {
+  amount:            ['完成支付', '提交订单', '加入购物车', '用户充值'],
+  product_id:        ['浏览商品详情', '加入购物车', '提交订单', '完成支付', '收藏商品', '分享商品'],
+  product_category:  ['加入购物车', '提交订单', '商品曝光'],
+  page_name:         ['页面浏览', '点击首页 Banner', '分享页面', '退出页面', '页面停留', '滚动页面', '弹窗展示', '弹窗关闭', '搜索结果页', '商品详情页', '订单确认页', '支付结果页'],
+  order_id:          ['提交订单', '完成支付', '取消订单'],
+  is_first_purchase: ['完成支付', '用户注册'],
+  coupon_type:       ['完成支付', '优惠券领取'],
+  search_keyword:    ['搜索商品'],
+}
+
+// ── 事件属性 创建/编辑弹窗 ──
+function openEventPropModal(name, id, type, enumVals, refCount, desc) {
+  const isEdit = !!id
+  document.getElementById('epModalTitle').textContent = isEdit ? '编辑事件属性' : '创建事件属性'
+  document.getElementById('epSubmitBtn').textContent = isEdit ? '保存修改' : '创建属性'
+
+  document.getElementById('epFieldName').value = name || ''
+  document.getElementById('epFieldId').value = id || ''
+  document.getElementById('epFieldId').disabled = isEdit
+  document.getElementById('epFieldIdHint').style.display = isEdit ? 'block' : 'none'
+  document.getElementById('epFieldDesc').value = desc || ''
+
+  // 数据类型
+  const radios = document.querySelectorAll('input[name="epType"]')
+  radios.forEach(r => { r.checked = (r.value === (type || '字符串')) })
+  // 被引用时类型不可改
+  const hasRef = isEdit && parseInt(refCount) > 0
+  radios.forEach(r => r.disabled = hasRef)
+  document.getElementById('epTypeHint').style.display = hasRef ? 'block' : 'none'
+
+  // 枚举区域：所有类型都显示
+  document.getElementById('epEnumSection').style.display = 'block'
+
+  // 填充属性值列表
+  const enumRows = document.getElementById('epEnumRows')
+  const enumEmpty = document.getElementById('epEnumEmpty')
+  enumRows.innerHTML = ''
+  const enumList = enumVals ? enumVals.split(',').map(v => v.trim()).filter(Boolean) : []
+
+  // 编辑时商品分类和优惠券带说明示例
+  const enumDescMap = {
+    '电子产品': '手机、电脑、数码等电子类商品',
+    '服装': '男装、女装、童装等服饰类',
+    '食品': '生鲜、零食、饮料等食品类',
+    '家居': '家具、家纺、厨具等家居类',
+    '运动': '运动装备、户外用品等',
+    '图书': '书籍、杂志、电子书等',
+    '美妆': '护肤、彩妆、香水等',
+    '其他': '不属于以上分类的商品',
+    '满减券': '满足金额门槛后抵扣固定金额',
+    '折扣券': '按比例折扣，如九折券',
+    '免邮券': '免除运费',
+    '兑换券': '可直接兑换指定商品或服务',
+  }
+
+  if (enumList.length) {
+    enumEmpty.style.display = 'none'
+    enumList.forEach(v => addEnumRow(v, enumDescMap[v] || ''))
+  } else {
+    enumEmpty.style.display = 'block'
+  }
+
+  // 被引用事件
+  const refs = epRefData[id] || []
+  const refSection = document.getElementById('epRefSection')
+  const refList = document.getElementById('epRefList')
+  if (isEdit && refs.length) {
+    refSection.style.display = 'block'
+    refList.innerHTML = refs.map(r =>
+      `<span style="background:#f5f5f5;border:1px solid #e0e0e0;padding:3px 10px;border-radius:4px;font-size:12px;color:#595959">${r}</span>`
+    ).join('')
+  } else {
+    refSection.style.display = 'none'
+  }
+
+  // 监听类型切换，属性值区域始终显示，仅更新输入框 placeholder
+  const placeholders = {
+    '字符串': ['如：满减券', '如：满足金额门槛后抵扣固定金额'],
+    '数字':   ['如：1、9.9', '如：1 表示青铜，9.9 表示九折'],
+    '日期':   ['如：2026-01-01', '如：表示活动开始时间'],
+  }
+  radios.forEach(r => r.addEventListener('change', () => {
+    const ph = placeholders[r.value] || placeholders['字符串']
+    document.querySelectorAll('#epEnumRows .enum-row:not(.enum-row-header) input').forEach((inp, i) => {
+      inp.placeholder = ph[i] || ''
+    })
+    // 更新空态文案
+    const empty = document.getElementById('epEnumEmpty')
+    if (empty) empty.textContent = `暂无属性值，点击添加（${r.value}类型）`
+  }))
+
+  // 重置适用产品为「全部」
+  document.querySelectorAll('.ep-app-cb').forEach(cb => cb.checked = true)
+  const allCb = document.querySelector('#epApp0 input')
+  if (allCb) allCb.checked = true
+  syncAppLabelStyle()
+
+  openModal('modal-event-prop')
+}
+
+function toggleEnum(cb) {
+  document.getElementById('epEnumBox').style.display = cb.checked ? 'block' : 'none'
+}
+
+// ── 适用产品多选联动 ──
+function toggleAllApps(allCb) {
+  document.querySelectorAll('.ep-app-cb').forEach(cb => {
+    cb.checked = allCb.checked
+    cb.closest('label').style.borderColor = allCb.checked ? '#d9d9d9' : '#d9d9d9'
+  })
+  syncAppLabelStyle()
+}
+
+function syncAllApps() {
+  const cbs = [...document.querySelectorAll('.ep-app-cb')]
+  const allChecked = cbs.every(cb => cb.checked)
+  const allCb = document.querySelector('#epApp0 input')
+  if (allCb) allCb.checked = allChecked
+  // 若全部取消，至少保留「全部产品」选中
+  if (!cbs.some(cb => cb.checked)) {
+    if (allCb) allCb.checked = true
+    cbs.forEach(cb => cb.checked = true)
+  }
+  syncAppLabelStyle()
+}
+
+function syncFieldAppStyle() {
+  document.querySelectorAll('#fieldAppGroup label').forEach(label => {
+    const cb = label.querySelector('input')
+    label.style.borderColor = cb.checked ? '#1890ff' : '#d9d9d9'
+    label.style.background  = cb.checked ? '#e6f4ff' : '#fff'
+    label.style.color       = cb.checked ? '#1890ff' : '#333'
+  })
+}
+
+function syncAppLabelStyle() {
+  document.querySelectorAll('#epAppGroup label').forEach(label => {
+    const cb = label.querySelector('input')
+    label.style.borderColor = cb.checked ? '#1890ff' : '#d9d9d9'
+    label.style.background  = cb.checked ? '#e6f4ff' : '#fff'
+    label.style.color       = cb.checked ? '#1890ff' : '#333'
+  })
+}
+
+function addEnumRow(val, desc) {
+  const rows = document.getElementById('epEnumRows')
+  const empty = document.getElementById('epEnumEmpty')
+  empty.style.display = 'none'
+
+  const typeVal = document.querySelector('input[name="epType"]:checked')?.value || '字符串'
+  const phMap = {
+    '字符串': ['如：满减券', '如：满足金额门槛后抵扣固定金额'],
+    '数字':   ['如：1、9.9', '如：1 表示青铜，9.9 表示九折'],
+    '日期':   ['如：2026-01-01', '如：表示活动开始时间'],
+  }
+  const ph = phMap[typeVal] || phMap['字符串']
+
+  if (rows.children.length === 0) {
+    const header = document.createElement('div')
+    header.className = 'enum-row enum-row-header'
+    header.id = 'epEnumHeader'
+    header.innerHTML = '<span>属性值</span><span>说明（该值代表的业务含义）</span><span></span>'
+    rows.appendChild(header)
+  }
+
+  const row = document.createElement('div')
+  row.className = 'enum-row'
+  row.innerHTML = `
+    <input type="text" placeholder="${ph[0]}" value="${val || ''}" />
+    <input type="text" placeholder="${ph[1]}" value="${desc || ''}" />
+    <div class="enum-row-del" onclick="removeEnumRow(this)">×</div>
+  `
+  rows.appendChild(row)
+}
+
+function removeEnumRow(el) {
+  const row = el.parentElement
+  const rows = document.getElementById('epEnumRows')
+  row.remove()
+  // 移除列头和显示空态
+  const remaining = rows.querySelectorAll('.enum-row:not(.enum-row-header)')
+  if (remaining.length === 0) {
+    const header = document.getElementById('epEnumHeader')
+    if (header) header.remove()
+    document.getElementById('epEnumEmpty').style.display = 'block'
+  }
+}
+
+function addEnumTag(val) {
+  const container = document.getElementById('epEnumTags')
+  const tag = document.createElement('span')
+  tag.className = 'enum-val-tag'
+  tag.innerHTML = `${val} <span onclick="this.parentElement.remove()">×</span>`
+  container.appendChild(tag)
+}
+
+function addEnumVal(e) {
+  if (e.key !== 'Enter') return
+  const input = e.target || e
+  const val = input.value.trim()
+  if (!val) return
+  val.split(',').forEach(v => v.trim() && addEnumTag(v.trim()))
+  input.value = ''
+}
+
+// ── 属性抽屉数据 ──
+const propData = {
+  user_register: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '设备 ID', id: 'device_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+      { name: '渠道', id: 'channel', type: 'String', required: true },
+    ],
+    custom: [
+      { name: '注册来源', id: 'register_source', type: 'String', required: true },
+      { name: '推荐码', id: 'referral_code', type: 'String', required: false },
+      { name: '注册方式', id: 'register_method', type: 'String', required: true },
+    ]
+  },
+  payment_success: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '设备 ID', id: 'device_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+      { name: '渠道', id: 'channel', type: 'String', required: true },
+    ],
+    custom: [
+      { name: '支付金额', id: 'amount', type: 'Float', required: true },
+      { name: '订单 ID', id: 'order_id', type: 'String', required: true },
+      { name: '商品 ID', id: 'product_id', type: 'String', required: true },
+      { name: '商品分类', id: 'product_category', type: 'String', required: false },
+      { name: '优惠券类型', id: 'coupon_type', type: 'String', required: false },
+      { name: '是否首次购买', id: 'is_first_purchase', type: 'Boolean', required: false },
+      { name: '支付方式', id: 'pay_method', type: 'String', required: true },
+    ]
+  },
+  view_product_detail: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+      { name: '渠道', id: 'channel', type: 'String', required: true },
+    ],
+    custom: [
+      { name: '商品 ID', id: 'product_id', type: 'String', required: true },
+    ]
+  },
+  add_to_cart: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+      { name: '渠道', id: 'channel', type: 'String', required: true },
+    ],
+    custom: [
+      { name: '商品 ID', id: 'product_id', type: 'String', required: true },
+      { name: '商品分类', id: 'product_category', type: 'String', required: false },
+    ]
+  },
+  click_home_banner: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+    ],
+    custom: [
+      { name: '页面名称', id: 'page_name', type: 'String', required: true },
+      { name: 'Banner 位置', id: 'banner_position', type: 'Integer', required: false },
+      { name: '跳转链接', id: 'target_url', type: 'String', required: false },
+    ]
+  },
+  search_product: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+    ],
+    custom: [
+      { name: '搜索关键词', id: 'search_keyword', type: 'String', required: true },
+      { name: '搜索结果数', id: 'result_count', type: 'Integer', required: false },
+    ]
+  },
+  submit_order: {
+    common: [
+      { name: '事件时间', id: 'event_time', type: 'Datetime', required: true },
+      { name: '用户 ID', id: 'user_id', type: 'String', required: true },
+      { name: '平台', id: 'platform', type: 'Enum', required: true },
+      { name: '渠道', id: 'channel', type: 'String', required: true },
+    ],
+    custom: [
+      { name: '订单 ID', id: 'order_id', type: 'String', required: true },
+      { name: '订单金额', id: 'amount', type: 'Float', required: true },
+      { name: '商品数量', id: 'item_count', type: 'Integer', required: true },
+      { name: '商品分类', id: 'product_category', type: 'String', required: false },
+      { name: '优惠券类型', id: 'coupon_type', type: 'String', required: false },
+    ]
+  }
+}
+
+function openPropDrawer(name, id) {
+  const data = propData[id] || { common: [], custom: [] }
+  document.getElementById('drawerTitle').textContent = name + ' · 关联属性'
+  document.getElementById('drawerSubtitle').textContent = '事件 ID：' + id + '　共 ' + (data.common.length + data.custom.length) + ' 个属性'
+
+  const typeColors = { 'String': '#8c8c8c', 'Float': '#1890ff', 'Integer': '#52c41a', 'Datetime': '#722ed1', 'Enum': '#fa8c16', 'Boolean': '#eb2f96' }
+
+  const renderProps = (list) => list.map(p => `
+    <div class="prop-item">
+      <div>
+        <div class="prop-item-name">${p.name}</div>
+        <div class="prop-item-id">${p.id}</div>
+      </div>
+      <div class="prop-item-right">
+        <span style="font-size:11px;color:${typeColors[p.type]||'#8c8c8c'};background:#f5f5f5;padding:1px 7px;border-radius:4px">${p.type}</span>
+        ${p.required ? '<span class="prop-required">必传</span>' : '<span class="prop-optional">选传</span>'}
+      </div>
+    </div>
+  `).join('')
+
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="drawer-section">
+      <div class="drawer-section-title">公共属性（系统内置，自动携带）</div>
+      ${renderProps(data.common)}
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">自定义属性</div>
+      ${renderProps(data.custom)}
+    </div>
+  `
+  document.getElementById('propDrawerOverlay').classList.add('open')
+  document.getElementById('propDrawer').classList.add('open')
+}
+
+function closePropDrawer() {
+  document.getElementById('propDrawerOverlay').classList.remove('open')
+  document.getElementById('propDrawer').classList.remove('open')
+}
+
+// ── 用户属性 创建/编辑弹窗 ──
+function openUserPropModal(name, id, type, enumVals, desc) {
+  const isEdit = !!id
+  document.getElementById('upModalTitle').textContent = isEdit ? '编辑用户属性' : '创建用户属性'
+  document.getElementById('upSubmitBtn').textContent = isEdit ? '保存修改' : '创建属性'
+
+  document.getElementById('upFieldName').value = name || ''
+  document.getElementById('upFieldId').value = id || ''
+  document.getElementById('upFieldId').disabled = isEdit
+  document.getElementById('upFieldIdHint').style.display = isEdit ? 'block' : 'none'
+  document.getElementById('upFieldDesc').value = desc || ''
+
+  // 数据类型
+  const radios = document.querySelectorAll('input[name="upType"]')
+  radios.forEach(r => { r.checked = (r.value === (type || '字符串')) })
+
+  // 枚举区域始终显示
+  document.getElementById('upEnumSection').style.display = 'block'
+
+  // 填充属性值列表
+  const enumRows = document.getElementById('upEnumRows')
+  const enumEmpty = document.getElementById('upEnumEmpty')
+  enumRows.innerHTML = ''
+  const enumList = enumVals ? enumVals.split(',').map(v => v.trim()).filter(Boolean) : []
+
+  if (enumList.length) {
+    enumEmpty.style.display = 'none'
+    enumList.forEach(v => upAddEnumRow(v, ''))
+  } else {
+    enumEmpty.style.display = 'block'
+  }
+
+  // 属性值数（编辑时展示）
+  const countSection = document.getElementById('upEnumCountSection')
+  if (isEdit) {
+    countSection.style.display = 'block'
+    document.getElementById('upEnumCountText').textContent =
+      enumList.length ? enumList.length + ' 个值' : '无'
+  } else {
+    countSection.style.display = 'none'
+  }
+
+  // 监听类型切换，更新 placeholder
+  const placeholders = {
+    '字符串': ['如：金卡', '如：消费满500元可升级'],
+    '数字':   ['如：1、9.9', '如：1 表示最低档'],
+    '日期':   ['如：2026-01-01', '如：表示生效开始时间'],
+  }
+  radios.forEach(r => r.addEventListener('change', () => {
+    const ph = placeholders[r.value] || placeholders['字符串']
+    document.querySelectorAll('#upEnumRows .enum-row:not(.enum-row-header) input').forEach((inp, i) => {
+      inp.placeholder = ph[i] || ''
+    })
+    const empty = document.getElementById('upEnumEmpty')
+    if (empty) empty.textContent = `暂无属性值，点击添加（${r.value}类型）`
+  }))
+
+  openModal('modal-user-prop')
+}
+
+function upAddEnumRow(val, desc) {
+  const rows = document.getElementById('upEnumRows')
+  const empty = document.getElementById('upEnumEmpty')
+  empty.style.display = 'none'
+
+  const typeVal = document.querySelector('input[name="upType"]:checked')?.value || '字符串'
+  const phMap = {
+    '字符串': ['如：金卡', '如：消费满500元可升级'],
+    '数字':   ['如：1、9.9', '如：1 表示最低档'],
+    '日期':   ['如：2026-01-01', '如：表示生效开始时间'],
+  }
+  const ph = phMap[typeVal] || phMap['字符串']
+
+  if (rows.children.length === 0) {
+    const header = document.createElement('div')
+    header.className = 'enum-row enum-row-header'
+    header.id = 'upEnumHeader'
+    header.innerHTML = '<span>属性值</span><span>说明（该值代表的业务含义）</span><span></span>'
+    rows.appendChild(header)
+  }
+
+  const row = document.createElement('div')
+  row.className = 'enum-row'
+  row.innerHTML = `
+    <input type="text" placeholder="${ph[0]}" value="${val || ''}" />
+    <input type="text" placeholder="${ph[1]}" value="${desc || ''}" />
+    <div class="enum-row-del" onclick="upRemoveEnumRow(this)">×</div>
+  `
+  rows.appendChild(row)
+}
+
+function upRemoveEnumRow(el) {
+  const row = el.parentElement
+  const rows = document.getElementById('upEnumRows')
+  row.remove()
+  const remaining = rows.querySelectorAll('.enum-row:not(.enum-row-header)')
+  if (remaining.length === 0) {
+    const header = document.getElementById('upEnumHeader')
+    if (header) header.remove()
+    document.getElementById('upEnumEmpty').style.display = 'block'
+  }
+}
+</script>
+
+</body>
+</html>
