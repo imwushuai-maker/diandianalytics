@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能管控 - 数据管理平台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+  /* Layout */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: #001529; flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto; position: relative; z-index: 10; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 52px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Sidebar */
+  .logo { padding: 18px 20px; color: #fff; font-size: 16px; font-weight: 600; border-bottom: 1px solid #1e3a5f; letter-spacing: 1px; }
+  .logo span { color: #1890ff; }
+  .nav-group { padding: 12px 0; }
+  .nav-group-title { color: #6b8cae; font-size: 11px; padding: 6px 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #8fb3d4; cursor: pointer; transition: all .2s; font-size: 13px; }
+  .nav-item:hover { background: #1e3a5f; color: #fff; }
+  .nav-item.active { background: #1890ff; color: #fff; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item.sub { padding-left:38px;font-size:12px;color:#6b8cae; }
+  .nav-item.sub::before { content:'·';margin-right:4px; }
+
+  /* Topbar */
+  .breadcrumb { color: #666; font-size: 13px; }
+  .breadcrumb span { color: #1890ff; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* Page */
+  .page-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .page-title { font-size: 18px; font-weight: 600; color: #262626; }
+  .page-desc { color: #8c8c8c; font-size: 13px; margin-top: 4px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #f0f0f0; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #262626; display: flex; align-items: center; gap: 8px; }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid #f0f0f0; }
+  .stat-label { color: #8c8c8c; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #262626; }
+  .stat-sub { font-size: 12px; margin-top: 6px; color: #8c8c8c; }
+  .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; background: #fafafa; color: #595959; font-weight: 500; border-bottom: 1px solid #f0f0f0; font-size: 13px; white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; color: #262626; font-size: 13px; }
+  tr:hover td { background: #fafffe; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+  .badge-green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .badge-blue { background: #e6f4ff; color: #1890ff; border: 1px solid #91caff; }
+  .badge-gray { background: #f5f5f5; color: #8c8c8c; border: 1px solid #d9d9d9; }
+  .badge-orange { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .badge-red { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+  .badge-purple { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+  .link { color: #1890ff; cursor: pointer; font-size: 12px; }
+  .link:hover { text-decoration: underline; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-family: inherit; transition: all .2s; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #fff; color: #595959; border: 1px solid #d9d9d9; }
+  .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { background: #fff; color: #ff4d4f; border: 1px solid #ffa39e; }
+  .btn-danger:hover { background: #fff1f0; }
+  .btn-success { background: #fff; color: #52c41a; border: 1px solid #b7eb8f; }
+  .btn-success:hover { background: #f6ffed; }
+  .btn-ghost { background: transparent; color: #595959; border: none; padding: 4px 8px; }
+  .btn-ghost:hover { color: #1890ff; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .form-select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; background: #fff; outline: none; font-family: inherit; }
+  .form-select:focus { border-color: #1890ff; }
+  .form-input { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; color: #333; outline: none; font-family: inherit; }
+  .form-input:focus { border-color: #1890ff; }
+
+  /* Switch */
+  .switch { position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; }
+  .switch input { display: none; }
+  .switch-slider { position: absolute; inset: 0; background: #d9d9d9; border-radius: 20px; transition: .2s; }
+  .switch-slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + .switch-slider { background: #1890ff; }
+  .switch input:checked + .switch-slider::before { transform: translateX(16px); }
+
+  /* Drawer */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 900; }
+  .drawer-overlay.open { display: block; }
+  .drawer { position: fixed; top: 0; right: -640px; width: 640px; height: 100vh; background: #fff; z-index: 901; box-shadow: -4px 0 16px rgba(0,0,0,.12); transition: right .25s ease; display: flex; flex-direction: column; }
+  .drawer.open { right: 0; }
+  .drawer-header { padding: 18px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .drawer-title { font-size: 16px; font-weight: 600; color: #262626; }
+  .drawer-close { cursor: pointer; color: #8c8c8c; font-size: 20px; line-height: 1; padding: 4px; }
+  .drawer-close:hover { color: #333; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 24px; }
+  .drawer-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; background: #fff; }
+
+  /* Form sections in drawer */
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 14px; font-weight: 600; color: #262626; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #f5f5f5; }
+  .section-title svg { width: 16px; height: 16px; color: #1890ff; }
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 13px; color: #595959; margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-label.required::before { content: '* '; color: #ff4d4f; }
+  .form-help { font-size: 12px; color: #bfbfbf; margin-top: 4px; }
+
+  /* Radio card */
+  .radio-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-card { flex: 1; min-width: 160px; padding: 14px; border: 1px solid #d9d9d9; border-radius: 8px; cursor: pointer; transition: all .15s; position: relative; }
+  .radio-card:hover { border-color: #91caff; }
+  .radio-card.selected { border-color: #1890ff; background: #e6f4ff; }
+  .radio-card-title { font-size: 13px; font-weight: 600; color: #262626; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .radio-card-desc { font-size: 12px; color: #8c8c8c; }
+  .radio-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d9d9d9; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .radio-card.selected .radio-dot { border-color: #1890ff; }
+  .radio-card.selected .radio-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #1890ff; }
+  .radio-card-input { margin-top: 10px; display: none; }
+  .radio-card.selected .radio-card-input { display: flex; align-items: center; gap: 8px; }
+  .radio-card-input input { width: 120px; padding: 6px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; outline: none; text-align: right; }
+  .radio-card-input input:focus { border-color: #1890ff; }
+  .radio-card-input .unit { font-size: 12px; color: #8c8c8c; white-space: nowrap; }
+
+  /* Metric rows */
+  .metric-list { display: flex; flex-direction: column; gap: 10px; }
+  .metric-item { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; position: relative; }
+  .metric-item:hover { border-color: #d9d9d9; }
+  .metric-row { display: grid; grid-template-columns: 1fr 100px 100px 100px; gap: 10px; align-items: end; }
+  .metric-field label { font-size: 12px; color: #8c8c8c; display: block; margin-bottom: 4px; }
+  .metric-field input, .metric-field select { width: 100%; padding: 6px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; background: #fff; }
+  .metric-field input:focus, .metric-field select:focus { border-color: #1890ff; }
+  .metric-del { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #bfbfbf; border-radius: 4px; font-size: 16px; }
+  .metric-del:hover { color: #ff4d4f; background: #fff1f0; }
+  .logic-toggle { display: inline-flex; border: 1px solid #d9d9d9; border-radius: 6px; overflow: hidden; }
+  .logic-btn { padding: 5px 16px; font-size: 13px; cursor: pointer; background: #fff; color: #595959; border: none; font-family: inherit; transition: all .15s; }
+  .logic-btn.active { background: #1890ff; color: #fff; }
+
+  /* Checkbox */
+  .checkbox-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #595959; }
+  .checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1890ff; }
+
+  /* Product tag */
+  .product-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .product-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #595959; transition: all .15s; }
+  .product-tag:hover { border-color: #91caff; }
+  .product-tag.selected { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+
+  /* Recovery option */
+  .recovery-option { padding: 12px; border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all .15s; }
+  .recovery-option:hover { border-color: #91caff; }
+  .recovery-option.selected { border-color: #1890ff; background: #fafcff; }
+  .recovery-option-header { display: flex; align-items: center; gap: 8px; }
+  .recovery-option-desc { font-size: 12px; color: #8c8c8c; margin-top: 4px; margin-left: 24px; }
+  .recovery-input { margin-top: 10px; margin-left: 24px; display: none; }
+  .recovery-option.selected .recovery-input { display: flex; align-items: center; gap: 8px; }
+
+  /* Notify tags */
+  .notify-tags { display: flex; gap: 8px; }
+  .notify-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid #d9d9d9; border-radius: 8px; cursor: pointer; font-size: 13px; color: #595959; transition: all .15s; }
+  .notify-tag:hover { border-color: #91caff; }
+  .notify-tag.selected { background: #e6f4ff; border-color: #1890ff; color: #1890ff; }
+  .notify-tag svg { width: 16px; height: 16px; }
+
+  /* Scan freq */
+  .freq-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .freq-btn { padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; cursor: pointer; background: #fff; color: #595959; transition: all .15s; font-family: inherit; }
+  .freq-btn:hover { border-color: #91caff; }
+  .freq-btn.active { background: #1890ff; border-color: #1890ff; color: #fff; }
+
+  /* Detail drawer */
+  .detail-section { margin-bottom: 20px; }
+  .detail-label { font-size: 12px; color: #8c8c8c; margin-bottom: 6px; }
+  .detail-value { font-size: 13px; color: #262626; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Timeline in detail */
+  .tl-mini { position: relative; padding-left: 20px; }
+  .tl-mini::before { content: ''; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1px; background: #e8e8e8; }
+  .tl-mini-item { position: relative; padding: 6px 0; padding-left: 16px; }
+  .tl-mini-item::before { content: ''; position: absolute; left: -16px; top: 12px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #d9d9d9; background: #fff; }
+  .tl-mini-item.warn::before { border-color: #fa8c16; background: #fff7e6; }
+  .tl-mini-item.danger::before { border-color: #ff4d4f; background: #fff1f0; }
+  .tl-mini-item.ok::before { border-color: #52c41a; background: #f6ffed; }
+  .tl-mini-time { font-size: 11px; color: #bfbfbf; }
+  .tl-mini-text { font-size: 12px; color: #595959; margin-top: 2px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+  .empty-text { color: #bfbfbf; font-size: 14px; margin-bottom: 16px; }
+
+  /* Tooltip */
+  .info-tip { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #f0f0f0; color: #8c8c8c; font-size: 11px; cursor: help; font-style: normal; }
+  .info-tip:hover { background: #e6f4ff; color: #1890ff; }
+
+  /* Confirm modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 28px; width: 420px; max-width: 90vw; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .modal-text { font-size: 13px; color: #595959; margin-bottom: 20px; line-height: 1.6; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* Account search dropdown */
+  .acc-option { padding: 8px 12px; cursor: pointer; font-size: 13px; color: #262626; display: flex; align-items: center; gap: 6px; }
+  .acc-option:hover { background: #f5f5f5; }
+  .acc-option.selected { background: #e6f4ff; color: #1890ff; }
+  .acc-check { width: 14px; font-size: 12px; color: #1890ff; flex-shrink: 0; }
+  .acc-selected-tag { display: inline-flex; align-items: center; gap: 4px; background: #e6f4ff; color: #1890ff; border: 1px solid #91caff; border-radius: 4px; padding: 2px 8px; font-size: 12px; }
+  .acc-selected-tag span { cursor: pointer; color: #69b1ff; margin-left: 2px; }
+  .acc-selected-tag span:hover { color: #ff4d4f; }
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">AI 智能<span>中台</span></div>
+    <div style="padding:0 12px 12px">
+      <a href="ad.html" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8c8c8c;text-decoration:none;padding:6px 8px;border-radius:4px;border:1px solid #e8e8e8;background:#fafafa">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回投放管理
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">投放管理</div>
+      <div class="nav-item" onclick="location.href='ad.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        投放总览
+      </div>
+      <div class="nav-item sub" onclick="location.href='ad.html'">账户分析</div>
+      <div class="nav-item" onclick="location.href='ad.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        计划监控
+      </div>
+      <div class="nav-item" onclick="location.href='ad.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/></svg>
+        阈值管理
+      </div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        智能管控
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">投放管理 / <span>智能管控</span></div>
+      <div class="topbar-right">
+        <div style="color:#8c8c8c;font-size:13px;">测试环境</div>
+        <div class="avatar">PM</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">智能管控</div>
+          <div class="page-desc">配置投放计划自动扫描规则，基于成本指标组合实现智能预警与自动暂停</div>
+        </div>
+        <button class="btn btn-primary" onclick="openDrawer('create')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新建规则
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">
+            <span class="stat-icon" style="background:#e6f4ff;color:#1890ff;">&#9881;</span>
+            运行中规则
+          </div>
+          <div class="stat-value">3</div>
+          <div class="stat-sub">共 5 条规则</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <span class="stat-icon" style="background:#fff7e6;color:#fa8c16;">&#9888;</span>
+            今日预警
+          </div>
+          <div class="stat-value" style="color:#fa8c16;">12</div>
+          <div class="stat-sub">涉及 8 条计划</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <span class="stat-icon" style="background:#fff1f0;color:#ff4d4f;">&#9724;</span>
+            今日自动暂停
+          </div>
+          <div class="stat-value" style="color:#ff4d4f;">4</div>
+          <div class="stat-sub">涉及 3 个账户</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <span class="stat-icon" style="background:#f6ffed;color:#52c41a;">&#10003;</span>
+            今日自动恢复
+          </div>
+          <div class="stat-value" style="color:#52c41a;">2</div>
+          <div class="stat-sub">成本回落后自动恢复</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <select class="form-select" style="width:130px" onchange="filterRules()">
+          <option value="">全部产品</option>
+          <option>健康追踪仪</option>
+          <option>健康管家 Pro</option>
+          <option>运动助手</option>
+        </select>
+        <select class="form-select" style="width:120px" onchange="filterRules()">
+          <option value="">全部状态</option>
+          <option>已启用</option>
+          <option>已停用</option>
+        </select>
+        <input class="form-input" style="width:200px" placeholder="搜索规则名称..." oninput="filterRules()">
+      </div>
+
+      <!-- Rule list -->
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table id="ruleTable">
+            <thead>
+              <tr>
+                <th>规则名称</th>
+                <th>适用产品</th>
+                <th>触发门槛</th>
+                <th>管控指标</th>
+                <th>扫描频率</th>
+                <th>状态</th>
+                <th>今日触发</th>
+                <th>最近触发</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="ruleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit drawer -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="ruleDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawerTitle">新建管控规则</div>
+    <div class="drawer-close" onclick="closeDrawer()">&times;</div>
+  </div>
+  <div class="drawer-body">
+
+    <!-- 1. 基础设置 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        基础设置
+      </div>
+      <div class="form-row">
+        <label class="form-label required">规则名称</label>
+        <input class="form-input" id="ruleName" style="width:100%" placeholder="例：健康追踪仪-高消耗管控">
+      </div>
+      <div class="form-row">
+        <label class="form-label required">适用产品 <em class="info-tip" title="一条规则可同时覆盖多个产品">?</em></label>
+        <div class="product-tags" id="productTags">
+          <div class="product-tag selected" onclick="toggleProduct(this)">健康追踪仪</div>
+          <div class="product-tag" onclick="toggleProduct(this)">健康管家 Pro</div>
+          <div class="product-tag" onclick="toggleProduct(this)">运动助手</div>
+          <div class="product-tag" onclick="toggleProduct(this)">睡眠记录器</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">适用账户 <em class="info-tip" title="不选择则对该产品下所有账户生效">?</em></label>
+        <div style="position:relative;">
+          <input class="form-input" id="accountSearch" style="width:100%;padding-right:32px;" placeholder="搜索账户名称或 ID..." oninput="filterAccounts(this.value)" onfocus="showAccountDropdown()" autocomplete="off">
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#bfbfbf;pointer-events:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <div id="accountDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:200;max-height:200px;overflow-y:auto;margin-top:2px;">
+            <div class="acc-option selected" data-id="" onclick="toggleAccount(this)">
+              <span class="acc-check">&#10003;</span> 全部账户
+            </div>
+            <div class="acc-option" data-id="1892376" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 广州悦动 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1892376</span>
+            </div>
+            <div class="acc-option" data-id="1892501" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 深圳健行 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1892501</span>
+            </div>
+            <div class="acc-option" data-id="1893022" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 北京启程 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1893022</span>
+            </div>
+            <div class="acc-option" data-id="1893188" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 上海智远 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1893188</span>
+            </div>
+            <div class="acc-option" data-id="1893301" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 成都锐行 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1893301</span>
+            </div>
+            <div class="acc-option" data-id="1893455" onclick="toggleAccount(this)">
+              <span class="acc-check"></span> 武汉跃动 <span style="color:#bfbfbf;font-size:11px;font-family:monospace;">ID:1893455</span>
+            </div>
+          </div>
+        </div>
+        <div id="selectedAccounts" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+        <div class="form-help">搜索账户名称或 ID，不选择则对该产品下所有账户生效</div>
+      </div>
+    </div>
+
+    <!-- 2. 触发门槛 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        触发门槛
+        <span style="font-size:12px;font-weight:400;color:#8c8c8c;">（账户消耗达标后才会启动计划扫描）</span>
+      </div>
+      <div class="radio-cards" id="triggerCards">
+        <div class="radio-card selected" onclick="selectTrigger(this, 'daily')">
+          <div class="radio-card-title">
+            <span class="radio-dot"></span>
+            当日消耗
+          </div>
+          <div class="radio-card-desc">账户当日消耗金额达到设定值后启动扫描</div>
+          <div class="radio-card-input">
+            <span style="font-size:13px;color:#595959;">≥</span>
+            <input type="number" value="5000" id="triggerDaily">
+            <span class="unit">元</span>
+          </div>
+        </div>
+        <div class="radio-card" onclick="selectTrigger(this, 'total')">
+          <div class="radio-card-title">
+            <span class="radio-dot"></span>
+            累计消耗
+          </div>
+          <div class="radio-card-desc">账户历史累计消耗达到设定值后启动扫描</div>
+          <div class="radio-card-input">
+            <span style="font-size:13px;color:#595959;">≥</span>
+            <input type="number" value="100000" id="triggerTotal">
+            <span class="unit">元</span>
+          </div>
+        </div>
+        <div class="radio-card" onclick="selectTrigger(this, 'hourly')">
+          <div class="radio-card-title">
+            <span class="radio-dot"></span>
+            小时消耗速率
+          </div>
+          <div class="radio-card-desc">账户最近 1 小时消耗速率达到设定值后启动</div>
+          <div class="radio-card-input">
+            <span style="font-size:13px;color:#595959;">≥</span>
+            <input type="number" value="800" id="triggerHourly">
+            <span class="unit">元/小时</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 成本管控指标 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        成本管控指标
+        <span style="font-size:12px;font-weight:400;color:#8c8c8c;">（可添加多个指标组合判断）</span>
+      </div>
+      <div class="form-row" style="display:flex;align-items:center;gap:12px;">
+        <label class="form-label" style="margin-bottom:0;white-space:nowrap;">指标间逻辑：</label>
+        <div class="logic-toggle" id="logicToggle">
+          <button class="logic-btn active" onclick="setLogic('AND',this)">AND 全部满足</button>
+          <button class="logic-btn" onclick="setLogic('OR',this)">OR 任一满足</button>
+        </div>
+        <em class="info-tip" title="AND：所有指标同时超标才触发；OR：任一指标超标即触发">?</em>
+      </div>
+      <div class="metric-list" id="metricList">
+        <!-- metric item 1 -->
+        <div class="metric-item">
+          <div class="metric-del" onclick="removeMetric(this)">&times;</div>
+          <div class="metric-row">
+            <div class="metric-field">
+              <label>指标类型</label>
+              <select onchange="onMetricTypeChange(this)">
+                <option value="sub_cost" selected>订阅成本</option>
+                <option value="unsub_rate">取订率</option>
+                <option value="activate_cost">激活成本</option>
+                <option value="register_cost">注册成本</option>
+                <option value="key_action_cost">关键行为成本</option>
+              </select>
+            </div>
+            <div class="metric-field">
+              <label>基准值</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="35" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;white-space:nowrap;" class="metric-unit">元</span>
+              </div>
+            </div>
+            <div class="metric-field">
+              <label>警告超出</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="20" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;">%</span>
+              </div>
+            </div>
+            <div class="metric-field">
+              <label>暂停超出</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="50" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;">%</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:#8c8c8c;">
+            <span style="color:#fa8c16;">&#9888; 警告</span>：超过 ¥<span class="calc-warn">42</span> 时预警 &nbsp;|&nbsp;
+            <span style="color:#ff4d4f;">&#9724; 暂停</span>：超过 ¥<span class="calc-pause">52.5</span> 时自动暂停
+          </div>
+        </div>
+        <!-- metric item 2 -->
+        <div class="metric-item">
+          <div class="metric-del" onclick="removeMetric(this)">&times;</div>
+          <div class="metric-row">
+            <div class="metric-field">
+              <label>指标类型</label>
+              <select onchange="onMetricTypeChange(this)">
+                <option value="sub_cost">订阅成本</option>
+                <option value="unsub_rate" selected>取订率</option>
+                <option value="activate_cost">激活成本</option>
+                <option value="register_cost">注册成本</option>
+                <option value="key_action_cost">关键行为成本</option>
+              </select>
+            </div>
+            <div class="metric-field">
+              <label>基准值</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="18" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;white-space:nowrap;" class="metric-unit">%</span>
+              </div>
+            </div>
+            <div class="metric-field">
+              <label>警告超出</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="30" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;">%</span>
+              </div>
+            </div>
+            <div class="metric-field">
+              <label>暂停超出</label>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <input type="number" value="80" style="flex:1">
+                <span style="font-size:12px;color:#8c8c8c;">%</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:#8c8c8c;">
+            <span style="color:#fa8c16;">&#9888; 警告</span>：超过 <span class="calc-warn">23.4</span>% 时预警 &nbsp;|&nbsp;
+            <span style="color:#ff4d4f;">&#9724; 暂停</span>：超过 <span class="calc-pause">32.4</span>% 时自动暂停
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-default" style="margin-top:10px;width:100%;justify-content:center;" onclick="addMetric()">
+        + 添加指标
+      </button>
+    </div>
+
+    <!-- 4. 自动恢复 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        自动恢复
+      </div>
+      <div class="recovery-option selected" onclick="selectRecovery(this, 'auto')">
+        <div class="recovery-option-header">
+          <span class="radio-dot"></span>
+          <span style="font-size:13px;font-weight:500;">成本回落后自动恢复</span>
+        </div>
+        <div class="recovery-option-desc">暂停后持续扫描，当指标回落到设定范围内自动恢复投放</div>
+        <div class="recovery-input">
+          <span style="font-size:13px;color:#595959;">回落至基准值</span>
+          <input type="number" value="10" style="width:80px;padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;outline:none;text-align:right;" id="recoveryPercent">
+          <span style="font-size:12px;color:#8c8c8c;">% 以内时恢复</span>
+        </div>
+      </div>
+      <div class="recovery-option" onclick="selectRecovery(this, 'manual')">
+        <div class="recovery-option-header">
+          <span class="radio-dot"></span>
+          <span style="font-size:13px;font-weight:500;">仅手动恢复</span>
+        </div>
+        <div class="recovery-option-desc">暂停后需投放人员在计划监控中手动恢复</div>
+        <div class="recovery-input"></div>
+      </div>
+    </div>
+
+    <!-- 5. 扫描与通知 -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        扫描与通知
+      </div>
+      <div class="form-row">
+        <label class="form-label required">扫描频率 <em class="info-tip" title="数据更新频率为 3 分钟，扫描频率不低于数据刷新间隔">?</em></label>
+        <div class="freq-options" id="freqOptions">
+          <button class="freq-btn active" onclick="selectFreq(this)">3 分钟</button>
+          <button class="freq-btn" onclick="selectFreq(this)">5 分钟</button>
+          <button class="freq-btn" onclick="selectFreq(this)">15 分钟</button>
+          <button class="freq-btn" onclick="selectFreq(this)">30 分钟</button>
+        </div>
+        <div class="form-help">当前数据刷新频率：3 分钟/次，覆盖计划量约 4000-5000 条</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">通知方式</label>
+        <div class="notify-tags" id="notifyTags">
+          <div class="notify-tag selected" onclick="toggleNotify(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            站内通知
+          </div>
+          <div class="notify-tag selected" onclick="toggleNotify(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            飞书通知
+          </div>
+        </div>
+        <div class="form-help">同一计划同一规则触发后不再重复提醒，直至状态变更</div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">通知人员</label>
+        <select class="form-select" id="notifyUsers" style="width:100%" multiple size="3">
+          <option selected>张伟</option>
+          <option selected>李娜</option>
+          <option>王芳</option>
+          <option>赵磊</option>
+          <option>陈晨</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="saveRule()">保存规则</button>
+  </div>
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="drawer" id="detailDrawer" style="width:520px;right:-520px;">
+  <div class="drawer-header">
+    <div class="drawer-title" id="detailTitle">规则详情</div>
+    <div class="drawer-close" onclick="closeDetail()">&times;</div>
+  </div>
+  <div class="drawer-body" id="detailBody"></div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title" style="color:#ff4d4f;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      确认删除
+    </div>
+    <div class="modal-text" id="deleteModalText">确定要删除规则「规则名称」吗？删除后不可恢复。</div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── 数据 ───────────────────────────────────────────────────────
+const RULES = [
+  {
+    id: 1, name: '健康追踪仪-高消耗管控', products: ['健康追踪仪'],
+    trigger: { type: 'daily', value: 5000 },
+    logic: 'AND',
+    metrics: [
+      { type: 'sub_cost', label: '订阅成本', base: 35, unit: '元', warnPct: 20, pausePct: 50 },
+      { type: 'unsub_rate', label: '取订率', base: 18, unit: '%', warnPct: 30, pausePct: 80 }
+    ],
+    recovery: { mode: 'auto', pct: 10 },
+    freq: '3 分钟', notify: ['站内通知','飞书通知'], users: ['张伟','李娜'],
+    enabled: true, todayTrigger: 8, lastTrigger: '14:32'
+  },
+  {
+    id: 2, name: '健康管家Pro-订阅成本', products: ['健康管家 Pro'],
+    trigger: { type: 'hourly', value: 800 },
+    logic: 'OR',
+    metrics: [
+      { type: 'sub_cost', label: '订阅成本', base: 28, unit: '元', warnPct: 25, pausePct: 60 }
+    ],
+    recovery: { mode: 'auto', pct: 15 },
+    freq: '5 分钟', notify: ['飞书通知'], users: ['王芳'],
+    enabled: true, todayTrigger: 3, lastTrigger: '13:18'
+  },
+  {
+    id: 3, name: '运动助手-综合成本管控', products: ['运动助手'],
+    trigger: { type: 'total', value: 100000 },
+    logic: 'AND',
+    metrics: [
+      { type: 'sub_cost', label: '订阅成本', base: 42, unit: '元', warnPct: 15, pausePct: 40 },
+      { type: 'activate_cost', label: '激活成本', base: 12, unit: '元', warnPct: 30, pausePct: 70 },
+      { type: 'unsub_rate', label: '取订率', base: 22, unit: '%', warnPct: 25, pausePct: 60 }
+    ],
+    recovery: { mode: 'manual' },
+    freq: '5 分钟', notify: ['站内通知','飞书通知'], users: ['赵磊','李娜'],
+    enabled: true, todayTrigger: 5, lastTrigger: '12:45'
+  },
+  {
+    id: 4, name: '全产品-激活成本监控', products: ['健康追踪仪','健康管家 Pro','运动助手'],
+    trigger: { type: 'daily', value: 3000 },
+    logic: 'OR',
+    metrics: [
+      { type: 'activate_cost', label: '激活成本', base: 15, unit: '元', warnPct: 20, pausePct: 50 }
+    ],
+    recovery: { mode: 'auto', pct: 5 },
+    freq: '15 分钟', notify: ['站内通知'], users: ['张伟'],
+    enabled: false, todayTrigger: 0, lastTrigger: '昨日 22:10'
+  },
+  {
+    id: 5, name: '睡眠记录器-成本预警', products: ['睡眠记录器'],
+    trigger: { type: 'daily', value: 2000 },
+    logic: 'AND',
+    metrics: [
+      { type: 'sub_cost', label: '订阅成本', base: 25, unit: '元', warnPct: 30, pausePct: 70 },
+      { type: 'key_action_cost', label: '关键行为成本', base: 8, unit: '元', warnPct: 25, pausePct: 55 }
+    ],
+    recovery: { mode: 'manual' },
+    freq: '30 分钟', notify: ['飞书通知'], users: ['陈晨'],
+    enabled: false, todayTrigger: 0, lastTrigger: '-'
+  }
+];
+
+const TRIGGER_LOGS = [
+  { time: '14:32', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 广州悦动 / 行为定向_E', metric: '订阅成本 ¥61', exceed: '74%', action: 'pause', notified: '站内+飞书', status: 'paused' },
+  { time: '14:18', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 广州悦动 / 相似人群_C', metric: '订阅成本 ¥45', exceed: '28%', action: 'warn', notified: '站内+飞书', status: 'warned' },
+  { time: '13:55', rule: '运动助手-综合成本管控', target: '运动助手 / 杭州动力 / 精准运动_A', metric: '订阅成本 ¥62 + 激活 ¥18', exceed: '47% / 50%', action: 'pause', notified: '站内+飞书', status: 'paused' },
+  { time: '13:42', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 深圳健行 / 兴趣扩展_G', metric: '取订率 26%', exceed: '44%', action: 'warn', notified: '站内+飞书', status: 'warned' },
+  { time: '13:18', rule: '健康管家Pro-订阅成本', target: '健康管家Pro / 北京启程 / 城市白领_B', metric: '订阅成本 ¥38', exceed: '35%', action: 'warn', notified: '飞书', status: 'warned' },
+  { time: '12:45', rule: '运动助手-综合成本管控', target: '运动助手 / 上海智远 / 跑步爱好_D', metric: '激活成本 ¥21', exceed: '75%', action: 'pause', notified: '站内+飞书', status: 'recovered' },
+  { time: '12:30', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 广州悦动 / 宽泛兴趣_A', metric: '订阅成本 ¥39', exceed: '11%', action: 'warn', notified: '站内+飞书', status: 'recovered' },
+  { time: '11:50', rule: '健康管家Pro-订阅成本', target: '健康管家Pro / 上海智远 / 健康饮食_F', metric: '订阅成本 ¥46', exceed: '64%', action: 'pause', notified: '飞书', status: 'paused' },
+  { time: '11:15', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 广州悦动 / 精准健康_B', metric: '订阅成本 ¥42', exceed: '20%', action: 'warn', notified: '站内+飞书', status: 'warned' },
+  { time: '10:30', rule: '运动助手-综合成本管控', target: '运动助手 / 杭州动力 / 户外运动_C', metric: '取订率 29%', exceed: '31%', action: 'warn', notified: '站内+飞书', status: 'warned' },
+  { time: '10:00', rule: '健康追踪仪-高消耗管控', target: '健康追踪仪 / 深圳健行 / 竞品用户_D', metric: '订阅成本 ¥52', exceed: '48%', action: 'warn', notified: '站内+飞书', status: 'recovered' },
+  { time: '09:30', rule: '健康管家Pro-订阅成本', target: '健康管家Pro / 北京启程 / 年轻女性_E', metric: '订阅成本 ¥41', exceed: '46%', action: 'warn', notified: '飞书', status: 'warned' },
+];
+
+let deleteRuleId = null;
+
+// ─── 渲染规则表格 ────────────────────────────────────────────────
+function renderRules() {
+  const tbody = document.getElementById('ruleTableBody');
+  const triggerLabels = { daily: '当日消耗', total: '累计消耗', hourly: '小时速率' };
+  const triggerUnits = { daily: '元', total: '元', hourly: '元/h' };
+
+  tbody.innerHTML = RULES.map(r => `
+    <tr>
+      <td><span class="link" onclick="openDetail(${r.id})">${r.name}</span></td>
+      <td>${r.products.map(p => `<span class="badge badge-blue" style="margin:1px;">${p}</span>`).join(' ')}</td>
+      <td>
+        <span style="font-size:12px;color:#8c8c8c;">${triggerLabels[r.trigger.type]}</span><br>
+        <strong>≥ ${r.trigger.value.toLocaleString()}</strong> <span style="font-size:12px;color:#8c8c8c;">${triggerUnits[r.trigger.type]}</span>
+      </td>
+      <td>
+        ${r.metrics.map(m => `<span class="badge badge-purple" style="margin:1px;">${m.label}</span>`).join(' ')}
+        <br><span style="font-size:11px;color:#bfbfbf;">${r.logic === 'AND' ? '全部满足' : '任一满足'}</span>
+      </td>
+      <td>${r.freq}</td>
+      <td>
+        <label class="switch" onclick="event.stopPropagation()">
+          <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleRule(${r.id}, this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </td>
+      <td>
+        ${r.todayTrigger > 0
+          ? `<span style="font-size:18px;font-weight:700;color:${r.todayTrigger > 5 ? '#ff4d4f' : '#fa8c16'}">${r.todayTrigger}</span><span style="font-size:12px;color:#8c8c8c;"> 次</span>`
+          : '<span style="color:#bfbfbf;">-</span>'}
+      </td>
+      <td><span style="font-size:12px;color:#8c8c8c;">${r.lastTrigger}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openDrawer('edit',${r.id})" title="编辑">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="openDetail(${r.id})" title="详情">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-sm" style="color:#ff4d4f;" onclick="openDeleteModal(${r.id})" title="删除">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ─── 渲染触发记录 ────────────────────────────────────────────────
+const statusMap = {
+  warned: { label: '预警中', cls: 'badge-orange' },
+  paused: { label: '已暂停', cls: 'badge-red' },
+  recovered: { label: '已恢复', cls: 'badge-green' }
+};
+const actionMap = {
+  warn: { label: '预警', cls: 'badge-orange' },
+  pause: { label: '自动暂停', cls: 'badge-red' }
+};
+
+function getFilteredLogs() {
+  const product = document.getElementById('logProductFilter')?.value || '';
+  const action = document.getElementById('logActionFilter')?.value || '';
+  return TRIGGER_LOGS.filter(l => {
+    if (product && !l.target.includes(product)) return false;
+    if (action && l.action !== action) return false;
+    return true;
+  });
+}
+
+function renderTriggerLogs(logs) {
+  const data = logs || getFilteredLogs();
+  const tbody = document.getElementById('triggerLogBody');
+  const countEl = document.getElementById('logCount');
+  if (countEl) countEl.textContent = `共 ${data.length} 条`;
+
+  tbody.innerHTML = data.map(l => {
+    const s = statusMap[l.status];
+    const a = actionMap[l.action];
+    return `<tr>
+      <td style="white-space:nowrap;">今日 ${l.time}</td>
+      <td><span style="font-size:12px;">${l.rule}</span></td>
+      <td><span style="font-size:12px;color:#595959;">${l.target}</span></td>
+      <td><span style="font-size:12px;">${l.metric}</span></td>
+      <td><strong style="color:${l.action === 'pause' ? '#ff4d4f' : '#fa8c16'}">+${l.exceed}</strong></td>
+      <td><span class="badge ${a.cls}">${a.label}</span></td>
+      <td><span style="font-size:12px;color:#8c8c8c;">${l.notified}</span></td>
+      <td><span class="badge ${s.cls}">${s.label}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:#bfbfbf;padding:32px;">暂无记录</td></tr>';
+}
+
+function filterLogs() { renderTriggerLogs(); }
+
+function exportLogs() {
+  const data = getFilteredLogs();
+  const headers = ['时间','规则','产品/账户/计划','触发指标','超出幅度','动作','通知','状态'];
+  const rows = data.map(l => [
+    '今日 ' + l.time, l.rule, l.target, l.metric, '+' + l.exceed,
+    actionMap[l.action].label, l.notified, statusMap[l.status].label
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `触发记录_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+
+// ─── 规则开关 ───────────────────────────────────────────────────
+function toggleRule(id, checked) {
+  const rule = RULES.find(r => r.id === id);
+  if (rule) rule.enabled = checked;
+}
+
+// ─── 过滤规则列表 ────────────────────────────────────────────────
+function filterRules() {
+  // placeholder for filtering logic
+}
+
+// ─── 抽屉操作 ───────────────────────────────────────────────────
+function openDrawer(mode, ruleId) {
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('ruleDrawer').classList.add('open');
+  document.getElementById('drawerTitle').textContent = mode === 'create' ? '新建管控规则' : '编辑管控规则';
+
+  if (mode === 'edit' && ruleId) {
+    const rule = RULES.find(r => r.id === ruleId);
+    if (rule) {
+      document.getElementById('ruleName').value = rule.name;
+      // populate other fields ...
+    }
+  }
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('ruleDrawer').classList.remove('open');
+}
+
+// ─── 触发门槛选择 ────────────────────────────────────────────────
+function selectTrigger(el, type) {
+  document.querySelectorAll('#triggerCards .radio-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ─── 逻辑切换 ───────────────────────────────────────────────────
+function setLogic(logic, el) {
+  document.querySelectorAll('#logicToggle .logic-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── 产品选择 ───────────────────────────────────────────────────
+function toggleProduct(el) {
+  el.classList.toggle('selected');
+}
+
+// ─── 指标操作 ───────────────────────────────────────────────────
+let metricCounter = 2;
+function addMetric() {
+  metricCounter++;
+  const list = document.getElementById('metricList');
+  const item = document.createElement('div');
+  item.className = 'metric-item';
+  item.innerHTML = `
+    <div class="metric-del" onclick="removeMetric(this)">&times;</div>
+    <div class="metric-row">
+      <div class="metric-field">
+        <label>指标类型</label>
+        <select onchange="onMetricTypeChange(this)">
+          <option value="sub_cost">订阅成本</option>
+          <option value="unsub_rate">取订率</option>
+          <option value="activate_cost">激活成本</option>
+          <option value="register_cost">注册成本</option>
+          <option value="key_action_cost">关键行为成本</option>
+        </select>
+      </div>
+      <div class="metric-field">
+        <label>基准值</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" value="" placeholder="0" style="flex:1">
+          <span style="font-size:12px;color:#8c8c8c;white-space:nowrap;" class="metric-unit">元</span>
+        </div>
+      </div>
+      <div class="metric-field">
+        <label>警告超出</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" value="" placeholder="0" style="flex:1">
+          <span style="font-size:12px;color:#8c8c8c;">%</span>
+        </div>
+      </div>
+      <div class="metric-field">
+        <label>暂停超出</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" value="" placeholder="0" style="flex:1">
+          <span style="font-size:12px;color:#8c8c8c;">%</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#8c8c8c;">
+      <span style="color:#fa8c16;">&#9888; 警告</span>：超过 <span class="calc-warn">-</span> 时预警 &nbsp;|&nbsp;
+      <span style="color:#ff4d4f;">&#9724; 暂停</span>：超过 <span class="calc-pause">-</span> 时自动暂停
+    </div>
+  `;
+  list.appendChild(item);
+  // bind input events for calc
+  bindMetricCalc(item);
+}
+
+function removeMetric(el) {
+  const list = document.getElementById('metricList');
+  if (list.children.length <= 1) {
+    alert('至少保留一个管控指标');
+    return;
+  }
+  el.closest('.metric-item').remove();
+}
+
+function onMetricTypeChange(sel) {
+  const unitMap = { sub_cost: '元', unsub_rate: '%', activate_cost: '元', register_cost: '元', key_action_cost: '元' };
+  const item = sel.closest('.metric-item');
+  const unitEl = item.querySelector('.metric-unit');
+  if (unitEl) unitEl.textContent = unitMap[sel.value] || '元';
+}
+
+function bindMetricCalc(item) {
+  const inputs = item.querySelectorAll('input[type="number"]');
+  inputs.forEach(inp => {
+    inp.addEventListener('input', () => calcMetric(item));
+  });
+}
+
+function calcMetric(item) {
+  const inputs = item.querySelectorAll('.metric-row input[type="number"]');
+  const base = parseFloat(inputs[0]?.value) || 0;
+  const warnPct = parseFloat(inputs[1]?.value) || 0;
+  const pausePct = parseFloat(inputs[2]?.value) || 0;
+  const unit = item.querySelector('.metric-unit')?.textContent || '元';
+
+  const warnVal = (base * (1 + warnPct / 100)).toFixed(1);
+  const pauseVal = (base * (1 + pausePct / 100)).toFixed(1);
+
+  const calcWarn = item.querySelector('.calc-warn');
+  const calcPause = item.querySelector('.calc-pause');
+  if (calcWarn) calcWarn.textContent = unit === '%' ? warnVal + '%' : '¥' + warnVal;
+  if (calcPause) calcPause.textContent = unit === '%' ? pauseVal + '%' : '¥' + pauseVal;
+}
+
+// 初始绑定已有指标的计算
+document.querySelectorAll('.metric-item').forEach(item => bindMetricCalc(item));
+
+// ─── 恢复模式 ───────────────────────────────────────────────────
+function selectRecovery(el, mode) {
+  document.querySelectorAll('.recovery-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ─── 扫描频率 ───────────────────────────────────────────────────
+function selectFreq(el) {
+  document.querySelectorAll('#freqOptions .freq-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── 通知方式 ───────────────────────────────────────────────────
+function toggleNotify(el) {
+  el.classList.toggle('selected');
+}
+
+// ─── 保存规则 ───────────────────────────────────────────────────
+function saveRule() {
+  const name = document.getElementById('ruleName').value.trim();
+  if (!name) { alert('请输入规则名称'); return; }
+  const selectedProducts = document.querySelectorAll('#productTags .product-tag.selected');
+  if (selectedProducts.length === 0) { alert('请选择至少一个产品'); return; }
+  closeDrawer();
+  // Show success feedback
+  showToast('规则保存成功');
+}
+
+// ─── 详情抽屉 ───────────────────────────────────────────────────
+function openDetail(ruleId) {
+  const rule = RULES.find(r => r.id === ruleId);
+  if (!rule) return;
+
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('detailDrawer').classList.add('open');
+  document.getElementById('detailTitle').textContent = rule.name;
+
+  const triggerLabels = { daily: '当日消耗', total: '累计消耗', hourly: '小时消耗速率' };
+  const triggerUnits = { daily: '元', total: '元', hourly: '元/h' };
+
+  const relatedLogs = TRIGGER_LOGS.filter(l => l.rule === rule.name).slice(0, 6);
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-label">状态</div>
+      <span class="badge ${rule.enabled ? 'badge-green' : 'badge-gray'}">${rule.enabled ? '运行中' : '已停用'}</span>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">适用产品</div>
+      <div>${rule.products.map(p => `<span class="badge badge-blue" style="margin:2px;">${p}</span>`).join(' ')}</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-grid">
+        <div>
+          <div class="detail-label">触发门槛</div>
+          <div class="detail-value">${triggerLabels[rule.trigger.type]} ≥ ${rule.trigger.value.toLocaleString()} ${triggerUnits[rule.trigger.type]}</div>
+        </div>
+        <div>
+          <div class="detail-label">扫描频率</div>
+          <div class="detail-value">${rule.freq}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">管控指标 <span style="color:#1890ff;font-size:11px;">(${rule.logic === 'AND' ? '全部满足' : '任一满足'})</span></div>
+      ${rule.metrics.map(m => {
+        const warnVal = (m.base * (1 + m.warnPct / 100)).toFixed(1);
+        const pauseVal = (m.base * (1 + m.pausePct / 100)).toFixed(1);
+        const prefix = m.unit === '%' ? '' : '¥';
+        const suffix = m.unit === '%' ? '%' : '';
+        return `<div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:6px;padding:12px;margin-bottom:6px;">
+          <div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:6px;">${m.label}</div>
+          <div style="display:flex;gap:16px;font-size:12px;">
+            <span>基准值：<strong>${prefix}${m.base}${suffix}</strong></span>
+            <span style="color:#fa8c16;">警告：>${prefix}${warnVal}${suffix} (+${m.warnPct}%)</span>
+            <span style="color:#ff4d4f;">暂停：>${prefix}${pauseVal}${suffix} (+${m.pausePct}%)</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-grid">
+        <div>
+          <div class="detail-label">自动恢复</div>
+          <div class="detail-value">${rule.recovery.mode === 'auto' ? `回落至基准值 ${rule.recovery.pct}% 以内` : '仅手动恢复'}</div>
+        </div>
+        <div>
+          <div class="detail-label">通知方式</div>
+          <div class="detail-value">${rule.notify.join(' + ')}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">通知人员</div>
+      <div>${rule.users.map(u => `<span class="badge badge-blue" style="margin:2px;">${u}</span>`).join(' ')}</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">最近触发记录</div>
+      ${relatedLogs.length > 0 ? `<div class="tl-mini">
+        ${relatedLogs.map(l => {
+          const cls = l.action === 'pause' ? 'danger' : 'warn';
+          const finalCls = l.status === 'recovered' ? 'ok' : cls;
+          const statusLabel = { warned: '预警中', paused: '已暂停', recovered: '已恢复' };
+          return `<div class="tl-mini-item ${finalCls}">
+            <div class="tl-mini-time">今日 ${l.time}</div>
+            <div class="tl-mini-text">${l.target.split(' / ').pop()} · ${l.metric} · 超出 ${l.exceed} · <strong>${statusLabel[l.status]}</strong></div>
+          </div>`;
+        }).join('')}
+      </div>` : '<div style="color:#bfbfbf;font-size:13px;">暂无触发记录</div>'}
+    </div>
+  `;
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.getElementById('detailDrawer').classList.remove('open');
+}
+
+// ─── 删除 ───────────────────────────────────────────────────────
+function openDeleteModal(id) {
+  deleteRuleId = id;
+  const rule = RULES.find(r => r.id === id);
+  document.getElementById('deleteModalText').textContent = `确定要删除规则「${rule?.name}」吗？删除后不可恢复。`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteRuleId = null;
+}
+
+function confirmDelete() {
+  if (deleteRuleId !== null) {
+    const idx = RULES.findIndex(r => r.id === deleteRuleId);
+    if (idx !== -1) RULES.splice(idx, 1);
+    renderRules();
+    showToast('规则已删除');
+  }
+  closeDeleteModal();
+}
+
+// ─── 账户搜索 ────────────────────────────────────────────────────
+const selectedAccountIds = new Set();
+
+function showAccountDropdown() {
+  document.getElementById('accountDropdown').style.display = 'block';
+}
+
+function filterAccounts(val) {
+  const q = val.toLowerCase();
+  document.querySelectorAll('#accountDropdown .acc-option').forEach(opt => {
+    opt.style.display = opt.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+  document.getElementById('accountDropdown').style.display = 'block';
+}
+
+function toggleAccount(el) {
+  const id = el.dataset.id;
+  const check = el.querySelector('.acc-check');
+  if (id === '') {
+    // 全部账户
+    selectedAccountIds.clear();
+    document.querySelectorAll('#accountDropdown .acc-option').forEach(o => {
+      o.classList.remove('selected');
+      o.querySelector('.acc-check').textContent = '';
+    });
+    el.classList.add('selected');
+    check.textContent = '✓';
+  } else {
+    // 取消"全部账户"选中
+    const allOpt = document.querySelector('#accountDropdown .acc-option[data-id=""]');
+    if (allOpt) { allOpt.classList.remove('selected'); allOpt.querySelector('.acc-check').textContent = ''; }
+
+    if (selectedAccountIds.has(id)) {
+      selectedAccountIds.delete(id);
+      el.classList.remove('selected');
+      check.textContent = '';
+    } else {
+      selectedAccountIds.add(id);
+      el.classList.add('selected');
+      check.textContent = '✓';
+    }
+  }
+  renderSelectedAccounts();
+}
+
+function renderSelectedAccounts() {
+  const wrap = document.getElementById('selectedAccounts');
+  if (selectedAccountIds.size === 0) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = [...selectedAccountIds].map(id => {
+    const opt = document.querySelector(`#accountDropdown .acc-option[data-id="${id}"]`);
+    const name = opt ? opt.textContent.replace('✓','').trim().split(' ')[0] : id;
+    return `<span class="acc-selected-tag">${name} <span style="font-size:11px;color:#bfbfbf;">${id}</span><span onclick="removeAccount('${id}')">&times;</span></span>`;
+  }).join('');
+}
+
+function removeAccount(id) {
+  selectedAccountIds.delete(id);
+  const opt = document.querySelector(`#accountDropdown .acc-option[data-id="${id}"]`);
+  if (opt) { opt.classList.remove('selected'); opt.querySelector('.acc-check').textContent = ''; }
+  renderSelectedAccounts();
+}
+
+// 点击外部关闭下拉
+document.addEventListener('click', e => {
+  if (!e.target.closest('#accountSearch') && !e.target.closest('#accountDropdown')) {
+    const dd = document.getElementById('accountDropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+// ─── Toast ──────────────────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#262626;color:#fff;padding:10px 24px;border-radius:8px;font-size:13px;z-index:2000;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+}
+
+// ─── Init ───────────────────────────────────────────────────────
+renderRules();
+renderTriggerLogs();
+</script>
+</body>
+</html>
