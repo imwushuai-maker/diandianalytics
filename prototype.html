@@ -363,7 +363,7 @@
             <input type="text" placeholder="搜索事件名称 / 事件 ID">
             <select><option>全部状态</option><option>已上线</option><option>已停用</option></select>
             <select><option>全部分类</option><option>页面浏览</option><option>交互行为</option><option>业务转化</option></select>
-            <select id="appFilter"><option>全部 App</option><option>电商主站 App</option><option>买家助手小程序</option><option>商家管理后台</option></select>
+            <select id="appFilter"><option>全部 App</option><option>电商主站 App</option><option>买家助手小程序</option><option>商家管理后台</option><option>Home AI</option></select>
           </div>
           <div class="table-wrap">
             <table>
@@ -389,6 +389,27 @@
                 <tr><td>搜索商品</td><td style="font-family:monospace;color:#595959">search_product</td><td><span class="badge badge-blue">商家管理后台</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('搜索商品', 'search_product')">3</span></td><td>张伟</td><td>2026-03-12</td><td><span class="link" onclick="openEditModal('搜索商品','search_product','商家管理后台','交互行为','客户端','触发搜索时上报',['search_keyword','result_count'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
                 <tr><td>提交订单</td><td style="font-family:monospace;color:#595959">submit_order</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('提交订单', 'submit_order')">9</span></td><td>李明</td><td>2026-03-15</td><td><span class="link" onclick="openEditModal('提交订单','submit_order','电商主站 App','业务转化','服务端','提交订单成功后触发',['order_id','amount','item_count','product_category','coupon_type'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
                 <tr><td>旧版点击事件</td><td style="font-family:monospace;color:#595959">old_btn_click</td><td><span class="badge badge-purple">电商主站 App</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-gray">已停用</span></td><td><span style="color:#8c8c8c">2</span></td><td>陈刚</td><td>2025-12-01</td><td><span class="link" style="color:#8c8c8c">已停用</span></td></tr>
+                <!-- Home AI 事件 -->
+                <tr><td>应用启动</td><td style="font-family:monospace;color:#595959">app_start</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('应用启动', 'app_start')">3</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('应用启动','app_start','Home AI','交互行为','客户端','用户打开 App 时触发',['page_name','from_page','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>页面浏览</td><td style="font-family:monospace;color:#595959">page_view</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-orange">页面浏览</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('页面浏览', 'page_view')">3</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('页面浏览','page_view','Home AI','页面浏览','客户端','进入任意页面时触发',['page_name','from_page','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>创建项目</td><td style="font-family:monospace;color:#595959">project_create</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('创建项目', 'project_create')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('创建项目','project_create','Home AI','业务转化','客户端','新建家装设计项目时触发',['room_type','project_id','page_name','from_page'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>上传照片</td><td style="font-family:monospace;color:#595959">photo_upload</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('上传照片', 'photo_upload')">5</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('上传照片','photo_upload','Home AI','交互行为','客户端','上传房间照片或户型图时触发',['input_type','room_type','project_id','page_name','from_page'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>AI 生成发起</td><td style="font-family:monospace;color:#595959">ai_generate_start</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('AI 生成发起', 'ai_generate_start')">8</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('AI 生成发起','ai_generate_start','Home AI','业务转化','客户端','点击开始设计/生成按钮时触发',['design_style','room_type','input_type','is_regenerate','model_version','project_id','page_name','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>AI 生成完成</td><td style="font-family:monospace;color:#595959">ai_generate_complete</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('AI 生成完成', 'ai_generate_complete')">8</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('AI 生成完成','ai_generate_complete','Home AI','业务转化','服务端','AI 出图成功返回时触发',['design_style','room_type','generate_duration','model_version','design_index','project_id','page_name','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>AI 生成失败</td><td style="font-family:monospace;color:#595959">ai_generate_fail</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('AI 生成失败', 'ai_generate_fail')">5</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('AI 生成失败','ai_generate_fail','Home AI','业务转化','服务端','AI 出图失败时触发',['fail_reason','model_version','room_type','page_name','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>风格选择</td><td style="font-family:monospace;color:#595959">style_select</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('风格选择', 'style_select')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('风格选择','style_select','Home AI','交互行为','客户端','选择设计风格时触发',['design_style','project_id','page_name','from_page'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>房间类型选择</td><td style="font-family:monospace;color:#595959">room_type_select</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('房间类型选择', 'room_type_select')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('房间类型选择','room_type_select','Home AI','交互行为','客户端','选择房间类型时触发',['room_type','project_id','page_name','from_page'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>方案浏览</td><td style="font-family:monospace;color:#595959">design_view</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-orange">页面浏览</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('方案浏览', 'design_view')">5</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('方案浏览','design_view','Home AI','页面浏览','客户端','查看 AI 生成的设计方案时触发',['design_id','design_style','room_type','page_name','from_page'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>方案收藏</td><td style="font-family:monospace;color:#595959">design_favorite</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('方案收藏', 'design_favorite')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('方案收藏','design_favorite','Home AI','交互行为','客户端','收藏设计方案时触发',['design_id','design_style','room_type','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>方案下载</td><td style="font-family:monospace;color:#595959">design_download</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('方案下载', 'design_download')">5</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('方案下载','design_download','Home AI','交互行为','客户端','下载设计图时触发',['design_id','download_format','design_style','room_type','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>方案分享</td><td style="font-family:monospace;color:#595959">design_share</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('方案分享', 'design_share')">5</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('方案分享','design_share','Home AI','交互行为','客户端','分享设计方案到外部时触发',['design_id','share_channel','design_style','room_type','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>参数调整</td><td style="font-family:monospace;color:#595959">param_adjust</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('参数调整', 'param_adjust')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('参数调整','param_adjust','Home AI','交互行为','客户端','修改设计参数后重新生成时触发',['design_style','room_type','project_id','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>订阅页曝光</td><td style="font-family:monospace;color:#595959">paywall_view</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('订阅页曝光', 'paywall_view')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('订阅页曝光','paywall_view','Home AI','业务转化','客户端','进入订阅/付费页面时触发',['paywall_source','page_name','from_page','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>订阅发起</td><td style="font-family:monospace;color:#595959">purchase_start</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('订阅发起', 'purchase_start')">6</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('订阅发起','purchase_start','Home AI','业务转化','客户端','点击订阅/购买按钮时触发',['product_id','plan_type','price','currency','paywall_source','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>订阅成功</td><td style="font-family:monospace;color:#595959">purchase_complete</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('订阅成功', 'purchase_complete')">6</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('订阅成功','purchase_complete','Home AI','业务转化','服务端','支付成功回调时触发',['product_id','plan_type','price','currency','paywall_source','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>订阅恢复</td><td style="font-family:monospace;color:#595959">purchase_restore</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-blue">业务转化</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('订阅恢复', 'purchase_restore')">3</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('订阅恢复','purchase_restore','Home AI','业务转化','客户端','恢复购买时触发',['product_id','plan_type','page_name'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>引导页完成</td><td style="font-family:monospace;color:#595959">onboarding_complete</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('引导页完成', 'onboarding_complete')">3</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('引导页完成','onboarding_complete','Home AI','交互行为','客户端','完成新手引导流程时触发',['page_name','from_page','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
+                <tr><td>功能点击</td><td style="font-family:monospace;color:#595959">feature_click</td><td><span class="badge badge-green">Home AI</span></td><td><span class="badge badge-gray">交互行为</span></td><td><span class="badge badge-green">已上线</span></td><td><span class="link" onclick="openPropDrawer('功能点击', 'feature_click')">4</span></td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEditModal('功能点击','feature_click','Home AI','交互行为','客户端','点击功能入口时触发（通用兜底）',['page_name','from_page','ab_group'])">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">停用</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -423,6 +444,25 @@
                 <tr><td>是否首次购买</td><td style="font-family:monospace;color:#595959">is_first_purchase</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('是否首次购买','is_first_purchase','字符串','是,否','2','用户是否为首次完成购买行为')">2 个值</span></td><td>2</td><td>张伟</td><td>2026-03-10</td><td><span class="link" onclick="openEventPropModal('是否首次购买','is_first_purchase','字符串','是,否','2','用户是否为首次完成购买行为')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
                 <tr><td>优惠券类型</td><td style="font-family:monospace;color:#595959">coupon_type</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('优惠券类型','coupon_type','字符串','满减券,折扣券,免邮券,兑换券','2','使用的优惠券类型')">4 个值</span></td><td>2</td><td>李明</td><td>2026-03-15</td><td><span class="link" onclick="openEventPropModal('优惠券类型','coupon_type','字符串','满减券,折扣券,免邮券,兑换券','2','使用的优惠券类型')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
                 <tr><td>搜索关键词</td><td style="font-family:monospace;color:#595959">search_keyword</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>1</td><td>张伟</td><td>2026-03-18</td><td><span class="link" onclick="openEventPropModal('搜索关键词','search_keyword','字符串','','1','用户输入的搜索词')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <!-- Home AI 事件属性 -->
+                <tr><td>来源页面</td><td style="font-family:monospace;color:#595959">from_page</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>12</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('来源页面','from_page','字符串','','12','上一级页面名称')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>实验分组</td><td style="font-family:monospace;color:#595959">ab_group</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>8</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('实验分组','ab_group','字符串','','8','A/B 实验分组标识')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>设计风格</td><td style="font-family:monospace;color:#595959">design_style</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('设计风格','design_style','字符串','现代简约,北欧,日式,中式,美式,工业风,轻奢,法式,地中海,侘寂','6','')">10 个值</span></td><td>6</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('设计风格','design_style','字符串','现代简约,北欧,日式,中式,美式,工业风,轻奢,法式,地中海,侘寂','6','选择的家装设计风格')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>房间类型</td><td style="font-family:monospace;color:#595959">room_type</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('房间类型','room_type','字符串','客厅,卧室,厨房,卫生间,书房,阳台,餐厅,儿童房,玄关','8','')">9 个值</span></td><td>8</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('房间类型','room_type','字符串','客厅,卧室,厨房,卫生间,书房,阳台,餐厅,儿童房,玄关','8','设计的房间类型')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>生成耗时(ms)</td><td style="font-family:monospace;color:#595959">generate_duration</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('生成耗时(ms)','generate_duration','数字','','1','AI 生成设计图的耗时，单位毫秒')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>失败原因</td><td style="font-family:monospace;color:#595959">fail_reason</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('失败原因','fail_reason','字符串','超时,模型异常,图片不合规,参数错误,服务不可用','1','')">5 个值</span></td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('失败原因','fail_reason','字符串','超时,模型异常,图片不合规,参数错误,服务不可用','1','AI 生成失败的原因分类')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>生成模型</td><td style="font-family:monospace;color:#595959">model_version</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>3</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('生成模型','model_version','字符串','','3','AI 生成使用的模型版本标识')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>输入方式</td><td style="font-family:monospace;color:#595959">input_type</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('输入方式','input_type','字符串','拍照,相册,户型图,文字描述','2','')">4 个值</span></td><td>2</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('输入方式','input_type','字符串','拍照,相册,户型图,文字描述','2','用户上传房间照片的方式')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>是否重新生成</td><td style="font-family:monospace;color:#595959">is_regenerate</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('是否重新生成','is_regenerate','字符串','是,否','1','')">2 个值</span></td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('是否重新生成','is_regenerate','字符串','是,否','1','本次生成是否为重新生成操作')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>方案序号</td><td style="font-family:monospace;color:#595959">design_index</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('方案序号','design_index','数字','','1','多方案场景下的方案序号')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>项目 ID</td><td style="font-family:monospace;color:#595959">project_id</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>7</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('项目 ID','project_id','字符串','','7','家装设计项目的唯一标识')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>方案 ID</td><td style="font-family:monospace;color:#595959">design_id</td><td><span class="badge badge-gray">字符串</span></td><td>—</td><td>4</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('方案 ID','design_id','字符串','','4','AI 生成方案的唯一标识')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>分享渠道</td><td style="font-family:monospace;color:#595959">share_channel</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('分享渠道','share_channel','字符串','微信,朋友圈,小红书,保存图片','1','')">4 个值</span></td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('分享渠道','share_channel','字符串','微信,朋友圈,小红书,保存图片','1','分享设计方案到外部的渠道')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>下载格式</td><td style="font-family:monospace;color:#595959">download_format</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('下载格式','download_format','字符串','高清图,对比图,视频','1','')">3 个值</span></td><td>1</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('下载格式','download_format','字符串','高清图,对比图,视频','1','下载设计方案的文件格式')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>订阅套餐类型</td><td style="font-family:monospace;color:#595959">plan_type</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('订阅套餐类型','plan_type','字符串','周,月,年,终身','3','')">4 个值</span></td><td>3</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('订阅套餐类型','plan_type','字符串','周,月,年,终身','3','用户选择的订阅套餐周期')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>价格</td><td style="font-family:monospace;color:#595959">price</td><td><span class="badge badge-blue">数字</span></td><td>—</td><td>2</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('价格','price','数字','','2','实际支付金额')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>货币</td><td style="font-family:monospace;color:#595959">currency</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('货币','currency','字符串','CNY,USD','2','')">2 个值</span></td><td>2</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('货币','currency','字符串','CNY,USD','2','支付使用的货币类型')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
+                <tr><td>付费墙来源</td><td style="font-family:monospace;color:#595959">paywall_source</td><td><span class="badge badge-gray">字符串</span></td><td><span class="link" onclick="openEventPropModal('付费墙来源','paywall_source','字符串','AI生成限制,高清下载,去水印,风格解锁,设置页','3','')">5 个值</span></td><td>3</td><td>吴达帅</td><td>2026-04-15</td><td><span class="link" onclick="openEventPropModal('付费墙来源','paywall_source','字符串','AI生成限制,高清下载,去水印,风格解锁,设置页','3','触发付费墙的功能来源')">编辑</span> &nbsp; <span class="link" style="color:#ff4d4f">删除</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -511,6 +551,7 @@
                 <option value="电商主站 App">电商主站 App</option>
                 <option value="买家助手小程序">买家助手小程序</option>
                 <option value="商家管理后台">商家管理后台</option>
+                <option value="Home AI">Home AI</option>
               </select>
             </div>
             <div class="config-section">
@@ -650,6 +691,7 @@
                 <option value="电商主站 App">电商主站 App</option>
                 <option value="买家助手小程序">买家助手小程序</option>
                 <option value="商家管理后台">商家管理后台</option>
+                <option value="Home AI">Home AI</option>
               </select>
             </div>
 
@@ -890,6 +932,7 @@
                 <option>电商主站 App</option>
                 <option>买家助手小程序</option>
                 <option>商家管理后台</option>
+                <option>Home AI</option>
               </select>
             </div>
             <div class="config-section">
@@ -986,6 +1029,7 @@
                 <option>电商主站 App</option>
                 <option>买家助手小程序</option>
                 <option>商家管理后台</option>
+                <option>Home AI</option>
               </select>
             </div>
             <div class="config-section">
@@ -1098,6 +1142,7 @@
                 <option>电商主站 App</option>
                 <option>买家助手小程序</option>
                 <option>商家管理后台</option>
+                <option>Home AI</option>
               </select>
             </div>
             <div class="config-section">
@@ -1229,6 +1274,9 @@
         <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
           <input type="checkbox" value="商家管理后台" class="field-app-cb" onchange="syncFieldAppStyle()" style="accent-color:#1890ff"> 商家管理后台
         </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="Home AI" class="field-app-cb" onchange="syncFieldAppStyle()" style="accent-color:#1890ff"> Home AI
+        </label>
       </div>
       <div style="font-size:12px;color:#8c8c8c;margin-top:5px">App 列表从 AI 智能中台同步，如未找到请先在中台注册 App</div>
     </div>
@@ -1281,8 +1329,9 @@ const appEvents = {
   '电商主站 App':   ['用户注册', '完成支付', '加入购物车', '提交订单'],
   '买家助手小程序': ['浏览商品详情', '点击首页 Banner', '搜索商品'],
   '商家管理后台':   ['搜索商品'],
+  'Home AI':        ['应用启动', '页面浏览', '创建项目', '上传照片', 'AI 生成发起', 'AI 生成完成', 'AI 生成失败', '风格选择', '房间类型选择', '方案浏览', '方案收藏', '方案下载', '方案分享', '参数调整', '订阅页曝光', '订阅发起', '订阅成功', '订阅恢复', '引导页完成', '功能点击'],
 }
-const allAppEvents = ['用户注册', '完成支付', '加入购物车', '提交订单', '浏览商品详情', '点击首页 Banner', '搜索商品']
+const allAppEvents = ['用户注册', '完成支付', '加入购物车', '提交订单', '浏览商品详情', '点击首页 Banner', '搜索商品', '应用启动', '页面浏览', '创建项目', '上传照片', 'AI 生成发起', 'AI 生成完成', 'AI 生成失败', '风格选择', '房间类型选择', '方案浏览', '方案收藏', '方案下载', '方案分享', '参数调整', '订阅页曝光', '订阅发起', '订阅成功', '订阅恢复', '引导页完成', '功能点击']
 
 // ── 事件-属性映射 ──
 const eventAttrs = {
@@ -1293,6 +1342,26 @@ const eventAttrs = {
   '浏览商品详情':    ['商品ID (product_id)', '商品分类 (category)', '停留时长 (dwell_time)', '平台 (platform)'],
   '点击首页 Banner': ['Banner ID (banner_id)', 'Banner位置 (position)', '平台 (platform)'],
   '搜索商品':        ['搜索词 (keyword)', '结果数量 (result_count)', '平台 (platform)'],
+  '应用启动':        ['页面名称 (page_name)', '来源页面 (from_page)', '实验分组 (ab_group)'],
+  '页面浏览':        ['页面名称 (page_name)', '来源页面 (from_page)', '实验分组 (ab_group)'],
+  '创建项目':        ['房间类型 (room_type)', '项目ID (project_id)', '页面名称 (page_name)', '来源页面 (from_page)'],
+  '上传照片':        ['输入方式 (input_type)', '房间类型 (room_type)', '项目ID (project_id)', '页面名称 (page_name)', '来源页面 (from_page)'],
+  'AI 生成发起':     ['设计风格 (design_style)', '房间类型 (room_type)', '输入方式 (input_type)', '是否重新生成 (is_regenerate)', '生成模型 (model_version)', '项目ID (project_id)', '页面名称 (page_name)', '实验分组 (ab_group)'],
+  'AI 生成完成':     ['设计风格 (design_style)', '房间类型 (room_type)', '生成耗时 (generate_duration)', '生成模型 (model_version)', '方案序号 (design_index)', '项目ID (project_id)', '页面名称 (page_name)', '实验分组 (ab_group)'],
+  'AI 生成失败':     ['失败原因 (fail_reason)', '生成模型 (model_version)', '房间类型 (room_type)', '页面名称 (page_name)', '实验分组 (ab_group)'],
+  '风格选择':        ['设计风格 (design_style)', '项目ID (project_id)', '页面名称 (page_name)', '来源页面 (from_page)'],
+  '房间类型选择':    ['房间类型 (room_type)', '项目ID (project_id)', '页面名称 (page_name)', '来源页面 (from_page)'],
+  '方案浏览':        ['方案ID (design_id)', '设计风格 (design_style)', '房间类型 (room_type)', '页面名称 (page_name)', '来源页面 (from_page)'],
+  '方案收藏':        ['方案ID (design_id)', '设计风格 (design_style)', '房间类型 (room_type)', '页面名称 (page_name)'],
+  '方案下载':        ['方案ID (design_id)', '下载格式 (download_format)', '设计风格 (design_style)', '房间类型 (room_type)', '页面名称 (page_name)'],
+  '方案分享':        ['方案ID (design_id)', '分享渠道 (share_channel)', '设计风格 (design_style)', '房间类型 (room_type)', '页面名称 (page_name)'],
+  '参数调整':        ['设计风格 (design_style)', '房间类型 (room_type)', '项目ID (project_id)', '页面名称 (page_name)'],
+  '订阅页曝光':      ['付费墙来源 (paywall_source)', '页面名称 (page_name)', '来源页面 (from_page)', '实验分组 (ab_group)'],
+  '订阅发起':        ['商品ID (product_id)', '订阅套餐 (plan_type)', '价格 (price)', '货币 (currency)', '付费墙来源 (paywall_source)', '页面名称 (page_name)'],
+  '订阅成功':        ['商品ID (product_id)', '订阅套餐 (plan_type)', '价格 (price)', '货币 (currency)', '付费墙来源 (paywall_source)', '页面名称 (page_name)'],
+  '订阅恢复':        ['商品ID (product_id)', '订阅套餐 (plan_type)', '页面名称 (page_name)'],
+  '引导页完成':      ['页面名称 (page_name)', '来源页面 (from_page)', '实验分组 (ab_group)'],
+  '功能点击':        ['页面名称 (page_name)', '来源页面 (from_page)', '实验分组 (ab_group)'],
 }
 const userAttrOptions = ['注册时间 (register_time)', '首次渠道 (first_channel)', '用户分层 (user_segment)', '订阅状态 (subscription_status)', '订阅套餐 (subscription_plan)', '订阅到期时间 (subscription_expire_time)', '累计订阅次数 (total_subscription_count)', '累计消费金额 (total_revenue)', '是否曾付费 (is_ever_paid)', '试用开始时间 (trial_start_time)', '付款方式 (payment_method)', '取消订阅原因 (cancel_reason)']
 const dateAttrs = new Set(['注册时间 (register_time)', '首次访问时间 (first_visit_time)'])
@@ -2175,6 +2244,9 @@ renderDetailTable()
         </label>
         <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
           <input type="checkbox" value="商家管理后台" class="ep-app-cb" onchange="syncAllApps()" style="accent-color:#1890ff"> 商家管理后台
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff">
+          <input type="checkbox" value="Home AI" class="ep-app-cb" onchange="syncAllApps()" style="accent-color:#1890ff"> Home AI
         </label>
       </div>
     </div>

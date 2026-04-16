@@ -25,6 +25,8 @@
   .nav-item:hover { background: #1e3a5f; color: #fff; }
   .nav-item.active { background: #1890ff; color: #fff; }
   .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item.sub { padding-left:38px;font-size:12px;color:#6b8cae; }
+  .nav-item.sub::before { content:'·';margin-right:4px; }
 
   /* Topbar */
   .breadcrumb { color: #666; font-size: 13px; }
@@ -282,6 +284,21 @@
   .report-card { background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .2s; }
   .report-card:hover { box-shadow:0 2px 14px rgba(0,0,0,.08);border-color:#d9d9d9; }
   .report-finding { display:flex;align-items:flex-start;gap:7px;font-size:13px;color:#595959;margin-bottom:5px;line-height:1.5; }
+  .tl-item { display:flex;gap:14px;position:relative;padding-bottom:20px; }
+  .tl-item:last-child { padding-bottom:0; }
+  .tl-item::before { content:'';position:absolute;left:15px;top:28px;bottom:0;width:1px;background:#f0f0f0; }
+  .tl-item:last-child::before { display:none; }
+  .tl-dot { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px; }
+  .tl-dot.danger { background:#fff1f0;border:1px solid #ffa39e; }
+  .tl-dot.warn { background:#fff7e6;border:1px solid #ffd591; }
+  .tl-dot.ok { background:#f6ffed;border:1px solid #b7eb8f; }
+  .tl-dot.pause { background:#f5f5f5;border:1px solid #d9d9d9; }
+  .tl-body { flex:1;min-width:0; }
+  .tl-header { display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap; }
+  .tl-time { font-size:11px;color:#bfbfbf; }
+  .tl-desc { font-size:13px;color:#595959;line-height:1.6; }
+  .opt-tag { font-size:11px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;border-radius:10px;padding:1px 8px; }
+  .manual-actions { display:flex;gap:6px;margin-top:8px;align-items:center; }
 </style>
 
 <body>
@@ -302,22 +319,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         投放总览
       </div>
-      <div class="nav-item" onclick="openAdPlan('健康追踪_相似人群_C')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <div class="nav-item sub" onclick="openAdPlan('健康追踪_相似人群_C')">
         账户分析
+      </div>
+      <div class="nav-item" onclick="showPage('ad-intervene',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        计划监控
       </div>
       <div class="nav-item" onclick="showPage('ad-thresholds',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/></svg>
         阈值管理
-      </div>
-      <div class="nav-item" onclick="showPage('ad-alerts',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        预警中心
-        <span class="nav-badge">2</span>
-      </div>
-      <div class="nav-item" onclick="showPage('ad-reports',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        分析报告
       </div>
     </div>
   </div>
@@ -799,6 +810,107 @@
         </div>
       </div>
 
+      <!-- ===== 干预记录 ===== -->
+      <div class="page" id="page-ad-intervene">
+        <div class="page-header">
+          <div class="page-title">干预记录</div>
+          <div class="page-desc">所有拉空、暂停、恢复操作的完整时间线与 AI 决策依据</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+          <select class="form-select" style="width:130px" id="adHistOptFilter" onchange="adFilterHistory()">
+            <option value="">全部优化师</option>
+            <option value="张伟">张伟</option>
+            <option value="李娜">李娜</option>
+            <option value="王芳">王芳</option>
+          </select>
+          <select class="form-select" style="width:130px">
+            <option>全部产品</option>
+            <option>健康追踪仪</option>
+            <option>健康管家 Pro</option>
+            <option>运动助手</option>
+          </select>
+          <select class="form-select" style="width:130px">
+            <option>全部动作</option>
+            <option>拉空</option>
+            <option>暂停</option>
+            <option>恢复</option>
+          </select>
+          <input class="form-input" style="width:160px" placeholder="搜索计划 ID..." oninput="adFilterByPlanId(this.value)">
+          <select class="form-select" style="width:100px">
+            <option>今日</option>
+            <option>昨日</option>
+            <option>近7天</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="tl-item" data-opt="张伟">
+            <div class="tl-dot danger">⏸</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626"><span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span><span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span><strong>行为定向_E <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218765</span></strong></span>
+                <span class="opt-tag">张伟</span>
+                <span class="badge badge-danger">暂停计划</span>
+                <span class="tl-time">今日 14:45 · 人工确认</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥61（超阈值 74%）· 首日取订率 38%（超阈值 111%）<br>AI 判断趋势持续恶化，建议暂停 → 投放人员确认执行</div>
+              <div class="manual-actions"><span style="font-size:12px;color:#8c8c8c">手动干预：</span><button class="btn btn-default btn-sm" onclick="adManualIntervene(this,'pull','行为定向_E')">拉空</button><button class="btn btn-danger btn-sm" onclick="adManualIntervene(this,'pause','行为定向_E')">暂停</button><button class="btn btn-success btn-sm" onclick="adManualIntervene(this,'recover','行为定向_E')">恢复</button></div>
+            </div>
+          </div>
+          <div class="tl-item" data-opt="李娜">
+            <div class="tl-dot warn">⏳</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626"><span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span><span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span><strong>相似人群_C <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218801</span></strong></span>
+                <span class="opt-tag">李娜</span>
+                <span class="badge badge-warn">拉空时段</span>
+                <span class="tl-time">今日 14:45 · 人工确认 · 预计 18:00 复查</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥45（超阈值 28%）· AI 判断趋势可能转好 → 拉空 3 小时观察<br><span style="color:#722ed1">复查规则：18:00 若成本回落至 ≤¥35 → 自动恢复；否则升级暂停</span></div>
+              <div class="manual-actions"><span style="font-size:12px;color:#8c8c8c">手动干预：</span><button class="btn btn-default btn-sm" onclick="adManualIntervene(this,'pull','相似人群_C')">拉空</button><button class="btn btn-danger btn-sm" onclick="adManualIntervene(this,'pause','相似人群_C')">暂停</button><button class="btn btn-success btn-sm" onclick="adManualIntervene(this,'recover','相似人群_C')">恢复</button></div>
+            </div>
+          </div>
+          <div class="tl-item" data-opt="王芳">
+            <div class="tl-dot warn">⏳</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626"><span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span><span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span><strong>竞品用户_D <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218899</span></strong></span>
+                <span class="opt-tag">王芳</span>
+                <span class="badge badge-warn">拉空时段</span>
+                <span class="tl-time">今日 13:30 · 人工确认 · 预计 16:30 复查</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥41（超阈值 17%）· AI 判断下午可能转好 → 拉空 3 小时<br><span style="color:#722ed1">等待 16:30 复查</span></div>
+              <div class="manual-actions"><span style="font-size:12px;color:#8c8c8c">手动干预：</span><button class="btn btn-default btn-sm" onclick="adManualIntervene(this,'pull','竞品用户_D')">拉空</button><button class="btn btn-danger btn-sm" onclick="adManualIntervene(this,'pause','竞品用户_D')">暂停</button><button class="btn btn-success btn-sm" onclick="adManualIntervene(this,'recover','竞品用户_D')">恢复</button></div>
+            </div>
+          </div>
+          <div class="tl-item" data-opt="王芳">
+            <div class="tl-dot ok">✓</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626"><span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span><span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span><strong>宽泛兴趣_A <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218710</span></strong></span>
+                <span class="opt-tag">王芳</span>
+                <span class="badge badge-ok">自动恢复</span>
+                <span class="tl-time">今日 11:00 · 自动执行</span>
+              </div>
+              <div class="tl-desc">10:30 拉空，复查时订成成本从 ¥37 回落至 ¥31（正常区间）→ 自动恢复复投</div>
+              <div class="manual-actions"><span style="font-size:12px;color:#8c8c8c">手动干预：</span><button class="btn btn-default btn-sm" onclick="adManualIntervene(this,'pull','宽泛兴趣_A')">拉空</button><button class="btn btn-danger btn-sm" onclick="adManualIntervene(this,'pause','宽泛兴趣_A')">暂停</button><button class="btn btn-success btn-sm" onclick="adManualIntervene(this,'recover','宽泛兴趣_A')">恢复</button></div>
+            </div>
+          </div>
+          <div class="tl-item" data-opt="张伟">
+            <div class="tl-dot pause">⏸</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626"><span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span><span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span><strong>精准健康_B <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218733</span></strong></span>
+                <span class="opt-tag">张伟</span>
+                <span class="badge badge-gray">暂停 → 恢复</span>
+                <span class="tl-time">昨日 21:30 暂停 → 今日 09:15 人工恢复</span>
+              </div>
+              <div class="tl-desc">昨日晚间订成成本飙升至 ¥52（严重区间）· AI 判断恶化 → 暂停<br>今日早间扫描成本回落至 ¥28 → 投放人员手动恢复</div>
+              <div class="manual-actions"><span style="font-size:12px;color:#8c8c8c">手动干预：</span><button class="btn btn-default btn-sm" onclick="adManualIntervene(this,'pull','精准健康_B')">拉空</button><button class="btn btn-danger btn-sm" onclick="adManualIntervene(this,'pause','精准健康_B')">暂停</button><button class="btn btn-success btn-sm" onclick="adManualIntervene(this,'recover','精准健康_B')">恢复</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== 阈值管理 ===== -->
       <div class="page" id="page-ad-thresholds">
         <div class="page-header">
@@ -828,8 +940,8 @@
             <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">已绑定事件</div>
             <div id="thBoundEvents"></div>
 
-            <div style="margin-top:12px;font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">添加事件</div>
-            <div style="display:flex;gap:6px">
+            <div id="thAddArea" style="margin-top:12px;font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">添加事件</div>
+            <div id="thAddAreaInput" style="display:flex;gap:6px">
               <select id="thEventSelect" class="form-select" style="flex:1">
                 <option value="">选择事件...</option>
                 <option value="app_register">app_register（注册完成）</option>
@@ -842,7 +954,7 @@
               <button class="btn btn-primary btn-sm" onclick="addThEvent()">绑定</button>
             </div>
 
-            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+            <div id="thLogicArea" style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
               <div style="font-size:12px;font-weight:600;color:#8c8c8c;margin-bottom:8px;letter-spacing:.5px">有效用户判定逻辑</div>
               <div style="display:flex;gap:6px;margin-bottom:12px">
                 <span id="thLogicAnd" onclick="switchThLogic('and')" style="flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #1890ff;background:#e6f4ff;color:#1890ff;font-weight:500">全部满足（AND）</span>
@@ -983,6 +1095,21 @@
               </div>
             </div>
 
+            <!-- 计划消耗设定 -->
+            <div style="margin-bottom:20px;padding:14px;background:#f9f9f9;border:1px solid #f0f0f0;border-radius:8px">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+                计划消耗设定
+                <span style="font-size:11px;color:#8c8c8c;font-weight:400">消耗达到此值后，AI 才对该计划进行指标扫描</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;color:#8c8c8c">当日消耗 ≥</span>
+                <span style="font-size:13px;color:#8c8c8c">¥</span>
+                <input type="number" value="500" class="alert-th-input" style="width:80px;text-align:center" id="thMinSpend">
+                <span style="font-size:13px;color:#8c8c8c">时，纳入 AI 扫描</span>
+              </div>
+              <div style="font-size:12px;color:#bfbfbf;margin-top:6px">低于此消耗的计划将跳过本轮扫描，避免误判低量计划</div>
+            </div>
+
             <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveThresholds()">保存阈值配置</button>
           </div>
         </div>
@@ -1075,117 +1202,6 @@
         </div>
       </div>
 
-      <!-- ===== 分析报告 ===== -->
-      <div class="page" id="page-ad-reports">
-        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <div class="page-title">分析报告</div>
-            <div class="page-desc">Claude AI 生成的投放诊断报告，包含定时报告和告警触发报告</div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <select class="metric-select" style="width:120px"><option>全部类型</option><option>定时报告</option><option>告警报告</option></select>
-            <select class="metric-select" style="width:120px"><option>近7天</option><option>近30天</option></select>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-          <!-- 报告卡片 1 -->
-          <div class="report-card" onclick="openAdPlan('健康追踪_相似人群_C');setTimeout(triggerAIAnalysis,300)">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-10 14:15</span>
-              <span class="ad-badge-warn">告警触发</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">相似人群_C · 成本+取消率双预警</div>
-            <div class="report-finding">有效订阅成本 ¥45，超阈值 28.6%，主因晚间时段竞价激烈</div>
-            <div class="report-finding">首日取消率 28%，较历史均值偏高 9.8pp，晚间用户质量差</div>
-            <div class="report-finding">建议暂停 20:00-24:00 时段，预期成本下降至 ¥36</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">3 条建议 · 1 条风险预警</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-
-          <!-- 报告卡片 2 -->
-          <div class="report-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-10 12:30</span>
-              <span class="ad-badge-danger">告警触发</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">行为定向_E · 成本严重超标</div>
-            <div class="report-finding">有效订阅成本 ¥61，超阈值 74%，严重消耗预算</div>
-            <div class="report-finding">10分钟存活率仅 68%，远低于账户均值 75.7%</div>
-            <div class="report-finding">建议立即暂停或大幅降价，该计划投放效率最低</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">2 条建议 · 2 条风险预警</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-
-          <!-- 报告卡片 3 -->
-          <div class="report-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-10 09:00</span>
-              <span class="badge badge-blue">定时日报</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 今日投放早报</div>
-            <div class="report-finding">精准健康_B 表现最优（成本 ¥29），建议放量 20%</div>
-            <div class="report-finding">行为定向_E 成本连续2日偏高，需调整出价策略</div>
-            <div class="report-finding">整体有效订阅成本较上周上涨 12%，关注趋势</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 4 条建议</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-
-          <!-- 报告卡片 4 -->
-          <div class="report-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-09 09:00</span>
-              <span class="badge badge-blue">定时日报</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 昨日投放日报</div>
-            <div class="report-finding">行为定向_E 晚间成本飙升至 ¥58，较均值偏高 65%</div>
-            <div class="report-finding">账户整体首日取消率 18.6%，在合理区间内</div>
-            <div class="report-finding">宽泛兴趣_A 与精准健康_B 共同贡献了 61% 的有效订阅</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 3 条建议</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-
-          <!-- 报告卡片 5 -->
-          <div class="report-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-09 21:45</span>
-              <span class="ad-badge-warn">告警触发</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">行为定向_E · 昨晚成本异常</div>
-            <div class="report-finding">21:00-24:00 时段有效订阅成本 ¥78，为全天最高</div>
-            <div class="report-finding">该时段首日取消率高达 41%，获客质量极差</div>
-            <div class="report-finding">建议次日设置时段屏蔽：20:00-24:00</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">2 条建议 · 1 条风险预警</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-
-          <!-- 报告卡片 6 -->
-          <div class="report-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-size:12px;color:#8c8c8c">2026-04-08 09:00</span>
-              <span class="badge badge-blue">定时日报</span>
-            </div>
-            <div style="font-weight:600;font-size:14px;color:#262626;margin-bottom:10px">全账户 · 2026-04-08 日报</div>
-            <div class="report-finding">整体有效订阅成本 ¥31.8，接近近期最优水平</div>
-            <div class="report-finding">竞品用户_D 首日取消率下降至 19%，策略调整有效</div>
-            <div class="report-finding">建议维持当前出价策略，重点关注宽泛兴趣_A 放量空间</div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;display:flex;justify-content:space-between">
-              <span style="font-size:12px;color:#8c8c8c">5 个计划 · 2 条建议</span>
-              <span class="link" style="font-size:12px">查看完整分析 →</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -1200,9 +1216,32 @@
 const breadcrumbs = {
   'ad-overview': '投放管理 / <span>投放总览</span>',
   'ad-plan':     '投放管理 / <span>账户分析</span>',
+  'ad-intervene':  '投放管理 / <span>计划监控</span>',
   'ad-alerts':   '投放管理 / <span>预警中心</span>',
   'ad-thresholds':'投放管理 / <span>阈值管理</span>',
-  'ad-reports':  '投放管理 / <span>分析报告</span>',
+}
+function adFilterHistory() {
+  const opt = document.getElementById('adHistOptFilter').value
+  document.querySelectorAll('#page-ad-intervene .tl-item').forEach(item => {
+    item.style.display = (!opt || item.dataset.opt === opt) ? '' : 'none'
+  })
+}
+function adFilterByPlanId(val) {
+  const q = val.trim().toLowerCase()
+  document.querySelectorAll('#page-ad-intervene .tl-item').forEach(item => {
+    item.style.display = (!q || item.innerText.toLowerCase().includes(q)) ? '' : 'none'
+  })
+}
+function adManualIntervene(btn, action, planName) {
+  const item = btn.closest('.tl-item')
+  const labels = { pull: '手动拉空', pause: '手动暂停', recover: '手动恢复' }
+  btn.disabled = true
+  btn.textContent = '执行中...'
+  setTimeout(() => {
+    item.querySelector('.manual-actions').innerHTML =
+      `<span class="badge" style="background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9;text-decoration:line-through">已排除 AI 扫描</span>
+       <span style="font-size:12px;color:#8c8c8c;margin-left:6px">${labels[action]} · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} · 优化师手动操作，不再纳入自动扫描</span>`
+  }, 600)
 }
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
@@ -1926,8 +1965,14 @@ function switchThProduct(el, product) {
 function renderThBoundEvents() {
   const cfg = thProductConfig[currentThProduct]
   const wrap = document.getElementById('thBoundEvents')
+  const addArea = document.getElementById('thAddArea')
+  const logicArea = document.getElementById('thLogicArea')
   if (cfg.events.length === 0) {
     wrap.innerHTML = '<div style="font-size:12px;color:#bfbfbf;padding:8px 0">暂未绑定事件</div>'
+    if (addArea) addArea.style.display = ''
+    const addInput = document.getElementById('thAddAreaInput')
+    if (addInput) addInput.style.display = ''
+    if (logicArea) logicArea.style.display = 'none'
     return
   }
   wrap.innerHTML = cfg.events.map(e => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid #f0f0f0;border-radius:6px;margin-bottom:6px;background:#fafafa">
@@ -1937,6 +1982,10 @@ function renderThBoundEvents() {
     </div>
     <span onclick="removeThEvent('${e}')" style="cursor:pointer;color:#bfbfbf;font-size:16px;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='#ff4d4f';this.style.background='#fff1f0'" onmouseout="this.style.color='#bfbfbf';this.style.background='transparent'">&times;</span>
   </div>`).join('')
+  if (addArea) addArea.style.display = 'none'
+  const addInput = document.getElementById('thAddAreaInput')
+  if (addInput) addInput.style.display = 'none'
+  if (logicArea) logicArea.style.display = 'none'
 }
 
 function addThEvent() {
@@ -1944,8 +1993,7 @@ function addThEvent() {
   const val = sel.value
   if (!val) return
   const cfg = thProductConfig[currentThProduct]
-  if (cfg.events.includes(val)) { sel.value = ''; return }
-  cfg.events.push(val)
+  cfg.events = [val]
   sel.value = ''
   renderThBoundEvents()
 }

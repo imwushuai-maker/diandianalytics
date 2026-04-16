@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预警中心 - 智能投放管控</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+  /* Layout */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: #001529; flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 52px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; flex-shrink: 0; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Sidebar */
+  .logo { padding: 18px 20px; color: #fff; font-size: 16px; font-weight: 600; border-bottom: 1px solid #1e3a5f; letter-spacing: 1px; }
+  .logo span { color: #1890ff; }
+  .nav-group { padding: 12px 0; }
+  .nav-group-title { color: #6b8cae; font-size: 11px; padding: 6px 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #8fb3d4; cursor: pointer; transition: all .2s; font-size: 13px; text-decoration: none; }
+  .nav-item:hover { background: #1e3a5f; color: #fff; }
+  .nav-item.active { background: #1890ff; color: #fff; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-badge { background:#ff4d4f;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:auto;font-weight:600; }
+
+  /* Topbar */
+  .breadcrumb { color: #666; font-size: 13px; }
+  .breadcrumb span { color: #1890ff; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* Cards */
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 18px; font-weight: 600; color: #262626; }
+  .page-desc { color: #8c8c8c; font-size: 13px; margin-top: 4px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #f0f0f0; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #262626; display: flex; align-items: center; gap: 8px; }
+  .card-title .tag { font-size: 11px; font-weight: 400; background: #e6f4ff; color: #1890ff; padding: 2px 8px; border-radius: 10px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-family: inherit; transition: all .2s; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #fff; color: #595959; border: 1px solid #d9d9d9; }
+  .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { background:#fff;color:#ff4d4f;border:1px solid #ff4d4f; }
+  .btn-danger:hover { background:#fff1f0; }
+  .btn-success { background:#52c41a;color:#fff;border:none; }
+  .btn-success:hover { background:#73d13d; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+  .badge-ok { background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f; }
+  .badge-warn { background:#fff7e6;color:#d46b08;border:1px solid #ffd591; }
+  .badge-danger { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e; }
+  .badge-gray { background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9; }
+  .badge-blue { background:#e6f4ff;color:#1890ff;border:1px solid #91caff; }
+  .badge-purple { background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; background: #fafafa; color: #595959; font-weight: 500; border-bottom: 1px solid #f0f0f0; font-size: 13px; white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; color: #262626; font-size: 13px; }
+  tr:hover td { background: #fafffe; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+  .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: #595959; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab:hover { color: #1890ff; }
+  .tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 500; }
+
+  /* Chips */
+  .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid #d9d9d9; font-size: 12px; cursor: pointer; background: #fff; color: #595959; }
+  .chip.active { background: #1890ff; border-color: #1890ff; color: #fff; }
+
+  /* Toggle switch */
+  .toggle-wrap { display:flex;align-items:center;gap:10px; }
+  .toggle { width:40px;height:22px;border-radius:11px;background:#d9d9d9;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0; }
+  .toggle.on { background:#1890ff; }
+  .toggle::after { content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .toggle.on::after { left:20px; }
+
+  /* Scan status */
+  .scan-status { display:flex;align-items:center;gap:8px;font-size:13px; }
+  .scan-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+  .scan-dot.running { background:#52c41a;animation:pulse 1.5s infinite; }
+  .scan-dot.paused { background:#d9d9d9; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Timeline */
+  .tl-item { display:flex;gap:14px;position:relative;padding-bottom:20px; }
+  .tl-item:last-child { padding-bottom:0; }
+  .tl-item::before { content:'';position:absolute;left:15px;top:28px;bottom:0;width:1px;background:#f0f0f0; }
+  .tl-item:last-child::before { display:none; }
+  .tl-dot { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px; }
+  .tl-dot.danger { background:#fff1f0;border:1px solid #ffa39e; }
+  .tl-dot.warn { background:#fff7e6;border:1px solid #ffd591; }
+  .tl-dot.ok { background:#f6ffed;border:1px solid #b7eb8f; }
+  .tl-dot.ai { background:#f0f5ff;border:1px solid #adc6ff; }
+  .tl-dot.pause { background:#f5f5f5;border:1px solid #d9d9d9; }
+  .tl-body { flex:1;min-width:0; }
+  .tl-header { display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap; }
+  .tl-time { font-size:11px;color:#bfbfbf; }
+  .tl-desc { font-size:13px;color:#595959;line-height:1.6; }
+
+  /* AI card */
+  .ai-card { background:linear-gradient(135deg,#f0f5ff 0%,#fff 60%);border:1px solid #adc6ff;border-radius:10px;padding:16px;margin-top:8px; }
+  .ai-verdict { display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:8px; }
+  .ai-detail { font-size:12px;color:#595959;line-height:1.6; }
+  .ai-action { margin-top:10px;padding:10px 12px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:8px; }
+  .ai-action.pull { background:#fff7e6;border:1px solid #ffd591;color:#d46b08; }
+  .ai-action.stop { background:#fff1f0;border:1px solid #ffa39e;color:#cf1322; }
+  .ai-action.recover { background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d; }
+
+  /* Scan panel */
+  .scan-card { border-radius:8px;padding:14px 16px;margin-bottom:8px;border:1px solid #f0f0f0;background:#fff; }
+  .scan-card.warn { border-left:3px solid #faad14; }
+  .scan-card.danger { border-left:3px solid #ff4d4f; }
+  .scan-card.pulled { border-left:3px solid #722ed1;background:#fafafa; }
+  .scan-card.paused { border-left:3px solid #8c8c8c;background:#fafafa; }
+
+  /* Form */
+  .form-select { width:100%;padding:7px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;background:#fff;outline:none; }
+  .form-input { width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;outline:none;font-family:inherit; }
+  .form-input:focus,.form-select:focus { border-color:#1890ff; }
+
+  /* Stat row */
+  .stat-mini { text-align:center; }
+  .stat-mini-label { font-size:11px;color:#8c8c8c;margin-bottom:4px; }
+  .stat-mini-val { font-size:18px;font-weight:700; }
+
+  .badge-excluded { background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9;text-decoration:line-through; }
+  .manual-actions { display:flex;gap:6px;margin-top:8px;align-items:center; }
+  .opt-tag { font-size:11px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;border-radius:10px;padding:1px 8px; }
+  .ai-loading-spinner { display:inline-block;width:14px;height:14px;border:2px solid #e8e8e8;border-top-color:#1890ff;border-radius:50%;animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+
+  /* 账户健康度条 */
+  .health-bar { display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:6px; }
+  .health-bar div { transition:flex .3s; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">AI 智能<span>中台</span></div>
+    <div style="padding:0 12px 12px">
+      <a href="ad.html" class="nav-item" style="border:1px solid #1e3a5f;border-radius:4px;padding:6px 8px;font-size:12px;margin:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回投放管理
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">预警中心</div>
+      <a href="#" class="nav-item active" onclick="showTab('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        干预记录
+      </a>
+      <a href="#" class="nav-item" onclick="showTab('config')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        扫描配置
+      </a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">预警中心 / <span id="tabTitle">干预记录</span></div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="scan-status">
+          <span class="scan-dot running" id="scanDot"></span>
+          <span id="scanStatusText">扫描运行中 · 间隔 3 分钟</span>
+        </div>
+        <div style="color:#8c8c8c;font-size:13px">最后扫描：<span id="lastScanTime">14:42</span></div>
+        <div class="avatar">PM</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ========== 干预记录 ========== -->
+      <div id="tab-history">
+        <div class="page-header">
+          <div class="page-title">干预记录</div>
+          <div class="page-desc">所有拉空、暂停、恢复操作的完整时间线与 AI 决策依据</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+          <select class="form-select" style="width:130px" id="histOptFilter" onchange="filterHistory()">
+            <option value="">全部优化师</option>
+            <option value="张伟">张伟</option>
+            <option value="李娜">李娜</option>
+            <option value="王芳">王芳</option>
+          </select>
+          <select class="form-select" style="width:130px">
+            <option>全部产品</option>
+            <option>健康追踪仪</option>
+            <option>健康管家 Pro</option>
+            <option>运动助手</option>
+          </select>
+          <select class="form-select" style="width:130px">
+            <option>全部动作</option>
+            <option>拉空</option>
+            <option>暂停</option>
+            <option>恢复</option>
+          </select>
+          <input class="form-input" style="width:160px" placeholder="搜索计划 ID..." oninput="filterByPlanId(this.value)">
+          <select class="form-select" style="width:100px">
+            <option>今日</option>
+            <option>昨日</option>
+            <option>近7天</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <!-- 时间线 -->
+          <div id="tlList">
+          <div class="tl-item" data-opt="张伟">
+            <div class="tl-dot danger">⏸</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626">
+                  <span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <strong>行为定向_E <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218765</span></strong>
+                </span>
+                <span class="opt-tag">张伟</span>
+                <span class="badge badge-danger">暂停计划</span>
+                <span class="tl-time">今日 14:45 · 人工确认</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥61（超阈值 74%）· 首日取订率 38%（超阈值 111%）<br>AI 判断趋势持续恶化，建议暂停 → 投放人员确认执行</div>
+              <div class="manual-actions">
+                <span style="font-size:12px;color:#8c8c8c">手动干预：</span>
+                <button class="btn btn-default btn-sm" onclick="manualIntervene(this,'pull','行为定向_E')">拉空</button>
+                <button class="btn btn-danger btn-sm" onclick="manualIntervene(this,'pause','行为定向_E')">暂停</button>
+                <button class="btn btn-success btn-sm" onclick="manualIntervene(this,'recover','行为定向_E')">恢复</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item" data-opt="李娜">
+            <div class="tl-dot warn">⏳</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626">
+                  <span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <strong>相似人群_C <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218801</span></strong>
+                </span>
+                <span class="opt-tag">李娜</span>
+                <span class="badge badge-warn">拉空时段</span>
+                <span class="tl-time">今日 14:45 · 人工确认 · 预计 18:00 复查</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥45（超阈值 28%）· AI 判断趋势可能转好 → 拉空 3 小时观察<br><span style="color:#722ed1">复查规则：18:00 若成本回落至 ≤¥35（正常区间）→ 自动恢复；否则升级暂停</span></div>
+              <div class="manual-actions">
+                <span style="font-size:12px;color:#8c8c8c">手动干预：</span>
+                <button class="btn btn-default btn-sm" onclick="manualIntervene(this,'pull','相似人群_C')">拉空</button>
+                <button class="btn btn-danger btn-sm" onclick="manualIntervene(this,'pause','相似人群_C')">暂停</button>
+                <button class="btn btn-success btn-sm" onclick="manualIntervene(this,'recover','相似人群_C')">恢复</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item" data-opt="王芳">
+            <div class="tl-dot warn">⏳</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626">
+                  <span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <strong>竞品用户_D <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218899</span></strong>
+                </span>
+                <span class="opt-tag">王芳</span>
+                <span class="badge badge-warn">拉空时段</span>
+                <span class="tl-time">今日 13:30 · 人工确认 · 预计 16:30 复查</span>
+              </div>
+              <div class="tl-desc">订成成本 ¥41（超阈值 17%）· AI 判断下午可能转好 → 拉空 3 小时<br><span style="color:#722ed1">等待 16:30 复查</span></div>
+              <div class="manual-actions">
+                <span style="font-size:12px;color:#8c8c8c">手动干预：</span>
+                <button class="btn btn-default btn-sm" onclick="manualIntervene(this,'pull','竞品用户_D')">拉空</button>
+                <button class="btn btn-danger btn-sm" onclick="manualIntervene(this,'pause','竞品用户_D')">暂停</button>
+                <button class="btn btn-success btn-sm" onclick="manualIntervene(this,'recover','竞品用户_D')">恢复</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item" data-opt="王芳">
+            <div class="tl-dot ok">✓</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626">
+                  <span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <strong>宽泛兴趣_A <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218710</span></strong>
+                </span>
+                <span class="opt-tag">王芳</span>
+                <span class="badge badge-ok">自动恢复</span>
+                <span class="tl-time">今日 11:00 · 自动执行</span>
+              </div>
+              <div class="tl-desc">10:30 拉空，复查时订成成本从 ¥37 回落至 ¥31（正常区间）→ 自动恢复复投<br><span style="color:#389e0d">状态标记：持续关注中</span></div>
+              <div class="manual-actions">
+                <span style="font-size:12px;color:#8c8c8c">手动干预：</span>
+                <button class="btn btn-default btn-sm" onclick="manualIntervene(this,'pull','宽泛兴趣_A')">拉空</button>
+                <button class="btn btn-danger btn-sm" onclick="manualIntervene(this,'pause','宽泛兴趣_A')">暂停</button>
+                <button class="btn btn-success btn-sm" onclick="manualIntervene(this,'recover','宽泛兴趣_A')">恢复</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item" data-opt="张伟">
+            <div class="tl-dot pause">⏸</div>
+            <div class="tl-body">
+              <div class="tl-header">
+                <span style="font-size:13px;color:#262626">
+                  <span style="color:#8c8c8c">健康追踪仪</span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <span>广州悦动 <span style="color:#bfbfbf;font-size:11px">ID:1892376</span></span><span style="color:#d9d9d9;margin:0 4px">/</span>
+                  <strong>精准健康_B <span style="color:#bfbfbf;font-size:11px;font-weight:400">ID:40218733</span></strong>
+                </span>
+                <span class="opt-tag">张伟</span>
+                <span class="badge badge-gray">暂停 → 恢复</span>
+                <span class="tl-time">昨日 21:30 暂停 → 今日 09:15 人工恢复</span>
+              </div>
+              <div class="tl-desc">昨日晚间订成成本飙升至 ¥52（严重区间）· AI 判断恶化 → 暂停<br>今日早间扫描成本回落至 ¥28 → 投放人员手动恢复</div>
+              <div class="manual-actions">
+                <span style="font-size:12px;color:#8c8c8c">手动干预：</span>
+                <button class="btn btn-default btn-sm" onclick="manualIntervene(this,'pull','精准健康_B')">拉空</button>
+                <button class="btn btn-danger btn-sm" onclick="manualIntervene(this,'pause','精准健康_B')">暂停</button>
+                <button class="btn btn-success btn-sm" onclick="manualIntervene(this,'recover','精准健康_B')">恢复</button>
+              </div>
+            </div>
+          </div>
+          </div><!-- /tlList -->
+          <!-- 翻页 -->
+          <div id="tlPager" style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid #f5f5f5;margin-top:4px">
+            <span id="tlPageInfo" style="font-size:12px;color:#8c8c8c"></span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-default btn-sm" id="tlPrev" onclick="tlChangePage(-1)">上一页</button>
+              <button class="btn btn-default btn-sm" id="tlNext" onclick="tlChangePage(1)">下一页</button>
+            </div>
+          </div>
+        </div>
+
+        </div>
+      </div>
+      <div id="tab-config" style="display:none">
+        <div class="page-header">
+          <div class="page-title">扫描配置</div>
+          <div class="page-desc">配置扫描频率、干预规则与自动化授权</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- 扫描参数 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              扫描参数
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">扫描开关</div>
+                <div style="font-size:12px;color:#8c8c8c">开启后系统自动定时扫描所有计划</div>
+              </div>
+              <div class="toggle on" id="scanToggle" onclick="toggleScan()"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">扫描间隔</div>
+                <div style="font-size:12px;color:#8c8c8c">建议 3-5 分钟</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" value="3" class="form-input" style="width:60px;text-align:center;padding:5px 8px">
+                <span style="font-size:13px;color:#8c8c8c">分钟</span>
+              </div>
+            </div>
+
+            <div style="padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div style="font-size:13px;font-weight:500;margin-bottom:10px">扫描范围</div>
+              <table style="width:100%;border-collapse:collapse;border:1px solid #f0f0f0;border-radius:6px;overflow:hidden">
+                <thead>
+                  <tr style="background:#fafafa">
+                    <th style="padding:6px 12px;font-size:11px;color:#8c8c8c;font-weight:400;text-align:left;border-bottom:1px solid #f0f0f0">产品</th>
+                    <th style="padding:6px 12px;font-size:11px;color:#8c8c8c;font-weight:400;text-align:center;width:110px;border-bottom:1px solid #f0f0f0">消耗阈值（¥）</th>
+                    <th style="padding:6px 12px;font-size:11px;color:#8c8c8c;font-weight:400;text-align:center;width:56px;border-bottom:1px solid #f0f0f0">扫描</th>
+                  </tr>
+                </thead>
+                <tbody id="scanRangeBody">
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">健康追踪仪</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">健康管家 Pro</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">运动助手</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">睡眠监测仪</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">体脂秤 Pro</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">心率手环</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">血压计智能版</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">营养管理App</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:7px 12px;font-size:13px">康复训练仪</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                  <tr><td style="padding:7px 12px;font-size:13px">儿童健康手表</td><td style="padding:7px 12px;text-align:center"><input type="number" value="500" class="form-input" style="width:80px;text-align:center;padding:4px 6px"></td><td style="padding:7px 12px;text-align:center"><div class="toggle on" style="margin:0 auto" onclick="this.classList.toggle('on')"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">拉空复查间隔</div>
+                <div style="font-size:12px;color:#8c8c8c">拉空后多久进行一次复查</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" value="30" class="form-input" style="width:60px;text-align:center;padding:5px 8px">
+                <span style="font-size:13px;color:#8c8c8c">分钟</span>
+              </div>
+            </div>
+
+            <div style="padding:14px 0 2px;display:flex;justify-content:flex-end;gap:8px" id="scanParamActions">
+              <button class="btn btn-default btn-sm" onclick="resetScanParams()">重置</button>
+              <button class="btn btn-primary btn-sm" onclick="saveScanParams(this)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>
+                保存配置
+              </button>
+            </div>
+          </div>
+
+          <!-- 自动化授权 -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              自动化授权
+            </div>
+            <div style="font-size:12px;color:#8c8c8c;margin-bottom:16px;background:#fff7e6;border:1px solid #ffd591;border-radius:6px;padding:8px 10px;line-height:1.5">
+              <strong>阶段一（当前）</strong>：AI 分析 + 推送建议 → 人工确认执行<br>
+              <strong>阶段二</strong>：开启自动执行后，AI 可直接拉空/暂停/恢复，事后通知
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">AI 自动拉空</div>
+                <div style="font-size:12px;color:#8c8c8c">趋势可能转好时，AI 自动拉空时段</div>
+              </div>
+              <div class="toggle" id="autoActionPull" onclick="this.classList.toggle('on')"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">AI 自动暂停</div>
+                <div style="font-size:12px;color:#8c8c8c">趋势恶化时，AI 自动暂停计划</div>
+              </div>
+              <div class="toggle" id="autoActionPause" onclick="this.classList.toggle('on')"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5">
+              <div>
+                <div style="font-size:13px;font-weight:500">AI 自动恢复</div>
+                <div style="font-size:12px;color:#8c8c8c">成本回落至正常区间时自动恢复复投</div>
+              </div>
+              <div class="toggle on" id="autoActionRecover" onclick="this.classList.toggle('on')"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+              <div>
+                <div style="font-size:13px;font-weight:500">通知方式</div>
+                <div style="font-size:12px;color:#8c8c8c">干预动作执行后的通知渠道</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <span class="chip active" style="font-size:11px;padding:3px 10px">飞书消息</span>
+                <span class="chip" style="font-size:11px;padding:3px 10px">邮件</span>
+                <span class="chip active" style="font-size:11px;padding:3px 10px">站内通知</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 双层判定规则说明 -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            双层判定规则
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>账户状态</th>
+                  <th>计划状态</th>
+                  <th>系统动作</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-ok">正常</span></td>
+                  <td><span class="badge badge-ok">正常</span></td>
+                  <td style="color:#389e0d">无动作</td>
+                  <td style="color:#8c8c8c">一切正常，继续投放</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-ok">正常</span></td>
+                  <td><span class="badge badge-warn">警告</span></td>
+                  <td style="color:#d46b08">观察 + AI 分析</td>
+                  <td style="color:#8c8c8c">账户整体健康，单计划轻微超标可容忍</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-ok">正常</span></td>
+                  <td><span class="badge badge-danger">严重</span></td>
+                  <td style="color:#cf1322">AI 分析 → 干预</td>
+                  <td style="color:#8c8c8c">单计划严重超标，需 AI 判断拉空或暂停</td>
+                </tr>
+                <tr style="background:#fff7e6">
+                  <td><span class="badge badge-warn">警告</span></td>
+                  <td><span class="badge badge-warn">警告</span></td>
+                  <td style="color:#cf1322;font-weight:600">AI 分析 → 干预</td>
+                  <td style="color:#8c8c8c">账户已承压，计划超标即需干预</td>
+                </tr>
+                <tr style="background:#fff7e6">
+                  <td><span class="badge badge-warn">警告</span></td>
+                  <td><span class="badge badge-danger">严重</span></td>
+                  <td style="color:#cf1322;font-weight:600">直接干预</td>
+                  <td style="color:#8c8c8c">高优先级处理，AI 快速判断后执行</td>
+                </tr>
+                <tr style="background:#fff1f0">
+                  <td><span class="badge badge-danger">严重</span></td>
+                  <td>任意超标</td>
+                  <td style="color:#cf1322;font-weight:700">直接干预</td>
+                  <td style="color:#8c8c8c">零容忍，立即拉空或暂停</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-primary" onclick="saveConfig(this)">保存配置</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// 干预记录分页
+let tlPage = 0
+const TL_PAGE_SIZE = 20
+
+function tlRender() {
+  const list = document.getElementById('tlList')
+  const items = Array.from(list.querySelectorAll('.tl-item'))
+  // 按 data-ts 倒序（无则保持原顺序）
+  items.sort((a, b) => (b.dataset.ts || 0) - (a.dataset.ts || 0))
+  const total = items.length
+  const totalPages = Math.max(1, Math.ceil(total / TL_PAGE_SIZE))
+  tlPage = Math.min(tlPage, totalPages - 1)
+  items.forEach((el, i) => {
+    el.style.display = (i >= tlPage * TL_PAGE_SIZE && i < (tlPage + 1) * TL_PAGE_SIZE) ? '' : 'none'
+  })
+  document.getElementById('tlPageInfo').textContent =
+    `共 ${total} 条 · 第 ${tlPage + 1} / ${totalPages} 页`
+  document.getElementById('tlPrev').disabled = tlPage === 0
+  document.getElementById('tlNext').disabled = tlPage >= totalPages - 1
+  document.getElementById('tlPager').style.display = total > TL_PAGE_SIZE ? 'flex' : 'none'
+}
+
+function tlChangePage(dir) {
+  tlPage += dir
+  tlRender()
+}
+
+// 5 分钟自动刷新（仅刷新干预记录 tab 的分页状态，不重载页面）
+setInterval(() => {
+  const lastEl = document.getElementById('lastScanTime')
+  if (lastEl) {
+    const now = new Date()
+    lastEl.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0')
+  }
+  tlPage = 0
+  tlRender()
+}, 5 * 60 * 1000)
+
+// 初始化
+tlRender()
+
+// Tab 切换
+function showTab(tab) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none')
+  document.getElementById('tab-' + tab).style.display = 'block'
+  document.querySelectorAll('.nav-group .nav-item').forEach(el => el.classList.remove('active'))
+  event.currentTarget.classList.add('active')
+  const titles = { history: '干预记录', config: '扫描配置' }
+  document.getElementById('tabTitle').textContent = titles[tab] || tab
+}
+
+// 扫描开关
+function toggleScan() {
+  const t = document.getElementById('scanToggle')
+  t.classList.toggle('on')
+  const dot = document.getElementById('scanDot')
+  const text = document.getElementById('scanStatusText')
+  if (t.classList.contains('on')) {
+    dot.className = 'scan-dot running'
+    text.textContent = '扫描运行中 · 间隔 3 分钟'
+  } else {
+    dot.className = 'scan-dot paused'
+    text.textContent = '扫描已暂停'
+  }
+}
+
+// 执行干预动作
+function execAction(btn, action, planName) {
+  const card = btn.closest('.scan-card')
+  const labels = { pause: '暂停', pull: '拉空', recover: '恢复' }
+
+  btn.disabled = true
+  btn.textContent = '执行中...'
+
+  setTimeout(() => {
+    if (action === 'pause') {
+      card.className = 'scan-card paused'
+      card.dataset.status = 'paused'
+      card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="badge badge-gray">已暂停</span>
+            <span style="font-weight:500;font-size:13px">健康追踪_${planName}</span>
+            <span style="font-size:11px;color:#bfbfbf">${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} 执行</span>
+          </div>
+          <div style="font-size:12px;color:#8c8c8c">AI 判断趋势恶化 → 已暂停 · 待成本回落至正常区间后可恢复</div>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="execAction(this,'recover','${planName}')">手动恢复</button>
+      </div>`
+    } else if (action === 'pull') {
+      card.className = 'scan-card pulled'
+      card.dataset.status = 'pulled'
+      const recoverTime = new Date(Date.now() + 3*3600*1000)
+      const recoverStr = recoverTime.getHours().toString().padStart(2,'0') + ':' + recoverTime.getMinutes().toString().padStart(2,'0')
+      card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="badge badge-purple">已拉空</span>
+            <span style="font-weight:500;font-size:13px">健康追踪_${planName}</span>
+            <span style="font-size:11px;color:#bfbfbf">${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} 拉空 → 预计 ${recoverStr} 复查</span>
+          </div>
+          <div style="font-size:12px;color:#8c8c8c">AI 判断趋势可能转好 → 拉空 3 小时等待复查</div>
+          <div style="font-size:12px;color:#722ed1;margin-top:4px">若成本回落至正常区间将自动恢复</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-success btn-sm" onclick="execAction(this,'recover','${planName}')">手动恢复</button>
+          <button class="btn btn-danger btn-sm" onclick="execAction(this,'pause','${planName}')">升级暂停</button>
+        </div>
+      </div>`
+    } else if (action === 'recover') {
+      card.className = 'scan-card'
+      card.dataset.status = 'ok'
+      card.style.borderLeft = '3px solid #52c41a'
+      card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-ok">已恢复</span>
+          <span style="font-weight:500;font-size:13px">健康追踪_${planName}</span>
+          <span style="font-size:12px;color:#389e0d">已恢复复投 · 持续关注中</span>
+        </div>
+        <span style="font-size:12px;color:#8c8c8c">${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} 恢复</span>
+      </div>`
+    }
+  }, 800)
+}
+
+function saveConfig(btn) {
+  btn.textContent = '保存中...'
+  btn.disabled = true
+  setTimeout(() => {
+    btn.textContent = '已保存'
+    btn.style.background = '#52c41a'
+    setTimeout(() => {
+      btn.textContent = '保存配置'
+      btn.style.background = ''
+      btn.disabled = false
+    }, 2000)
+  }, 600)
+}
+
+function filterByPlanId(val) {
+  const q = val.trim().toLowerCase()
+  document.querySelectorAll('#tab-history .tl-item').forEach(item => {
+    const text = item.innerText.toLowerCase()
+    item.style.display = (!q || text.includes(q)) ? '' : 'none'
+  })
+}
+
+function filterHistory() {
+  const opt = document.getElementById('histOptFilter').value
+  document.querySelectorAll('#tab-history .tl-item').forEach(item => {
+    item.style.display = (!opt || item.dataset.opt === opt) ? '' : 'none'
+  })
+}
+
+function manualIntervene(btn, action, planName) {
+  const item = btn.closest('.tl-item')
+  const labels = { pull: '手动拉空', pause: '手动暂停', recover: '手动恢复' }
+  btn.disabled = true
+  btn.textContent = '执行中...'
+  setTimeout(() => {
+    item.querySelector('.manual-actions').innerHTML =
+      `<span class="badge badge-excluded">已排除 AI 扫描</span>
+       <span style="font-size:12px;color:#8c8c8c;margin-left:6px">${labels[action]} · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} · 优化师手动操作，不再纳入自动扫描</span>`
+  }, 600)
+}
+
+// 保存扫描参数
+function saveScanParams(btn) {
+  const origText = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<span class="ai-loading-spinner" style="width:12px;height:12px;border-width:1.5px"></span> 保存中...'
+  setTimeout(() => {
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> 已保存'
+    btn.style.background = '#52c41a'
+    setTimeout(() => {
+      btn.innerHTML = origText
+      btn.style.background = ''
+      btn.disabled = false
+    }, 2000)
+  }, 600)
+}
+
+// 重置扫描参数
+function resetScanParams() {
+  const card = document.getElementById('scanParamActions').closest('.card')
+  card.querySelectorAll('input[type="number"]').forEach(input => {
+    if (input.style.width === '60px') input.value = input.closest('[style*="border-bottom"]') ? 3 : 30
+    if (input.style.width === '80px') input.value = 500
+  })
+  card.querySelectorAll('.toggle').forEach(t => { if (!t.id) t.classList.add('on') })
+  document.getElementById('scanToggle').classList.add('on')
+  toggleScan()
+}
+</script>
+</body>
+</html>
