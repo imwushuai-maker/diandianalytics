@@ -1450,95 +1450,6 @@
         </div>
       </div>
 
-      <!-- 新建/编辑策略抽屉 -->
-      <div class="drawer-overlay" id="strategyDrawerOverlay" onclick="closeStrategyDrawer()"></div>
-      <div class="drawer" id="strategyDrawer" style="width:480px;right:-480px">
-        <div class="drawer-header">
-          <div class="drawer-title" id="strategyDrawerTitle">新建策略</div>
-          <div class="drawer-close" onclick="closeStrategyDrawer()">×</div>
-        </div>
-        <div class="drawer-body">
-          <div class="form-row">
-            <label class="form-label required">产品</label>
-            <select class="form-select" id="sdProduct">
-              <option value="">请选择产品</option>
-              <option value="健康追踪仪">健康追踪仪</option>
-              <option value="健康管家Pro">健康管家 Pro</option>
-              <option value="运动助手">运动助手</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label class="form-label required">渠道</label>
-            <select class="form-select" id="sdChannel">
-              <option value="">请选择渠道</option>
-              <option value="巨量">巨量</option>
-              <option value="快手">快手</option>
-              <option value="广点通">广点通</option>
-              <option value="OPPO">OPPO</option>
-              <option value="vivo">vivo</option>
-              <option value="小米">小米</option>
-              <option value="华为">华为</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label class="form-label required">作用范围</label>
-            <div style="display:flex;gap:8px;margin-bottom:8px">
-              <div class="strategy-scope-btn active" id="sdScopeGlobal" onclick="setSdScope('global')">全局（默认）</div>
-              <div class="strategy-scope-btn" id="sdScopeAccount" onclick="setSdScope('account')">指定账户</div>
-            </div>
-            <div id="sdAccountPanel" style="display:none">
-              <div style="display:flex;gap:6px">
-                <input class="form-input" id="sdAccountInput" placeholder="输入账户 ID，回车添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addSdAccount()}">
-                <button class="btn btn-primary btn-sm" onclick="addSdAccount()">添加</button>
-              </div>
-              <div id="sdAccountTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label class="form-label required" style="display:flex;align-items:center;justify-content:space-between">
-              关键行为事件
-              <span style="display:flex;gap:0;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;font-weight:400">
-                <span id="sdRelAnd" onclick="setSdRel('and')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#1890ff;color:#fff">AND</span>
-                <span id="sdRelOr" onclick="setSdRel('or')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#fff;color:#595959">OR</span>
-              </span>
-            </label>
-            <div style="display:flex;gap:6px;margin-bottom:8px">
-              <select class="form-select" id="sdEventSelect" style="flex:1">
-                <option value="">选择打点事件或用户属性</option>
-                <optgroup label="打点事件">
-                  <option value="app_launch">app_launch（应用启动）</option>
-                  <option value="page_view">page_view（页面浏览）</option>
-                  <option value="register">register（注册）</option>
-                  <option value="first_health_check">first_health_check（首次健康检测）</option>
-                  <option value="subscribe">subscribe（订阅）</option>
-                  <option value="pay">pay（支付）</option>
-                  <option value="button_click">button_click（按钮点击）</option>
-                </optgroup>
-                <optgroup label="用户属性">
-                  <option value="user_level">user_level（用户等级）</option>
-                  <option value="health_score">health_score（健康评分）</option>
-                </optgroup>
-              </select>
-              <button class="btn btn-default btn-sm" onclick="addSdEvent()">添加</button>
-            </div>
-            <div id="sdEventTags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;padding:6px;border:1px dashed #d9d9d9;border-radius:6px;background:#fafafa">
-              <span style="font-size:12px;color:#bfbfbf;align-self:center" id="sdEventEmpty">尚未添加事件</span>
-            </div>
-            <div style="font-size:11px;color:#8c8c8c;margin-top:6px" id="sdRelDesc">多个事件之间为 AND 关系，用户需同时满足所有事件才触发关键行为</div>
-          </div>
-          <div class="form-row">
-            <label class="form-label">状态</label>
-            <div style="display:flex;gap:8px">
-              <div class="strategy-scope-btn active" id="sdStatusOn" onclick="setSdStatus('on')">启用</div>
-              <div class="strategy-scope-btn" id="sdStatusOff" onclick="setSdStatus('off')">停用</div>
-            </div>
-          </div>
-        </div>
-        <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px">
-          <button class="btn btn-default" onclick="closeStrategyDrawer()">取消</button>
-          <button class="btn btn-primary" onclick="saveStrategy()">保存</button>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -2868,12 +2779,12 @@ function setSdStatus(v) {
 function setSdRel(v) {
   sdRel = v
   var andBtn = document.getElementById('sdRelAnd'), orBtn = document.getElementById('sdRelOr')
-  andBtn.style.background = v==='and' ? '#1890ff' : '#fff'; andBtn.style.color = v==='and' ? '#fff' : '#595959'
-  orBtn.style.background  = v==='or'  ? '#1890ff' : '#fff'; orBtn.style.color  = v==='or'  ? '#fff' : '#595959'
-  document.getElementById('sdRelDesc').textContent = v==='and'
+  if (andBtn) { andBtn.style.background = v==='and' ? '#1890ff' : '#fff'; andBtn.style.color = v==='and' ? '#fff' : '#595959' }
+  if (orBtn)  { orBtn.style.background  = v==='or'  ? '#1890ff' : '#fff'; orBtn.style.color  = v==='or'  ? '#fff' : '#595959' }
+  var desc = document.getElementById('sdRelDesc')
+  if (desc) desc.textContent = v==='and'
     ? '多个事件之间为 AND 关系，用户需同时满足所有事件才触发关键行为'
     : '多个事件之间为 OR 关系，用户满足任一事件即触发关键行为'
-  renderSdEventTags()
 }
 function addSdAccount() {
   const val = document.getElementById('sdAccountInput').value.trim()
@@ -2896,9 +2807,10 @@ function addSdEvent() {
 }
 function renderSdEventTags() {
   const wrap = document.getElementById('sdEventTags')
-  const empty = document.getElementById('sdEventEmpty')
-  if (sdEvents.length === 0) { wrap.innerHTML = ''; wrap.appendChild(empty); empty.style.display=''; return }
-  empty.style.display = 'none'
+  if (sdEvents.length === 0) {
+    wrap.innerHTML = '<span style="font-size:12px;color:#bfbfbf;align-self:center">尚未添加事件</span>'
+    return
+  }
   wrap.innerHTML = sdEvents.map((e,i) => {
     var connector = i > 0 ? `<span style="color:${sdRel==='and'?'#1890ff':'#fa8c16'};font-size:11px;font-weight:600;align-self:center">${sdRel.toUpperCase()}</span>` : ''
     return `${connector}<span class="kb-and-tag">${e}<span class="rm" onclick="removeSdEvent('${e}')">×</span></span>`
@@ -2922,5 +2834,92 @@ function saveStrategy() {
 
 </script>
 
+<!-- 新建/编辑策略抽屉（须在 body 顶层，避免被 overflow 容器裁剪） -->
+<div class="drawer-overlay" id="strategyDrawerOverlay" onclick="closeStrategyDrawer()"></div>
+<div class="drawer" id="strategyDrawer" style="width:480px;right:-480px">
+  <div class="drawer-header">
+    <div class="drawer-title" id="strategyDrawerTitle">新建策略</div>
+    <div class="drawer-close" onclick="closeStrategyDrawer()">×</div>
+  </div>
+  <div class="drawer-body">
+    <div class="form-row">
+      <label class="form-label required">产品</label>
+      <select class="form-select" id="sdProduct">
+        <option value="">请选择产品</option>
+        <option value="健康追踪仪">健康追踪仪</option>
+        <option value="健康管家Pro">健康管家 Pro</option>
+        <option value="运动助手">运动助手</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label required">渠道</label>
+      <select class="form-select" id="sdChannel">
+        <option value="">请选择渠道</option>
+        <option value="巨量">巨量</option>
+        <option value="快手">快手</option>
+        <option value="广点通">广点通</option>
+        <option value="OPPO">OPPO</option>
+        <option value="vivo">vivo</option>
+        <option value="小米">小米</option>
+        <option value="华为">华为</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label required">作用范围</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div class="strategy-scope-btn active" id="sdScopeGlobal" onclick="setSdScope('global')">全局（默认）</div>
+        <div class="strategy-scope-btn" id="sdScopeAccount" onclick="setSdScope('account')">指定账户</div>
+      </div>
+      <div id="sdAccountPanel" style="display:none">
+        <div style="display:flex;gap:6px">
+          <input class="form-input" id="sdAccountInput" placeholder="输入账户 ID，回车添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addSdAccount()}">
+          <button class="btn btn-primary btn-sm" onclick="addSdAccount()">添加</button>
+        </div>
+        <div id="sdAccountTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label required" style="display:flex;align-items:center;justify-content:space-between">
+        关键行为事件
+        <span style="display:flex;gap:0;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;font-weight:400">
+          <span id="sdRelAnd" onclick="setSdRel('and')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#1890ff;color:#fff">AND</span>
+          <span id="sdRelOr" onclick="setSdRel('or')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#fff;color:#595959">OR</span>
+        </span>
+      </label>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <select class="form-select" id="sdEventSelect" style="flex:1">
+          <option value="">选择打点事件或用户属性</option>
+          <optgroup label="打点事件">
+            <option value="app_launch">app_launch（应用启动）</option>
+            <option value="page_view">page_view（页面浏览）</option>
+            <option value="register">register（注册）</option>
+            <option value="first_health_check">first_health_check（首次健康检测）</option>
+            <option value="subscribe">subscribe（订阅）</option>
+            <option value="pay">pay（支付）</option>
+            <option value="button_click">button_click（按钮点击）</option>
+          </optgroup>
+          <optgroup label="用户属性">
+            <option value="user_level">user_level（用户等级）</option>
+            <option value="health_score">health_score（健康评分）</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-default btn-sm" onclick="addSdEvent()">添加</button>
+      </div>
+      <div id="sdEventTags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;padding:6px;border:1px dashed #d9d9d9;border-radius:6px;background:#fafafa"></div>
+      <div style="font-size:11px;color:#8c8c8c;margin-top:6px" id="sdRelDesc">多个事件之间为 AND 关系，用户需同时满足所有事件才触发关键行为</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">状态</label>
+      <div style="display:flex;gap:8px">
+        <div class="strategy-scope-btn active" id="sdStatusOn" onclick="setSdStatus('on')">启用</div>
+        <div class="strategy-scope-btn" id="sdStatusOff" onclick="setSdStatus('off')">停用</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn btn-default" onclick="closeStrategyDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="saveStrategy()">保存</button>
+  </div>
+</div>
 </body>
 </html>
