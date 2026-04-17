@@ -299,6 +299,58 @@
   .tl-desc { font-size:13px;color:#595959;line-height:1.6; }
   .opt-tag { font-size:11px;color:#722ed1;background:#f9f0ff;border:1px solid #d3adf7;border-radius:10px;padding:1px 8px; }
   .manual-actions { display:flex;gap:6px;margin-top:8px;align-items:center; }
+
+  /* ===== 关键行为管理模块 ===== */
+  .kb-page { display:none; }
+  .kb-page.active { display:block; }
+  .kb-product-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px; }
+  .kb-product-card { background:#fff;border-radius:8px;border:1px solid #f0f0f0;padding:20px; }
+  .kb-product-card-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:14px; }
+  .kb-product-name { font-size:15px;font-weight:600;color:#262626; }
+  .kb-ratio-badge { font-size:13px;font-weight:700;padding:3px 12px;border-radius:20px; }
+  .kb-ratio-ok { background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f; }
+  .kb-ratio-low { background:#fff1f0;color:#cf1322;border:1px solid #ffa39e; }
+  .kb-ratio-high { background:#fff7e6;color:#d46b08;border:1px solid #ffd591; }
+  .kb-channel-row { display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px; }
+  .kb-channel-row:last-child { border-bottom:none; }
+  .kb-channel-name { width:60px;color:#8c8c8c;flex-shrink:0; }
+  .kb-event-tags { display:flex;flex-wrap:wrap;gap:4px;flex:1; }
+  .kb-event-tag { background:#f0f5ff;color:#2f54eb;border:1px solid #adc6ff;border-radius:4px;padding:2px 8px;font-size:11px; }
+  .kb-event-tag.and-sep { background:none;border:none;color:#bfbfbf;padding:2px 2px;font-size:11px; }
+  .kb-chart-wrap { height:120px;margin-top:12px; }
+  .kb-hour-table { width:100%;border-collapse:collapse;font-size:12px; }
+  .kb-hour-table th { background:#fafafa;padding:6px 10px;color:#8c8c8c;font-weight:500;text-align:center;border-bottom:1px solid #f0f0f0; }
+  .kb-hour-table td { padding:8px 10px;text-align:center;border-bottom:1px solid #f5f5f5; }
+  .kb-status-ok { color:#389e0d;font-weight:600; }
+  .kb-status-low { color:#cf1322;font-weight:600; }
+  .kb-status-high { color:#d46b08;font-weight:600; }
+  .kb-report-badge { font-size:11px;padding:1px 6px;border-radius:3px; }
+  .kb-report-direct { background:#f6ffed;color:#389e0d; }
+  .kb-report-hold { background:#fff1f0;color:#cf1322; }
+  .kb-report-flush { background:#e6f4ff;color:#1890ff; }
+  .strategy-scope-btn { flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#595959;font-weight:500;transition:all .15s; }
+  .strategy-scope-btn.active { border-color:#1890ff;background:#e6f4ff;color:#1890ff; }
+  .kb-and-tag { display:inline-flex;align-items:center;gap:4px;background:#f0f5ff;color:#2f54eb;border:1px solid #adc6ff;border-radius:4px;padding:3px 9px;font-size:12px; }
+  .kb-and-tag .rm { cursor:pointer;color:#adc6ff;margin-left:2px; }
+  .kb-and-tag .rm:hover { color:#ff4d4f; }
+
+  /* 策略ID标签 */
+  .kb-sid-tag { display:inline-block;background:#f0f5ff;color:#1890ff;border:1px solid #adc6ff;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-weight:600;transition:all .15s;margin:2px 0; }
+  .kb-sid-tag:hover { background:#1890ff;color:#fff;border-color:#1890ff; }
+
+  /* 策略详情浮层 */
+  .kb-strategy-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:900; }
+  .kb-strategy-overlay.open { display:block; }
+  .kb-strategy-panel { position:fixed;top:0;right:-520px;width:520px;height:100vh;background:#fff;z-index:901;box-shadow:-6px 0 24px rgba(0,0,0,.12);transition:right .28s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;pointer-events:none; }
+  .kb-strategy-panel.open { right:0;pointer-events:auto; }
+  .kb-strategy-panel-header { padding:20px 24px 16px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0; }
+  .kb-strategy-panel-title { font-size:16px;font-weight:700;color:#262626; }
+  .kb-strategy-panel-sub { font-size:12px;color:#8c8c8c;margin-top:4px; }
+  .kb-strategy-panel-body { flex:1;overflow-y:auto;padding:20px 24px; }
+  .kb-detail-table { width:100%;border-collapse:collapse;font-size:12px; }
+  .kb-detail-table th { background:#fafafa;padding:8px 10px;color:#8c8c8c;font-weight:500;text-align:center;border-bottom:1px solid #f0f0f0;position:sticky;top:0; }
+  .kb-detail-table td { padding:8px 10px;text-align:center;border-bottom:1px solid #f5f5f5; }
+  .kb-detail-table tr:hover td { background:#f5f8ff; }
 </style>
 
 <body>
@@ -334,6 +386,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         智能管控
       </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">关键行为</div>
+      <div class="nav-item" id="nav-kb-dashboard" onclick="showKbPage('kb-dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        关键行为看板
+      </div>
+      <div class="nav-item sub" onclick="showKbPage('kb-records',this)">关键行为记录</div>
+      <div class="nav-item sub" onclick="showKbPage('kb-manage',this)">关键行为管理</div>
     </div>
   </div>
 
@@ -1242,6 +1303,242 @@
         </div>
       </div>
 
+      <!-- ===== 关键行为看板 ===== -->
+      <div class="page" id="page-kb-dashboard">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">关键行为看板</div>
+            <div class="page-desc">各产品关键行为回传状态 · 计费比实时监控 · 数据延迟 ≤3分钟</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="metric-select" id="kbDashboardProduct" style="width:130px" onchange="renderKbDashboard()">
+              <option value="">全部产品</option>
+              <option value="健康追踪仪">健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+            <button class="btn btn-default btn-sm" onclick="renderKbDashboard()">刷新</button>
+          </div>
+        </div>
+        <div class="kb-product-grid" id="kbProductGrid"></div>
+      </div>
+
+      <!-- ===== 策略24h详情浮层 ===== -->
+      <div class="kb-strategy-overlay" id="kbStrategyOverlay" onclick="closeStrategyDetail()"></div>
+      <div class="kb-strategy-panel" id="kbStrategyPanel">
+        <div class="kb-strategy-panel-header">
+          <div>
+            <div class="kb-strategy-panel-title" id="kbStrategyPanelTitle">策略详情</div>
+            <div class="kb-strategy-panel-sub" id="kbStrategyPanelSub"></div>
+          </div>
+          <div class="drawer-close" onclick="closeStrategyDetail()">×</div>
+        </div>
+        <div class="kb-strategy-panel-body" id="kbStrategyPanelBody"></div>
+      </div>
+
+      <!-- ===== 关键行为记录 ===== -->
+      <div class="page" id="page-kb-records">
+        <div class="page-header">
+          <div class="page-title">关键行为记录</div>
+          <div class="page-desc">关键行为事件上报历史流水，含扣量/补回状态</div>
+        </div>
+        <div class="card">
+          <div class="filter-bar" style="margin-bottom:16px;flex-wrap:wrap;gap:8px">
+            <select class="metric-select" id="kbRecProduct" style="width:130px">
+              <option value="">全部产品</option>
+              <option value="健康追踪仪">健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+            <select class="metric-select" id="kbRecChannel" style="width:110px">
+              <option value="">全部渠道</option>
+              <option value="巨量">巨量</option>
+              <option value="快手">快手</option>
+              <option value="广点通">广点通</option>
+              <option value="OPPO">OPPO</option>
+              <option value="vivo">vivo</option>
+              <option value="小米">小米</option>
+              <option value="华为">华为</option>
+            </select>
+            <select class="metric-select" id="kbRecStatus" style="width:110px">
+              <option value="">全部状态</option>
+              <option value="直接回传">直接回传</option>
+              <option value="扣量">扣量</option>
+              <option value="补回">补回</option>
+            </select>
+            <input type="text" id="kbRecDeviceId" class="metric-select" placeholder="输入用户设备ID" style="width:180px;padding:5px 10px">
+            <button class="btn btn-primary" onclick="filterKbRecords()" style="height:32px;padding:0 16px;font-size:13px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              搜索
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>产品</th>
+                  <th>渠道</th>
+                  <th>计划ID</th>
+                  <th>用户设备信息</th>
+                  <th>账户ID</th>
+                  <th>事件名称</th>
+                  <th>回传状态</th>
+                  <th>计费比</th>
+                  <th>操作</th>
+                  <th>操作消息</th>
+                </tr>
+              </thead>
+              <tbody id="kbRecordsBody"></tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div id="kbRecordsPagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:8px 0;border-top:1px solid #f0f0f0">
+            <div id="kbRecordsTotal" style="font-size:13px;color:#8c8c8c"></div>
+            <div id="kbRecordsPager" style="display:flex;align-items:center;gap:4px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 关键行为管理 ===== -->
+      <div class="page" id="page-kb-manage">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">关键行为管理</div>
+            <div class="page-desc">配置各产品在不同渠道的关键行为上报策略，支持全局或指定账户</div>
+          </div>
+          <button class="btn btn-primary" onclick="openStrategyDrawer(null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新建策略
+          </button>
+        </div>
+        <div class="card">
+          <div class="filter-bar" style="margin-bottom:16px">
+            <select class="metric-select" id="kbMgmtProduct" style="width:130px" onchange="filterKbStrategies()">
+              <option value="">全部产品</option>
+              <option value="健康追踪仪">健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+            <select class="metric-select" id="kbMgmtChannel" style="width:110px" onchange="filterKbStrategies()">
+              <option value="">全部渠道</option>
+              <option value="巨量">巨量</option>
+              <option value="快手">快手</option>
+              <option value="广点通">广点通</option>
+              <option value="OPPO">OPPO</option>
+              <option value="vivo">vivo</option>
+              <option value="小米">小米</option>
+              <option value="华为">华为</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>产品</th>
+                  <th>渠道</th>
+                  <th>作用范围</th>
+                  <th>关键行为（AND）</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="kbStrategiesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 新建/编辑策略抽屉 -->
+      <div class="drawer-overlay" id="strategyDrawerOverlay" onclick="closeStrategyDrawer()"></div>
+      <div class="drawer" id="strategyDrawer" style="width:480px;right:-480px">
+        <div class="drawer-header">
+          <div class="drawer-title" id="strategyDrawerTitle">新建策略</div>
+          <div class="drawer-close" onclick="closeStrategyDrawer()">×</div>
+        </div>
+        <div class="drawer-body">
+          <div class="form-row">
+            <label class="form-label required">产品</label>
+            <select class="form-select" id="sdProduct">
+              <option value="">请选择产品</option>
+              <option value="健康追踪仪">健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label required">渠道</label>
+            <select class="form-select" id="sdChannel">
+              <option value="">请选择渠道</option>
+              <option value="巨量">巨量</option>
+              <option value="快手">快手</option>
+              <option value="广点通">广点通</option>
+              <option value="OPPO">OPPO</option>
+              <option value="vivo">vivo</option>
+              <option value="小米">小米</option>
+              <option value="华为">华为</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label required">作用范围</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <div class="strategy-scope-btn active" id="sdScopeGlobal" onclick="setSdScope('global')">全局（默认）</div>
+              <div class="strategy-scope-btn" id="sdScopeAccount" onclick="setSdScope('account')">指定账户</div>
+            </div>
+            <div id="sdAccountPanel" style="display:none">
+              <div style="display:flex;gap:6px">
+                <input class="form-input" id="sdAccountInput" placeholder="输入账户 ID，回车添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addSdAccount()}">
+                <button class="btn btn-primary btn-sm" onclick="addSdAccount()">添加</button>
+              </div>
+              <div id="sdAccountTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label required" style="display:flex;align-items:center;justify-content:space-between">
+              关键行为事件
+              <span style="display:flex;gap:0;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;font-weight:400">
+                <span id="sdRelAnd" onclick="setSdRel('and')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#1890ff;color:#fff">AND</span>
+                <span id="sdRelOr" onclick="setSdRel('or')" style="padding:2px 10px;font-size:12px;cursor:pointer;background:#fff;color:#595959">OR</span>
+              </span>
+            </label>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <select class="form-select" id="sdEventSelect" style="flex:1">
+                <option value="">选择打点事件或用户属性</option>
+                <optgroup label="打点事件">
+                  <option value="app_launch">app_launch（应用启动）</option>
+                  <option value="page_view">page_view（页面浏览）</option>
+                  <option value="register">register（注册）</option>
+                  <option value="first_health_check">first_health_check（首次健康检测）</option>
+                  <option value="subscribe">subscribe（订阅）</option>
+                  <option value="pay">pay（支付）</option>
+                  <option value="button_click">button_click（按钮点击）</option>
+                </optgroup>
+                <optgroup label="用户属性">
+                  <option value="user_level">user_level（用户等级）</option>
+                  <option value="health_score">health_score（健康评分）</option>
+                </optgroup>
+              </select>
+              <button class="btn btn-default btn-sm" onclick="addSdEvent()">添加</button>
+            </div>
+            <div id="sdEventTags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;padding:6px;border:1px dashed #d9d9d9;border-radius:6px;background:#fafafa">
+              <span style="font-size:12px;color:#bfbfbf;align-self:center" id="sdEventEmpty">尚未添加事件</span>
+            </div>
+            <div style="font-size:11px;color:#8c8c8c;margin-top:6px" id="sdRelDesc">多个事件之间为 AND 关系，用户需同时满足所有事件才触发关键行为</div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">状态</label>
+            <div style="display:flex;gap:8px">
+              <div class="strategy-scope-btn active" id="sdStatusOn" onclick="setSdStatus('on')">启用</div>
+              <div class="strategy-scope-btn" id="sdStatusOff" onclick="setSdStatus('off')">停用</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-default" onclick="closeStrategyDrawer()">取消</button>
+          <button class="btn btn-primary" onclick="saveStrategy()">保存</button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -1259,6 +1556,9 @@ const breadcrumbs = {
   'ad-intervene':  '投放管理 / <span>计划监控</span>',
   'ad-alerts':   '投放管理 / <span>预警中心</span>',
   'ad-thresholds':'投放管理 / <span>阈值管理</span>',
+  'kb-dashboard':'关键行为 / <span>关键行为看板</span>',
+  'kb-records':  '关键行为 / <span>关键行为记录</span>',
+  'kb-manage':   '关键行为 / <span>关键行为管理</span>',
 }
 function adFilterHistory() {}
 function adFilterByPlanId() {}
@@ -1328,6 +1628,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.modal-overlay').forEach(el => {
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open') })
   })
+  // 处理 hash 导航（从其他页面跳转过来时定位到指定子页面）
+  var hash = location.hash.replace('#', '')
+  if (hash && document.getElementById('page-' + hash)) {
+    var navEl = document.querySelector('.nav-item[onclick*="' + hash + '"]')
+    if (hash.startsWith('kb-')) showKbPage(hash, navEl)
+    else showPage(hash, navEl)
+  }
 })
 function filterAdRows() {
   const optimizer = document.getElementById('adOptimizerFilter').value
@@ -2174,6 +2481,443 @@ function switchAdTrend(el, metric) {
     adTrendChartObj.data.datasets[1].data = d.yesterday
     adTrendChartObj.update()
   }
+}
+
+// ══════════════════════════════════════════
+//  关键行为管理模块 JS
+// ══════════════════════════════════════════
+
+// Mock 数据
+const kbProducts = ['健康追踪仪', '健康管家Pro', '运动助手']
+const kbChannels = ['巨量', '快手', '广点通', 'OPPO', 'vivo', '小米', '华为']
+
+// 各产品各渠道绑定的关键行为策略（Mock）
+let kbStrategies = [
+  { id:1, product:'健康追踪仪', channel:'巨量',  scope:'global',  accounts:[], events:['first_health_check','subscribe'], status:'on', createdAt:'2026-04-10' },
+  { id:2, product:'健康追踪仪', channel:'快手',  scope:'global',  accounts:[], events:['register'], status:'on', createdAt:'2026-04-10' },
+  { id:3, product:'健康追踪仪', channel:'巨量',  scope:'account', accounts:['A001','A002'], events:['pay'], status:'on', createdAt:'2026-04-12' },
+  { id:4, product:'健康管家Pro', channel:'巨量', scope:'global',  accounts:[], events:['subscribe'], status:'on', createdAt:'2026-04-08' },
+  { id:5, product:'运动助手',   channel:'广点通',scope:'global',  accounts:[], events:['app_launch','register'], status:'off', createdAt:'2026-04-05' },
+]
+let kbStrategyIdSeq = 6
+
+// 各产品各小时计费比 Mock
+function genHourlyRatios() {
+  const hours = []
+  for (let h = 0; h <= 14; h++) {
+    const r = 0.85 + Math.random() * 0.5
+    hours.push({ hour: h, ratio: parseFloat(r.toFixed(2)) })
+  }
+  return hours
+}
+const kbHourlyData = {
+  '健康追踪仪': genHourlyRatios(),
+  '健康管家Pro': genHourlyRatios(),
+  '运动助手': genHourlyRatios(),
+}
+
+// 关键行为记录 Mock
+const kbRecordsMock = (() => {
+  const statuses = ['直接回传','扣量','补回']
+  const events = ['first_health_check','subscribe','register','pay','app_launch']
+  const devices = ['iPhone 15 Pro','Xiaomi 14','OPPO Find X7','Samsung S24','Huawei Mate 60','vivo X100','Redmi K70','iPhone 14','Honor Magic6','OnePlus 12']
+  const deviceIds = []
+  for (let i = 0; i < 30; i++) deviceIds.push('DEV_' + String(100000 + Math.floor(Math.random()*900000)))
+  const accountIds = ['ACC_1001','ACC_1002','ACC_1003','ACC_2001','ACC_2002','ACC_3001','ACC_3002','ACC_3003']
+  const rows = []
+  for (let i = 0; i < 200; i++) {
+    const product = kbProducts[i % 3]
+    const channel = kbChannels[i % 7]
+    const status = statuses[i % 3]
+    const ratio = (0.55 + Math.random() * 0.6).toFixed(2)
+    const cost = (2 + Math.random() * 8).toFixed(1)
+    const m = String(Math.floor(Math.random()*60)).padStart(2,'0')
+    const s = String(Math.floor(Math.random()*60)).padStart(2,'0')
+    const h = String(Math.floor(Math.random()*24)).padStart(2,'0')
+    const deviceId = deviceIds[i % deviceIds.length]
+    const device = devices[i % devices.length]
+    const accountId = accountIds[i % accountIds.length]
+    const ratioBefore = (parseFloat(ratio) * 100 - 5 - Math.random()*10).toFixed(1)
+    const ratioAfter = (parseFloat(ratio) * 100).toFixed(1)
+    const ratioTarget = (parseFloat(ratio) * 100 + 3 + Math.random()*5).toFixed(1)
+    let operation = ''
+    let opMessage = ''
+    if (status === '补回') {
+      operation = '手动补回'
+      opMessage = `上报成功：需要上报,上报前比例${ratioBefore}% 上报后比例${ratioAfter}% 上报设置比例${ratioTarget}%`
+    } else if (status === '扣量') {
+      operation = '自动扣量'
+      opMessage = `扣量成功：超出阈值,当前比例${ratioAfter}% 目标比例${ratioTarget}%`
+    } else {
+      operation = '直接上报'
+      opMessage = `上报成功：正常上报,当前比例${ratioAfter}% 设置比例${ratioTarget}%`
+    }
+    rows.push({ time:`${h}:${m}:${s}`, product, channel, planId:`plan_${String(i+1).padStart(3,'0')}`, event: events[i%5], status, ratio: parseFloat(ratio), cost: parseFloat(cost), deviceId, device, accountId, operation, opMessage })
+  }
+  rows.sort((a,b) => b.time.localeCompare(a.time))
+  return rows
+})()
+
+// 页面切换
+function showKbPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('page-' + id).classList.add('active')
+  document.getElementById('breadcrumb').innerHTML = breadcrumbs[id]
+  if (el) el.classList.add('active')
+  if (id === 'kb-dashboard') renderKbDashboard()
+  if (id === 'kb-records')   renderKbRecords()
+  if (id === 'kb-manage')    renderKbStrategies()
+}
+
+// 计费比状态
+function ratioStatus(r) {
+  if (r < 1.0) return { cls:'kb-ratio-low', label: (r*100).toFixed(0)+'% 限流风险' }
+  if (r > 1.2) return { cls:'kb-ratio-high', label: (r*100).toFixed(0)+'% 赔付风险' }
+  return { cls:'kb-ratio-ok', label: (r*100).toFixed(0)+'% 正常' }
+}
+
+// 每个策略的24h Mock数据（按策略ID缓存）
+const kbStrategy24hCache = {}
+function getStrategy24hData(strategyId) {
+  if (kbStrategy24hCache[strategyId]) return kbStrategy24hCache[strategyId]
+  const rows = []
+  for (let h = 0; h < 24; h++) {
+    const ratio = 0.6 + Math.random() * 0.7
+    const holdCount = ratio < 1.0 ? Math.floor(Math.random()*12+1) : 0
+    const flushCount = ratio > 1.15 ? Math.floor(Math.random()*8+1) : 0
+    rows.push({ hour: h, ratio: parseFloat(ratio.toFixed(2)), holdCount, flushCount })
+  }
+  kbStrategy24hCache[strategyId] = rows
+  return rows
+}
+
+// 打开策略详情浮层
+function openStrategyDetail(strategyId) {
+  const s = kbStrategies.find(x => x.id === strategyId)
+  if (!s) return
+  document.getElementById('kbStrategyPanelTitle').textContent = `策略 #${s.id}`
+  document.getElementById('kbStrategyPanelSub').textContent = `${s.product} · ${s.channel} · ${s.scope==='global'?'全局':'账户 '+s.accounts.join(',')}`
+  const data = getStrategy24hData(strategyId)
+  let html = `<table class="kb-detail-table">
+    <thead><tr><th style="width:80px">时段</th><th>计费比</th><th>扣量/补回</th></tr></thead><tbody>`
+  data.forEach(d => {
+    const rs = ratioStatus(d.ratio)
+    const clsName = rs.cls.replace('kb-ratio-','kb-status-')
+    let actionCell = ''
+    if (d.holdCount > 0) {
+      actionCell = `<span class="kb-report-badge kb-report-hold">扣量 ${d.holdCount}</span>`
+    } else if (d.flushCount > 0) {
+      actionCell = `<span class="kb-report-badge kb-report-flush">补回 ${d.flushCount}</span>`
+    } else {
+      actionCell = `<span class="kb-report-badge kb-report-direct">直接回传</span>`
+    }
+    html += `<tr>
+      <td style="font-family:monospace;color:#595959">${String(d.hour).padStart(2,'0')}:00</td>
+      <td class="${clsName}" style="font-weight:600">${(d.ratio*100).toFixed(0)}%</td>
+      <td>${actionCell}</td>
+    </tr>`
+  })
+  html += '</tbody></table>'
+  document.getElementById('kbStrategyPanelBody').innerHTML = html
+  document.getElementById('kbStrategyOverlay').classList.add('open')
+  document.getElementById('kbStrategyPanel').classList.add('open')
+}
+function closeStrategyDetail() {
+  document.getElementById('kbStrategyOverlay').classList.remove('open')
+  document.getElementById('kbStrategyPanel').classList.remove('open')
+}
+
+// 看板渲染
+function renderKbDashboard() {
+  const filterProduct = document.getElementById('kbDashboardProduct').value
+  const products = filterProduct ? [filterProduct] : kbProducts
+  const grid = document.getElementById('kbProductGrid')
+  grid.innerHTML = ''
+  products.forEach(product => {
+    const hours = kbHourlyData[product]
+    const avgRatio = hours.reduce((s,h)=>s+h.ratio,0)/hours.length
+    const rs = ratioStatus(avgRatio)
+    // 该产品绑定的渠道 + 策略ID
+    const strategies = kbStrategies.filter(s=>s.product===product && s.status==='on')
+    const channelMap = {}
+    strategies.forEach(s => {
+      if (!channelMap[s.channel]) channelMap[s.channel] = []
+      channelMap[s.channel].push(s.id)
+    })
+    const channelRows = Object.entries(channelMap).map(([ch, ids]) =>
+      `<div class="kb-channel-row">
+        <div class="kb-channel-name">${ch}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;flex:1">${ids.map(id => `<span class="kb-sid-tag" onclick="event.stopPropagation();openStrategyDetail(${id})">#${id}</span>`).join('')}</div>
+      </div>`
+    ).join('') || '<div style="font-size:12px;color:#bfbfbf;padding:6px 0">暂无绑定策略</div>'
+    // 分时计费比表格（最近6小时），显示扣量/补回数量
+    const recentHours = hours.slice(-6)
+    const hourRows = recentHours.map(h => {
+      const rs2 = ratioStatus(h.ratio)
+      const holdCount = h.ratio < 1.0 ? Math.floor(Math.random()*8+1) : 0
+      const flushCount = h.ratio > 1.2 ? Math.floor(Math.random()*5+1) : 0
+      const countCell = holdCount > 0
+        ? `<span class="kb-report-badge kb-report-hold">扣量 ${holdCount}</span>`
+        : flushCount > 0
+          ? `<span class="kb-report-badge kb-report-flush">补回 ${flushCount}</span>`
+          : `<span class="kb-report-badge kb-report-direct">直接回传</span>`
+      return `<tr>
+        <td>${String(h.hour).padStart(2,'0')}:00</td>
+        <td class="${rs2.cls.replace('kb-ratio-','kb-status-')}">${(h.ratio*100).toFixed(0)}%</td>
+        <td>${countCell}</td>
+      </tr>`
+    }).join('')
+    grid.innerHTML += `
+      <div class="kb-product-card">
+        <div class="kb-product-card-header">
+          <div class="kb-product-name">${product}</div>
+          <span class="kb-ratio-badge ${rs.cls}">${rs.label}</span>
+        </div>
+        <div style="font-size:12px;color:#8c8c8c;margin-bottom:8px">已绑定渠道</div>
+        ${channelRows}
+        <div style="font-size:12px;color:#8c8c8c;margin:12px 0 6px">近6小时计费比</div>
+        <table class="kb-hour-table">
+          <thead><tr><th>时段</th><th>计费比</th><th>扣量/补回</th></tr></thead>
+          <tbody>${hourRows}</tbody>
+        </table>
+      </div>`
+  })
+}
+
+// 关键行为记录渲染
+let kbRecCurrentPage = 1
+const kbRecPageSize = 50
+let kbRecFilteredRows = []
+
+function renderKbRecords() {
+  kbRecCurrentPage = 1
+  filterKbRecords()
+}
+function filterKbRecords() {
+  const product = document.getElementById('kbRecProduct').value
+  const channel = document.getElementById('kbRecChannel').value
+  const status  = document.getElementById('kbRecStatus').value
+  const deviceId = document.getElementById('kbRecDeviceId').value.trim()
+  kbRecFilteredRows = kbRecordsMock.filter(r =>
+    (!product || r.product === product) &&
+    (!channel || r.channel === channel) &&
+    (!status  || r.status  === status) &&
+    (!deviceId || r.deviceId.toLowerCase().includes(deviceId.toLowerCase()))
+  )
+  kbRecCurrentPage = 1
+  renderKbRecPage()
+}
+function renderKbRecPage() {
+  const total = kbRecFilteredRows.length
+  const totalPages = Math.max(1, Math.ceil(total / kbRecPageSize))
+  if (kbRecCurrentPage > totalPages) kbRecCurrentPage = totalPages
+  const start = (kbRecCurrentPage - 1) * kbRecPageSize
+  const pageRows = kbRecFilteredRows.slice(start, start + kbRecPageSize)
+
+  const statusBadge = { '直接回传':'kb-report-direct', '扣量':'kb-report-hold', '补回':'kb-report-flush' }
+  const ratioClass = r => r < 1 ? 'kb-status-low' : r > 1.2 ? 'kb-status-high' : 'kb-status-ok'
+  const opColor = op => op === '手动补回' ? 'color:#1890ff' : op === '自动扣量' ? 'color:#cf1322' : 'color:#389e0d'
+  document.getElementById('kbRecordsBody').innerHTML = pageRows.map((r, idx) => {
+    const globalIdx = start + idx
+    let opHtml
+    if (r.status === '扣量') {
+      if (r._replenished) {
+        opHtml = `<span style="font-size:12px;font-weight:500;color:#1890ff">已补回</span>`
+      } else {
+        opHtml = `<span style="font-size:12px;font-weight:500;color:#cf1322">自动扣量</span> <button onclick="kbReplenish(${globalIdx},this)" style="margin-left:4px;font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid #1890ff;background:#fff;color:#1890ff;cursor:pointer;white-space:nowrap">手动补量</button>`
+      }
+    } else {
+      opHtml = `<span style="font-size:12px;font-weight:500;${opColor(r.operation)}">${r.operation}</span>`
+    }
+    return `<tr>
+      <td style="font-family:monospace;color:#8c8c8c;white-space:nowrap">${r.time}</td>
+      <td>${r.product}</td>
+      <td><span class="badge badge-gray">${r.channel}</span></td>
+      <td style="font-family:monospace;font-size:12px">${r.planId}</td>
+      <td style="font-size:12px"><div style="font-weight:500">${r.device}</div><div style="color:#8c8c8c;font-size:11px;font-family:monospace">${r.deviceId}</div></td>
+      <td style="font-family:monospace;font-size:12px">${r.accountId}</td>
+      <td><span class="kb-event-tag">${r.event}</span></td>
+      <td><span class="kb-report-badge ${statusBadge[r.status]}">${r.status}</span></td>
+      <td class="${ratioClass(r.ratio)}">${(r.ratio*100).toFixed(0)}%</td>
+      <td style="white-space:nowrap">${opHtml}</td>
+      <td style="font-size:11px;color:#595959;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.opMessage}">${r.opMessage}</td>
+    </tr>`
+  }).join('') || '<tr><td colspan="11" class="empty">暂无记录</td></tr>'
+
+  // 分页信息
+  document.getElementById('kbRecordsTotal').innerHTML = `共 <b>${total}</b> 条记录，第 ${kbRecCurrentPage}/${totalPages} 页`
+  // 分页按钮
+  let pagerHtml = ''
+  const btnStyle = (disabled) => `padding:4px 10px;border-radius:4px;font-size:12px;cursor:${disabled?'not-allowed':'pointer'};border:1px solid ${disabled?'#e8e8e8':'#d9d9d9'};background:${disabled?'#f5f5f5':'#fff'};color:${disabled?'#bfbfbf':'#595959'}`
+  const activeStyle = `padding:4px 10px;border-radius:4px;font-size:12px;cursor:default;border:1px solid #1890ff;background:#1890ff;color:#fff;font-weight:600`
+  pagerHtml += `<span style="${btnStyle(kbRecCurrentPage<=1)}" onclick="${kbRecCurrentPage>1?'kbRecGoPage(1)':''}">首页</span>`
+  pagerHtml += `<span style="${btnStyle(kbRecCurrentPage<=1)}" onclick="${kbRecCurrentPage>1?'kbRecGoPage(kbRecCurrentPage-1)':''}">上一页</span>`
+  // 页码
+  let pageStart = Math.max(1, kbRecCurrentPage - 2)
+  let pageEnd = Math.min(totalPages, pageStart + 4)
+  if (pageEnd - pageStart < 4) pageStart = Math.max(1, pageEnd - 4)
+  for (let p = pageStart; p <= pageEnd; p++) {
+    if (p === kbRecCurrentPage) {
+      pagerHtml += `<span style="${activeStyle}">${p}</span>`
+    } else {
+      pagerHtml += `<span style="${btnStyle(false)}" onclick="kbRecGoPage(${p})">${p}</span>`
+    }
+  }
+  pagerHtml += `<span style="${btnStyle(kbRecCurrentPage>=totalPages)}" onclick="${kbRecCurrentPage<totalPages?'kbRecGoPage(kbRecCurrentPage+1)':''}">下一页</span>`
+  pagerHtml += `<span style="${btnStyle(kbRecCurrentPage>=totalPages)}" onclick="${kbRecCurrentPage<totalPages?'kbRecGoPage('+totalPages+')':''}">末页</span>`
+  document.getElementById('kbRecordsPager').innerHTML = pagerHtml
+}
+function kbRecGoPage(page) {
+  kbRecCurrentPage = page
+  renderKbRecPage()
+  document.getElementById('page-kb-records').querySelector('.table-wrap').scrollTop = 0
+}
+function kbReplenish(idx, btn) {
+  var r = kbRecFilteredRows[idx]
+  if (!r) return
+  r._replenished = true
+  r.operation = '手动补回'
+  r.status = '补回'
+  var td = btn.parentElement
+  td.innerHTML = '<span style="font-size:12px;font-weight:500;color:#1890ff">已补回</span>'
+}
+
+// 策略列表渲染
+function renderKbStrategies() {
+  filterKbStrategies()
+}
+function filterKbStrategies() {
+  const product = document.getElementById('kbMgmtProduct').value
+  const channel = document.getElementById('kbMgmtChannel').value
+  const rows = kbStrategies.filter(s =>
+    (!product || s.product === product) &&
+    (!channel || s.channel === channel)
+  )
+  document.getElementById('kbStrategiesBody').innerHTML = rows.map(s => `
+    <tr>
+      <td>${s.product}</td>
+      <td><span class="badge badge-gray">${s.channel}</span></td>
+      <td>${s.scope==='global'?'<span class="badge badge-blue">全局</span>':'<span class="badge badge-purple">账户 '+s.accounts.join(',')+' </span>'}</td>
+      <td>${s.events.map((e,i)=>`${i>0?'<span style="color:#bfbfbf;font-size:11px;margin:0 3px">AND</span>':''}<span class="kb-event-tag">${e}</span>`).join('')}</td>
+      <td>${s.status==='on'?'<span class="badge badge-green">启用</span>':'<span class="badge badge-gray">停用</span>'}</td>
+      <td style="color:#8c8c8c;font-size:12px">${s.createdAt}</td>
+      <td>
+        <span class="link" onclick="openStrategyDrawer(${s.id})">编辑</span>
+        <span style="color:#d9d9d9;margin:0 6px">|</span>
+        <span class="link" style="color:#ff4d4f" onclick="deleteStrategy(${s.id})">删除</span>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7" class="empty">暂无策略</td></tr>'
+}
+function deleteStrategy(id) {
+  if (!confirm('确认删除该策略？')) return
+  kbStrategies = kbStrategies.filter(s => s.id !== id)
+  renderKbStrategies()
+}
+
+// 抽屉操作
+let sdEditId = null
+let sdScope = 'global'
+let sdStatus = 'on'
+let sdAccounts = []
+let sdEvents = []
+let sdRel = 'and'
+
+function openStrategyDrawer(id) {
+  sdEditId = id
+  sdAccounts = []
+  sdEvents = []
+  if (id) {
+    const s = kbStrategies.find(x => x.id === id)
+    document.getElementById('strategyDrawerTitle').textContent = '编辑策略'
+    document.getElementById('sdProduct').value = s.product
+    document.getElementById('sdChannel').value = s.channel
+    sdAccounts = [...s.accounts]
+    sdEvents = [...s.events]
+    setSdRel(s.rel || 'and')
+    setSdScope(s.scope)
+    setSdStatus(s.status)
+  } else {
+    document.getElementById('strategyDrawerTitle').textContent = '新建策略'
+    document.getElementById('sdProduct').value = ''
+    document.getElementById('sdChannel').value = ''
+    setSdScope('global')
+    setSdRel('and')
+    setSdStatus('on')
+  }
+  renderSdAccountTags()
+  renderSdEventTags()
+  document.getElementById('strategyDrawerOverlay').classList.add('open')
+  document.getElementById('strategyDrawer').style.right = '0'
+}
+function closeStrategyDrawer() {
+  document.getElementById('strategyDrawerOverlay').classList.remove('open')
+  document.getElementById('strategyDrawer').style.right = '-480px'
+}
+function setSdScope(v) {
+  sdScope = v
+  document.getElementById('sdScopeGlobal').classList.toggle('active', v==='global')
+  document.getElementById('sdScopeAccount').classList.toggle('active', v==='account')
+  document.getElementById('sdAccountPanel').style.display = v==='account' ? '' : 'none'
+}
+function setSdStatus(v) {
+  sdStatus = v
+  document.getElementById('sdStatusOn').classList.toggle('active', v==='on')
+  document.getElementById('sdStatusOff').classList.toggle('active', v==='off')
+}
+function setSdRel(v) {
+  sdRel = v
+  var andBtn = document.getElementById('sdRelAnd'), orBtn = document.getElementById('sdRelOr')
+  andBtn.style.background = v==='and' ? '#1890ff' : '#fff'; andBtn.style.color = v==='and' ? '#fff' : '#595959'
+  orBtn.style.background  = v==='or'  ? '#1890ff' : '#fff'; orBtn.style.color  = v==='or'  ? '#fff' : '#595959'
+  document.getElementById('sdRelDesc').textContent = v==='and'
+    ? '多个事件之间为 AND 关系，用户需同时满足所有事件才触发关键行为'
+    : '多个事件之间为 OR 关系，用户满足任一事件即触发关键行为'
+  renderSdEventTags()
+}
+function addSdAccount() {
+  const val = document.getElementById('sdAccountInput').value.trim()
+  if (!val || sdAccounts.includes(val)) return
+  sdAccounts.push(val)
+  document.getElementById('sdAccountInput').value = ''
+  renderSdAccountTags()
+}
+function renderSdAccountTags() {
+  document.getElementById('sdAccountTags').innerHTML = sdAccounts.map(a =>
+    `<span class="kb-and-tag">${a}<span class="rm" onclick="removeSdAccount('${a}')">×</span></span>`
+  ).join('')
+}
+function removeSdAccount(a) { sdAccounts = sdAccounts.filter(x=>x!==a); renderSdAccountTags() }
+function addSdEvent() {
+  const val = document.getElementById('sdEventSelect').value
+  if (!val || sdEvents.includes(val)) return
+  sdEvents.push(val)
+  renderSdEventTags()
+}
+function renderSdEventTags() {
+  const wrap = document.getElementById('sdEventTags')
+  const empty = document.getElementById('sdEventEmpty')
+  if (sdEvents.length === 0) { wrap.innerHTML = ''; wrap.appendChild(empty); empty.style.display=''; return }
+  empty.style.display = 'none'
+  wrap.innerHTML = sdEvents.map((e,i) => {
+    var connector = i > 0 ? `<span style="color:${sdRel==='and'?'#1890ff':'#fa8c16'};font-size:11px;font-weight:600;align-self:center">${sdRel.toUpperCase()}</span>` : ''
+    return `${connector}<span class="kb-and-tag">${e}<span class="rm" onclick="removeSdEvent('${e}')">×</span></span>`
+  }).join('')
+}
+function removeSdEvent(e) { sdEvents = sdEvents.filter(x=>x!==e); renderSdEventTags() }
+function saveStrategy() {
+  const product = document.getElementById('sdProduct').value
+  const channel = document.getElementById('sdChannel').value
+  if (!product || !channel) { alert('请选择产品和渠道'); return }
+  if (sdEvents.length === 0) { alert('请至少添加一个关键行为事件'); return }
+  if (sdEditId) {
+    const s = kbStrategies.find(x => x.id === sdEditId)
+    Object.assign(s, { product, channel, scope: sdScope, accounts: [...sdAccounts], events: [...sdEvents], rel: sdRel, status: sdStatus })
+  } else {
+    kbStrategies.push({ id: kbStrategyIdSeq++, product, channel, scope: sdScope, accounts: [...sdAccounts], events: [...sdEvents], rel: sdRel, status: sdStatus, createdAt: new Date().toISOString().slice(0,10) })
+  }
+  closeStrategyDrawer()
+  renderKbStrategies()
 }
 
 </script>
