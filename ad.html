@@ -330,6 +330,23 @@
   .kb-report-flush { background:#e6f4ff;color:#1890ff; }
   .strategy-scope-btn { flex:1;text-align:center;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #d9d9d9;background:#fff;color:#595959;font-weight:500;transition:all .15s; }
   .strategy-scope-btn.active { border-color:#1890ff;background:#e6f4ff;color:#1890ff; }
+  .kb-rule-template-cards { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px; }
+  .kb-rule-template-card { border:2px solid #d9d9d9;border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff; }
+  .kb-rule-template-card.active { border-color:#1890ff;background:#e6f4ff; }
+  .kb-rule-template-card .tpl-name { font-size:13px;font-weight:600;color:#262626;margin-bottom:4px; }
+  .kb-rule-template-card .tpl-desc { font-size:11px;color:#8c8c8c;line-height:1.5; }
+  .kb-rule-section-title { font-size:12px;font-weight:600;color:#8c8c8c;letter-spacing:.5px;text-transform:uppercase;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid #f0f0f0; }
+  .kb-range-row { display:flex;align-items:center;gap:8px;margin-bottom:10px; }
+  .kb-range-label { width:72px;font-size:13px;color:#595959;flex-shrink:0; }
+  .kb-range-input { width:64px;padding:6px 8px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;text-align:center; }
+  .kb-range-sep { color:#8c8c8c;font-size:13px; }
+  .kb-switch { position:relative;width:36px;height:20px;display:inline-block; }
+  .kb-switch input { opacity:0;width:0;height:0; }
+  .kb-switch-slider { position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#d9d9d9;border-radius:20px;transition:.2s; }
+  .kb-switch-slider:before { content:'';position:absolute;width:16px;height:16px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.2s; }
+  .kb-switch input:checked + .kb-switch-slider { background:#52c41a; }
+  .kb-switch input:checked + .kb-switch-slider:before { transform:translateX(16px); }
+  .kb-advanced-toggle { font-size:12px;color:#1890ff;cursor:pointer;margin-top:12px;display:inline-flex;align-items:center;gap:4px; }
   .kb-and-tag { display:inline-flex;align-items:center;gap:4px;background:#f0f5ff;color:#2f54eb;border:1px solid #adc6ff;border-radius:4px;padding:3px 9px;font-size:12px; }
   .kb-and-tag .rm { cursor:pointer;color:#adc6ff;margin-left:2px; }
   .kb-and-tag .rm:hover { color:#ff4d4f; }
@@ -395,6 +412,7 @@
       </div>
       <div class="nav-item sub" onclick="showKbPage('kb-records',this)">关键行为记录</div>
       <div class="nav-item sub" onclick="showKbPage('kb-manage',this)">关键行为管理</div>
+      <div class="nav-item sub" onclick="showKbPage('kb-billing-rules',this)">计费比规则</div>
     </div>
   </div>
 
@@ -535,7 +553,6 @@
           </div>
           <div style="display:flex;gap:8px">
             <select class="metric-select" style="width:100px"><option>今日</option><option>昨日</option><option>近7天</option></select>
-            <button class="btn btn-primary btn-sm" id="aiAnalysisBtn" onclick="triggerAIAnalysis()">AI 智能分析</button>
           </div>
         </div>
 
@@ -694,20 +711,29 @@
           </div>
         </div>
 
-        <!-- AI 分析区 -->
+        <!-- 近 14 日数据 -->
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <div class="card-title" style="margin-bottom:0">Claude AI 智能诊断</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <div style="font-size:12px;color:#8c8c8c" id="aiTriggerInfo">触发方式：手动分析</div>
-              <button class="btn btn-primary btn-sm" id="aiAnalysisBtn2" onclick="triggerAIAnalysis()">开始 AI 分析</button>
-            </div>
+            <div class="card-title" style="margin-bottom:0">近 14 日数据</div>
+            <div style="font-size:12px;color:#8c8c8c">按自然日汇总 · 当前账户</div>
           </div>
-          <div id="aiAnalysisArea">
-            <div style="text-align:center;padding:40px;color:#bfbfbf;border:1px dashed #e8e8e8;border-radius:8px">
-              <div style="font-size:24px;margin-bottom:8px">🤖</div>
-              <div style="font-size:13px">点击「开始 AI 分析」，Claude 将综合分析当前计划的成本、质量和分时数据</div>
-            </div>
+          <div class="table-wrap">
+            <table class="hist-table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>消耗</th>
+                  <th>关键行为数</th>
+                  <th>关键行为成本</th>
+                  <th>订阅用户</th>
+                  <th>订阅率</th>
+                  <th>订成用户</th>
+                  <th>订成成本</th>
+                  <th>订成率</th>
+                </tr>
+              </thead>
+              <tbody id="planDailyDataBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -829,7 +855,7 @@
                   </div>
                   <div style="display:flex;gap:6px">
                     <button class="btn btn-default btn-sm" onclick="openAdPlan('健康追踪_行为定向_E')">查看详情</button>
-                    <button class="btn btn-primary btn-sm" onclick="showAlertAnalysis('E')">查看 AI 分析</button>
+                    <button class="btn btn-primary btn-sm" onclick="showAlertAnalysis('E')">查看账户数据</button>
                   </div>
                 </div>
               </div>
@@ -849,7 +875,7 @@
                   </div>
                   <div style="display:flex;gap:6px">
                     <button class="btn btn-default btn-sm" onclick="openAdPlan('健康追踪_相似人群_C')">查看详情</button>
-                    <button class="btn btn-primary btn-sm" onclick="openAdPlan('健康追踪_相似人群_C');setTimeout(triggerAIAnalysis,300)">查看 AI 分析</button>
+                    <button class="btn btn-primary btn-sm" onclick="showAlertAnalysis('C')">查看账户数据</button>
                   </div>
                 </div>
               </div>
@@ -1450,6 +1476,73 @@
         </div>
       </div>
 
+      <!-- ===== 计费比规则 ===== -->
+      <div class="page" id="page-kb-billing-rules">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">计费比规则</div>
+            <div class="page-desc">配置不同产品渠道的计费比控制模板、阈值区间与自动干预节奏</div>
+          </div>
+          <button class="btn btn-primary" onclick="openBillingRuleDrawer(null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新建规则
+          </button>
+        </div>
+        <div class="card">
+          <div class="filter-bar" style="margin-bottom:16px;flex-wrap:wrap;gap:8px">
+            <select class="metric-select" id="kbRuleProduct" style="width:130px" onchange="filterBillingRules()">
+              <option value="">全部产品</option>
+              <option value="健康追踪仪">健康追踪仪</option>
+              <option value="健康管家Pro">健康管家 Pro</option>
+              <option value="运动助手">运动助手</option>
+            </select>
+            <select class="metric-select" id="kbRuleChannel" style="width:110px" onchange="filterBillingRules()">
+              <option value="">全部渠道</option>
+              <option value="巨量">巨量</option>
+              <option value="快手">快手</option>
+              <option value="广点通">广点通</option>
+              <option value="OPPO">OPPO</option>
+              <option value="vivo">vivo</option>
+              <option value="小米">小米</option>
+              <option value="华为">华为</option>
+            </select>
+            <select class="metric-select" id="kbRuleLifecycle" style="width:120px" onchange="filterBillingRules()">
+              <option value="">全部生命周期</option>
+              <option value="all">全部</option>
+              <option value="learning">学习期</option>
+              <option value="growing">成长期</option>
+              <option value="stable">稳定期</option>
+            </select>
+            <select class="metric-select" id="kbRuleStatus" style="width:100px" onchange="filterBillingRules()">
+              <option value="">全部状态</option>
+              <option value="on">启用</option>
+              <option value="off">停用</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>产品</th>
+                  <th>渠道</th>
+                  <th>模板</th>
+                  <th>生命周期</th>
+                  <th>目标区间</th>
+                  <th>预警区间</th>
+                  <th>干预区间</th>
+                  <th>步长 / 冷却</th>
+                  <th>学习期保护</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="kbBillingRulesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
 
     </div>
   </div>
@@ -1470,6 +1563,7 @@ const breadcrumbs = {
   'kb-dashboard':'关键行为 / <span>关键行为看板</span>',
   'kb-records':  '关键行为 / <span>关键行为记录</span>',
   'kb-manage':   '关键行为 / <span>关键行为管理</span>',
+  'kb-billing-rules': '关键行为 / <span>计费比规则</span>',
 }
 function adFilterHistory() {}
 function adFilterByPlanId() {}
@@ -1527,7 +1621,10 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active')
   document.getElementById('breadcrumb').innerHTML = breadcrumbs[id]
   if (el) el.classList.add('active')
-  if (id === 'ad-plan') setTimeout(initPlanTrendChart, 80)
+  if (id === 'ad-plan') {
+    renderPlanDailyData()
+    setTimeout(initPlanTrendChart, 80)
+  }
   if (id === 'ad-overview') {
     filterAdByProduct(document.getElementById('adProductFilter').value || '健康追踪仪')
     setTimeout(initAdTrendChart, 80)
@@ -1576,16 +1673,66 @@ const adPlanData = {
   '运动助手_运动人群_H':  { cost: 25, cancelRate: 14, survival: 86, spend: 2100, validSub: 84 },
 }
 
+function formatMoney(num, digits = 0) {
+  return '¥' + Number(num).toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+}
+
+function formatDateOffset(offset) {
+  const d = new Date()
+  d.setDate(d.getDate() - offset)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}-${dd}`
+}
+
+function buildPlanDailyRows(planName) {
+  const base = adPlanData[planName] || adPlanData['健康追踪_相似人群_C']
+  const factors = [1, .95, .88, 1.08, .92, .84, 1.12, .98, .9, .86, 1.04, .93, .81, .89]
+  const keyCostBase = planName.includes('健康管家') ? 5.5 : planName.includes('运动助手') ? 5 : planName.includes('行为定向_E') ? 13.4 : 11.2
+  return factors.map((factor, idx) => {
+    const spend = Math.round(base.spend * factor)
+    const keyCount = Math.max(1, Math.round(spend / (keyCostBase * (1 + (idx % 4 - 1.5) * .025))))
+    const subscribeUsers = Math.max(1, Math.round(base.validSub / (base.survival / 100) * factor * (1 + (idx % 3 - 1) * .025)))
+    const validSubUsers = Math.max(1, Math.round(base.validSub * factor * (1 - (idx % 5) * .012)))
+    const subscribeRate = subscribeUsers / keyCount * 100
+    const validSubCost = spend / validSubUsers
+    const validSubRate = validSubUsers / subscribeUsers * 100
+    return {
+      date: formatDateOffset(idx),
+      spend,
+      keyCount,
+      keyCost: spend / keyCount,
+      subscribeUsers,
+      subscribeRate,
+      validSubUsers,
+      validSubCost,
+      validSubRate
+    }
+  })
+}
+
+function renderPlanDailyData() {
+  const body = document.getElementById('planDailyDataBody')
+  if (!body) return
+  const planName = document.getElementById('adPlanName')?.textContent || '健康追踪_相似人群_C'
+  body.innerHTML = buildPlanDailyRows(planName).map((r, idx) => `
+    <tr>
+      <td style="white-space:nowrap;font-weight:${idx === 0 ? '600' : '400'};color:${idx === 0 ? '#262626' : '#595959'}">${r.date}${idx === 0 ? ' 今日' : ''}</td>
+      <td>${formatMoney(r.spend)}</td>
+      <td>${r.keyCount.toLocaleString('zh-CN')}</td>
+      <td>${formatMoney(r.keyCost, 1)}</td>
+      <td>${r.subscribeUsers.toLocaleString('zh-CN')}</td>
+      <td>${r.subscribeRate.toFixed(1)}%</td>
+      <td class="${r.validSubCost > 40 ? 'warn-val' : ''}">${r.validSubUsers.toLocaleString('zh-CN')}</td>
+      <td class="${r.validSubCost > 40 ? 'warn-val' : ''}">${formatMoney(r.validSubCost, 1)}</td>
+      <td>${r.validSubRate.toFixed(1)}%</td>
+    </tr>
+  `).join('')
+}
+
 function openAdPlan(name) {
   document.getElementById('adPlanName').textContent = name
-  // 重置 AI 分析区
-  document.getElementById('aiAnalysisArea').innerHTML = `
-    <div style="text-align:center;padding:40px;color:#bfbfbf;border:1px dashed #e8e8e8;border-radius:8px">
-      <div style="font-size:24px;margin-bottom:8px">🤖</div>
-      <div style="font-size:13px">点击「开始 AI 分析」，Claude 将综合分析当前计划的成本、质量和分时数据</div>
-    </div>`
-  const btn2 = document.getElementById('aiAnalysisBtn2')
-  if (btn2) { btn2.textContent = '开始 AI 分析'; btn2.disabled = false }
+  renderPlanDailyData()
   showPage('ad-plan', document.querySelector('.nav-item[onclick*="openAdPlan"]'))
 }
 
@@ -1651,129 +1798,6 @@ function switchPlanTrend(el, metric) {
   }
 }
 
-function triggerAIAnalysis() {
-  const area = document.getElementById('aiAnalysisArea')
-  const btn  = document.getElementById('aiAnalysisBtn2') || document.getElementById('aiAnalysisBtn')
-  if (btn) { btn.disabled = true; btn.textContent = '分析中...' }
-  document.getElementById('aiTriggerInfo') && (document.getElementById('aiTriggerInfo').textContent = '触发方式：手动触发 · ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}))
-
-  area.innerHTML = `<div class="ai-loading"><div class="ai-loading-spinner"></div><div style="font-size:13px">Claude 正在分析计划数据...</div><div style="font-size:12px;color:#bfbfbf;margin-top:6px">分时环比 · 昨日同比 · 核心指标异常检测</div></div>`
-
-  setTimeout(() => {
-    area.innerHTML = buildAIResult()
-    if (btn) { btn.disabled = false; btn.textContent = '重新分析' }
-  }, 2400)
-}
-
-function buildAIResult() {
-  const planName = document.getElementById('adPlanName')?.textContent || ''
-  const isE = planName.includes('行为定向_E')
-
-  // 4 核心指标 × 分时环比 + 昨日同比
-  const metrics = isE ? [
-    { name: '消耗',       current: '¥2,870', hourUp: true,  hourVal: '+15.3%', hourWarn: false, dayUp: true,  dayVal: '+23.1%', dayWarn: false },
-    { name: '订成成本',   current: '¥61',    hourUp: true,  hourVal: '+12.4%', hourWarn: true,  dayUp: true,  dayVal: '+74.3%', dayWarn: true  },
-    { name: '订成量',     current: '47',     hourUp: false, hourVal: '-8.6%',  hourWarn: true,  dayUp: false, dayVal: '-22.5%', dayWarn: true  },
-    { name: '首日取订率', current: '38%',    hourUp: true,  hourVal: '+3.2pp', hourWarn: true,  dayUp: true,  dayVal: '+18pp',  dayWarn: true  }
-  ] : [
-    { name: '消耗',       current: '¥4,320', hourUp: true,  hourVal: '+8.2%',  hourWarn: false, dayUp: true,  dayVal: '+12.4%', dayWarn: false },
-    { name: '订成成本',   current: '¥45',    hourUp: true,  hourVal: '+5.1%',  hourWarn: true,  dayUp: true,  dayVal: '+28.6%', dayWarn: true  },
-    { name: '订成量',     current: '136',    hourUp: false, hourVal: '-3.2%',  hourWarn: false, dayUp: false, dayVal: '-9.3%',  dayWarn: true  },
-    { name: '首日取订率', current: '28%',    hourUp: true,  hourVal: '+1.8pp', hourWarn: true,  dayUp: true,  dayVal: '+8pp',   dayWarn: true  }
-  ]
-
-  const severity      = isE ? '严重风险' : '中等风险'
-  const severityClass = isE ? 'ai-severity-high' : 'ai-severity-mid'
-
-  const metricRows = metrics.map(m => {
-    const anyWarn   = m.hourWarn || m.dayWarn
-    const dot       = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${anyWarn ? '#ff4d4f' : '#52c41a'};margin-right:5px;vertical-align:middle;margin-top:-1px"></span>`
-    const hourColor = m.hourWarn ? '#cf1322' : (m.hourUp ? '#595959' : '#52c41a')
-    const dayColor  = m.dayWarn  ? '#cf1322' : (m.dayUp  ? '#595959' : '#52c41a')
-    const badge     = (warn) => warn ? `<span style="font-size:10px;color:#fff;background:#ff4d4f;border-radius:3px;padding:1px 4px;margin-left:5px;vertical-align:middle">异常</span>` : ''
-    return `<tr style="border-bottom:1px solid #f5f5f5">
-      <td style="padding:9px 12px;font-size:13px;color:#262626;font-weight:${anyWarn?'600':'400'};white-space:nowrap">${dot}${m.name}</td>
-      <td style="padding:9px 12px;font-size:13px;font-weight:600;color:${anyWarn?'#cf1322':'#262626'};white-space:nowrap">${m.current}</td>
-      <td style="padding:9px 12px;white-space:nowrap">
-        <span style="font-size:13px;font-weight:600;color:${hourColor}">${m.hourUp?'↑':'↓'} ${m.hourVal}</span>${badge(m.hourWarn)}
-      </td>
-      <td style="padding:9px 12px;white-space:nowrap">
-        <span style="font-size:13px;font-weight:600;color:${dayColor}">${m.dayUp?'↑':'↓'} ${m.dayVal}</span>${badge(m.dayWarn)}
-      </td>
-    </tr>`
-  }).join('')
-
-  const diagnosis = isE
-    ? '该计划核心指标全面恶化：消耗持续放量但订成量大幅下滑，订成成本超阈值 74%；分时环比与昨日同比双维度均呈同向恶化，排除偶发波动可能，属系统性问题。首日取订率 38%（昨日同比 +18pp），超阈值近一倍，人群包质量存在严重隐患，建议立即暂停。'
-    : '订成成本与首日取订率已构成双重预警：分时环比显示本时段较上一时段仍在恶化（成本 +5.1%、取订率 +1.8pp），昨日同比差距更为显著（成本 +28.6%、取订率 +8pp）。消耗持续放量但订成量开始下滑，预算利用效率下降。目前处于可干预窗口期，建议及时调整出价与时段策略。'
-
-  const now = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
-
-  return `
-  <div class="ai-card" style="margin-bottom:0">
-    <div class="ai-card-header">
-      <div class="ai-card-title">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2f54eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Claude 智能诊断
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="${severityClass}">${severity}</span>
-        <span style="font-size:12px;color:#8c8c8c">${now}</span>
-      </div>
-    </div>
-
-    <div class="ai-section-title">核心指标诊断</div>
-    <div style="border:1px solid #f0f0f0;border-radius:6px;overflow:hidden;margin-bottom:14px">
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:#fafafa;border-bottom:1px solid #f0f0f0">
-            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">指标</th>
-            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">当前值</th>
-            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">分时环比 <span style="font-size:11px;font-weight:400;color:#bfbfbf">vs 上时段</span></th>
-            <th style="padding:8px 12px;font-size:12px;color:#8c8c8c;font-weight:500;text-align:left;white-space:nowrap">昨日同比 <span style="font-size:11px;font-weight:400;color:#bfbfbf">vs 昨日同时段</span></th>
-          </tr>
-        </thead>
-        <tbody>${metricRows}</tbody>
-      </table>
-    </div>
-
-    <div class="ai-section-title">综合诊断</div>
-    <div class="ai-diagnosis">${diagnosis}</div>
-
-    <div class="ai-section-title">优化建议</div>
-    <div class="ai-rec">
-      <div class="ai-rec-priority p0">P0</div>
-      <div>
-        <div class="ai-rec-action">${isE ? '立即暂停该计划，排查人群包' : '压缩 20:00-24:00 时段预算比例'}</div>
-        <div class="ai-rec-reason">${isE ? '分时环比与昨日同比双维度持续恶化，无好转迹象，继续投放将加速预算损耗。' : '分时数据显示晚间时段订成成本与取订率显著高于日间，压缩该时段可快速改善整体 ROI。'}</div>
-        <div class="ai-rec-effect">→ 预期：${isE ? '立即停止损耗，分析完成后针对性重启' : '订成成本预计回落至 ¥36-38，取订率恢复至 18-20%'}</div>
-      </div>
-    </div>
-    <div class="ai-rec">
-      <div class="ai-rec-priority p1">P1</div>
-      <div>
-        <div class="ai-rec-action">${isE ? '更换人群包为「精准健康兴趣」标签' : '目标转化出价降低 10-15%'}</div>
-        <div class="ai-rec-reason">${isE ? '行为定向人群与产品匹配度低；精准健康_B 昨日同比成本仅 +3.2%，同口径下表现明显更优。' : '当前出价偏高吸引低意向用户，适度降价可在保量前提下筛选更高质量订阅用户。'}</div>
-        <div class="ai-rec-effect">→ 预期：${isE ? '7日内订成成本有望回落至 ¥35-42' : '7日内首日取订率恢复至历史均值（约 18%）'}</div>
-      </div>
-    </div>
-    <div class="ai-rec">
-      <div class="ai-rec-priority p2">P2</div>
-      <div>
-        <div class="ai-rec-action">添加「已取消订阅用户」排除包</div>
-        <div class="ai-rec-reason">高取消率部分原因可能是曾取消的老用户被重复触达，排除后可提升新用户占比并改善取订率基线。</div>
-        <div class="ai-rec-effect">→ 预期：减少 10-15% 无效曝光消耗</div>
-      </div>
-    </div>
-
-    <div class="ai-section-title">风险预警</div>
-    <div class="ai-risk">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cf1322" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <div>若下一时段（15:00）分时环比仍未收窄，且首日取订率持续上升至 <strong>${isE ? '45%' : '35%'}</strong> 以上，建议${isE ? '立即下线并向团队上报' : '暂停整个计划并进行人群包复审，避免低质量用户拉低整体 LTV 基线'}。</div>
-    </div>
-  </div>`
-}
-
 function switchAlertTab(el, tab) {
   document.querySelectorAll('#page-ad-alerts .tab').forEach(t => t.classList.remove('active'))
   el.classList.add('active')
@@ -1784,7 +1808,6 @@ function switchAlertTab(el, tab) {
 function showAlertAnalysis(planKey) {
   const planMap = { E: '健康追踪_行为定向_E', C: '健康追踪_相似人群_C' }
   openAdPlan(planMap[planKey] || '健康追踪_相似人群_C')
-  setTimeout(triggerAIAnalysis, 400)
 }
 
 const adProductStats = {
@@ -2401,6 +2424,12 @@ function switchAdTrend(el, metric) {
 // Mock 数据
 const kbProducts = ['健康追踪仪', '健康管家Pro', '运动助手']
 const kbChannels = ['巨量', '快手', '广点通', 'OPPO', 'vivo', '小米', '华为']
+const kbBillingTemplates = {
+  protective: { name:'学习保护型', desc:'容忍区间更宽，优先保护学习稳定', lifecycle:'learning', observeWindow:30, minSample:20, consecutive:3, targetLow:85, targetHigh:125, warnLow:85, warnHigh:125, interventionLow:75, interventionHigh:130, stepSize:3, cooldown:60, hourlyLimit:5, dailyLimit:15, learningProtect:true },
+  balanced: { name:'稳定控比型', desc:'平衡赔付风险与放量稳定性', lifecycle:'all', observeWindow:30, minSample:20, consecutive:2, targetLow:90, targetHigh:110, warnLow:80, warnHigh:120, interventionLow:70, interventionHigh:130, stepSize:5, cooldown:30, hourlyLimit:10, dailyLimit:20, learningProtect:true },
+  aggressive: { name:'强控赔付型', desc:'收紧区间，适合成熟高量计划', lifecycle:'stable', observeWindow:15, minSample:30, consecutive:2, targetLow:95, targetHigh:105, warnLow:85, warnHigh:115, interventionLow:75, interventionHigh:125, stepSize:8, cooldown:20, hourlyLimit:15, dailyLimit:30, learningProtect:false },
+  custom: { name:'自定义', desc:'完全手动配置阈值与动作节奏', lifecycle:'all', observeWindow:30, minSample:20, consecutive:2, targetLow:90, targetHigh:110, warnLow:80, warnHigh:120, interventionLow:70, interventionHigh:130, stepSize:5, cooldown:30, hourlyLimit:10, dailyLimit:20, learningProtect:true },
+}
 
 // 各产品各渠道绑定的关键行为策略（Mock）
 let kbStrategies = [
@@ -2411,6 +2440,13 @@ let kbStrategies = [
   { id:5, product:'运动助手',   channel:'广点通',scope:'global',  accounts:[], events:['app_launch','register'], status:'off', createdAt:'2026-04-05' },
 ]
 let kbStrategyIdSeq = 6
+let kbBillingRules = [
+  { id:1, product:'健康追踪仪', channel:'巨量', template:'protective', lifecycle:'learning', observeWindow:30, minSample:20, consecutive:3, targetLow:85, targetHigh:125, warnLow:85, warnHigh:125, interventionLow:75, interventionHigh:130, stepSize:3, cooldown:60, hourlyLimit:5, dailyLimit:15, learningProtect:true, status:'on', createdAt:'2026-04-10' },
+  { id:2, product:'健康追踪仪', channel:'快手', template:'balanced', lifecycle:'all', observeWindow:30, minSample:20, consecutive:2, targetLow:90, targetHigh:110, warnLow:80, warnHigh:120, interventionLow:70, interventionHigh:130, stepSize:5, cooldown:30, hourlyLimit:10, dailyLimit:20, learningProtect:true, status:'on', createdAt:'2026-04-10' },
+  { id:3, product:'健康管家Pro', channel:'巨量', template:'aggressive', lifecycle:'stable', observeWindow:15, minSample:30, consecutive:2, targetLow:95, targetHigh:105, warnLow:85, warnHigh:115, interventionLow:75, interventionHigh:125, stepSize:8, cooldown:20, hourlyLimit:15, dailyLimit:30, learningProtect:false, status:'on', createdAt:'2026-04-08' },
+  { id:4, product:'运动助手', channel:'广点通', template:'balanced', lifecycle:'all', observeWindow:30, minSample:20, consecutive:2, targetLow:90, targetHigh:110, warnLow:80, warnHigh:120, interventionLow:70, interventionHigh:130, stepSize:5, cooldown:30, hourlyLimit:10, dailyLimit:20, learningProtect:true, status:'off', createdAt:'2026-04-05' },
+]
+let kbBillingRuleIdSeq = 5
 
 // 各产品各小时计费比 Mock
 function genHourlyRatios() {
@@ -2479,6 +2515,7 @@ function showKbPage(id, el) {
   if (id === 'kb-dashboard') renderKbDashboard()
   if (id === 'kb-records')   renderKbRecords()
   if (id === 'kb-manage')    renderKbStrategies()
+  if (id === 'kb-billing-rules') renderBillingRules()
 }
 
 // 计费比状态
@@ -2726,6 +2763,58 @@ function deleteStrategy(id) {
   renderKbStrategies()
 }
 
+function billingTemplateBadge(tpl) {
+  if (tpl === 'protective') return '<span class="badge badge-purple">学习保护型</span>'
+  if (tpl === 'balanced') return '<span class="badge badge-green">稳定控比型</span>'
+  if (tpl === 'aggressive') return '<span class="badge badge-orange">强控赔付型</span>'
+  return '<span class="badge badge-gray">自定义</span>'
+}
+function billingLifecycleLabel(v) {
+  return v === 'learning' ? '学习期' : v === 'growing' ? '成长期' : v === 'stable' ? '稳定期' : '全部'
+}
+function billingRangeText(low, high) {
+  return `${low}% ~ ${high}%`
+}
+function renderBillingRules() {
+  filterBillingRules()
+}
+function filterBillingRules() {
+  const product = document.getElementById('kbRuleProduct').value
+  const channel = document.getElementById('kbRuleChannel').value
+  const lifecycle = document.getElementById('kbRuleLifecycle').value
+  const status = document.getElementById('kbRuleStatus').value
+  const rows = kbBillingRules.filter(r =>
+    (!product || r.product === product) &&
+    (!channel || r.channel === channel) &&
+    (!lifecycle || r.lifecycle === lifecycle) &&
+    (!status || r.status === status)
+  )
+  document.getElementById('kbBillingRulesBody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.product}</td>
+      <td><span class="badge badge-gray">${r.channel}</span></td>
+      <td>${billingTemplateBadge(r.template)}</td>
+      <td>${billingLifecycleLabel(r.lifecycle)}</td>
+      <td>${billingRangeText(r.targetLow, r.targetHigh)}</td>
+      <td>${billingRangeText(r.warnLow, r.warnHigh)}</td>
+      <td>${billingRangeText(r.interventionLow, r.interventionHigh)}</td>
+      <td>${r.stepSize}% / ${r.cooldown}分钟</td>
+      <td>${r.learningProtect ? '<span class="badge badge-green">开启</span>' : '<span class="badge badge-gray">关闭</span>'}</td>
+      <td>${r.status === 'on' ? '<span class="badge badge-green">启用</span>' : '<span class="badge badge-gray">停用</span>'}</td>
+      <td style="color:#8c8c8c;font-size:12px">${r.createdAt}</td>
+      <td>
+        <span class="link" onclick="openBillingRuleDrawer(${r.id})">编辑</span>
+        <span style="color:#d9d9d9;margin:0 6px">|</span>
+        <span class="link" style="color:#ff4d4f" onclick="deleteBillingRule(${r.id})">删除</span>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="12" class="empty">暂无规则</td></tr>'
+}
+function deleteBillingRule(id) {
+  if (!confirm('确认删除该规则？')) return
+  kbBillingRules = kbBillingRules.filter(r => r.id !== id)
+  renderBillingRules()
+}
+
 // 抽屉操作
 let sdEditId = null
 let sdScope = 'global'
@@ -2832,6 +2921,129 @@ function saveStrategy() {
   renderKbStrategies()
 }
 
+let brEditId = null
+let brTemplate = 'balanced'
+let brLifecycle = 'all'
+let brStatus = 'on'
+let brAdvancedOpen = false
+
+function openBillingRuleDrawer(id) {
+  brEditId = id
+  brAdvancedOpen = false
+  if (id) {
+    const rule = kbBillingRules.find(x => x.id === id)
+    document.getElementById('billingRuleDrawerTitle').textContent = '编辑规则'
+    document.getElementById('brProduct').value = rule.product
+    document.getElementById('brChannel').value = rule.channel
+    setBrTemplate(rule.template)
+    setBrLifecycle(rule.lifecycle)
+    setBrStatus(rule.status)
+    fillBillingRuleForm(rule)
+  } else {
+    document.getElementById('billingRuleDrawerTitle').textContent = '新建规则'
+    document.getElementById('brProduct').value = ''
+    document.getElementById('brChannel').value = ''
+    setBrTemplate('balanced')
+    setBrLifecycle('all')
+    setBrStatus('on')
+    fillBillingRuleForm({ ...kbBillingTemplates.balanced })
+  }
+  toggleBrAdvanced(false)
+  document.getElementById('billingRuleDrawerOverlay').classList.add('open')
+  document.getElementById('billingRuleDrawer').style.right = '0'
+}
+function closeBillingRuleDrawer() {
+  document.getElementById('billingRuleDrawerOverlay').classList.remove('open')
+  document.getElementById('billingRuleDrawer').style.right = '-520px'
+}
+function setBrTemplate(v) {
+  brTemplate = v
+  ;['protective','balanced','aggressive','custom'].forEach(key => {
+    document.getElementById('brTpl-' + key).classList.toggle('active', key === v)
+  })
+}
+function applyBrTemplate(v) {
+  setBrTemplate(v)
+  const tpl = kbBillingTemplates[v]
+  fillBillingRuleForm(tpl)
+  if (v !== 'custom') setBrLifecycle(tpl.lifecycle)
+}
+function setBrLifecycle(v) {
+  brLifecycle = v
+  ;['all','learning','growing','stable'].forEach(key => {
+    const el = document.getElementById('brLifecycle-' + key)
+    if (el) el.classList.toggle('active', key === v)
+  })
+}
+function setBrStatus(v) {
+  brStatus = v
+  document.getElementById('brStatusOn').classList.toggle('active', v === 'on')
+  document.getElementById('brStatusOff').classList.toggle('active', v === 'off')
+}
+function fillBillingRuleForm(rule) {
+  document.getElementById('brObserveWindow').value = rule.observeWindow
+  document.getElementById('brMinSample').value = rule.minSample
+  document.getElementById('brConsecutive').value = rule.consecutive
+  document.getElementById('brTargetLow').value = rule.targetLow
+  document.getElementById('brTargetHigh').value = rule.targetHigh
+  document.getElementById('brWarnLow').value = rule.warnLow
+  document.getElementById('brWarnHigh').value = rule.warnHigh
+  document.getElementById('brInterventionLow').value = rule.interventionLow
+  document.getElementById('brInterventionHigh').value = rule.interventionHigh
+  document.getElementById('brStepSize').value = rule.stepSize
+  document.getElementById('brCooldown').value = rule.cooldown
+  document.getElementById('brHourlyLimit').value = rule.hourlyLimit
+  document.getElementById('brDailyLimit').value = rule.dailyLimit
+  document.getElementById('brLearningProtect').checked = !!rule.learningProtect
+}
+function markBrCustom() {
+  if (brTemplate !== 'custom') setBrTemplate('custom')
+}
+function toggleBrAdvanced(force) {
+  brAdvancedOpen = typeof force === 'boolean' ? force : !brAdvancedOpen
+  document.getElementById('brAdvancedBlock').style.display = brAdvancedOpen ? 'block' : 'none'
+  document.getElementById('brAdvancedToggle').innerHTML = brAdvancedOpen ? '收起高级设置' : '展开高级设置'
+}
+function collectBillingRuleForm() {
+  return {
+    product: document.getElementById('brProduct').value,
+    channel: document.getElementById('brChannel').value,
+    template: brTemplate,
+    lifecycle: brLifecycle,
+    observeWindow: Number(document.getElementById('brObserveWindow').value),
+    minSample: Number(document.getElementById('brMinSample').value),
+    consecutive: Number(document.getElementById('brConsecutive').value),
+    targetLow: Number(document.getElementById('brTargetLow').value),
+    targetHigh: Number(document.getElementById('brTargetHigh').value),
+    warnLow: Number(document.getElementById('brWarnLow').value),
+    warnHigh: Number(document.getElementById('brWarnHigh').value),
+    interventionLow: Number(document.getElementById('brInterventionLow').value),
+    interventionHigh: Number(document.getElementById('brInterventionHigh').value),
+    stepSize: Number(document.getElementById('brStepSize').value),
+    cooldown: Number(document.getElementById('brCooldown').value),
+    hourlyLimit: Number(document.getElementById('brHourlyLimit').value),
+    dailyLimit: Number(document.getElementById('brDailyLimit').value),
+    learningProtect: document.getElementById('brLearningProtect').checked,
+    status: brStatus,
+  }
+}
+function saveBillingRule() {
+  const rule = collectBillingRuleForm()
+  if (!rule.product || !rule.channel) { alert('请选择产品和渠道'); return }
+  if (rule.targetLow >= rule.targetHigh || rule.warnLow >= rule.warnHigh || rule.interventionLow >= rule.interventionHigh) {
+    alert('请检查区间上下限设置')
+    return
+  }
+  if (brEditId) {
+    const current = kbBillingRules.find(x => x.id === brEditId)
+    Object.assign(current, rule)
+  } else {
+    kbBillingRules.push({ id: kbBillingRuleIdSeq++, ...rule, createdAt: new Date().toISOString().slice(0,10) })
+  }
+  closeBillingRuleDrawer()
+  renderBillingRules()
+}
+
 </script>
 
 <!-- 新建/编辑策略抽屉（须在 body 顶层，避免被 overflow 容器裁剪） -->
@@ -2920,6 +3132,48 @@ function saveStrategy() {
     <button class="btn btn-default" onclick="closeStrategyDrawer()">取消</button>
     <button class="btn btn-primary" onclick="saveStrategy()">保存</button>
   </div>
+</div>
+
+<!-- 新建/编辑计费比规则抽屉 -->
+<div class="drawer-overlay" id="billingRuleDrawerOverlay" onclick="closeBillingRuleDrawer()"></div>
+<div class="drawer" id="billingRuleDrawer" style="width:520px;right:-520px">
+  <div class="drawer-header">
+    <div class="drawer-title" id="billingRuleDrawerTitle">新建规则</div>
+    <div class="drawer-close" onclick="closeBillingRuleDrawer()">×</div>
+  </div>
+  <div class="drawer-body">
+    <div class="kb-rule-section-title">基础配置</div>
+    <div class="form-row"><label class="form-label required">产品</label><select class="form-select" id="brProduct"><option value="">请选择产品</option><option value="健康追踪仪">健康追踪仪</option><option value="健康管家Pro">健康管家 Pro</option><option value="运动助手">运动助手</option></select></div>
+    <div class="form-row"><label class="form-label required">渠道</label><select class="form-select" id="brChannel"><option value="">请选择渠道</option><option value="巨量">巨量</option><option value="快手">快手</option><option value="广点通">广点通</option><option value="OPPO">OPPO</option><option value="vivo">vivo</option><option value="小米">小米</option><option value="华为">华为</option></select></div>
+    <div class="form-row"><label class="form-label required">生命周期</label><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="strategy-scope-btn active" id="brLifecycle-all" onclick="setBrLifecycle('all')">全部</div><div class="strategy-scope-btn" id="brLifecycle-learning" onclick="setBrLifecycle('learning')">学习期</div><div class="strategy-scope-btn" id="brLifecycle-growing" onclick="setBrLifecycle('growing')">成长期</div><div class="strategy-scope-btn" id="brLifecycle-stable" onclick="setBrLifecycle('stable')">稳定期</div></div></div>
+    <div class="kb-rule-section-title">模板选择</div>
+    <div class="kb-rule-template-cards">
+      <div class="kb-rule-template-card" id="brTpl-protective" onclick="applyBrTemplate('protective')"><div class="tpl-name">学习保护型</div><div class="tpl-desc">宽区间、小步长，优先保护学习稳定</div></div>
+      <div class="kb-rule-template-card active" id="brTpl-balanced" onclick="applyBrTemplate('balanced')"><div class="tpl-name">稳定控比型</div><div class="tpl-desc">平衡赔付风险与放量稳定性</div></div>
+      <div class="kb-rule-template-card" id="brTpl-aggressive" onclick="applyBrTemplate('aggressive')"><div class="tpl-name">强控赔付型</div><div class="tpl-desc">收紧区间，适合成熟高量计划</div></div>
+      <div class="kb-rule-template-card" id="brTpl-custom" onclick="applyBrTemplate('custom')"><div class="tpl-name">自定义</div><div class="tpl-desc">完全手动配置阈值和动作节奏</div></div>
+    </div>
+    <div class="kb-rule-section-title">基础参数</div>
+    <div class="form-row"><label class="form-label">观察窗口</label><select class="form-select" id="brObserveWindow" onchange="markBrCustom()"><option value="10">10分钟</option><option value="15">15分钟</option><option value="30">30分钟</option><option value="60">1小时</option></select></div>
+    <div class="form-row"><label class="form-label">最小样本量</label><input class="form-input" id="brMinSample" type="number" min="1" onchange="markBrCustom()"></div>
+    <div class="form-row"><label class="form-label">连续触发次数</label><select class="form-select" id="brConsecutive" onchange="markBrCustom()"><option value="2">2次</option><option value="3">3次</option><option value="4">4次</option></select></div>
+    <div class="kb-rule-section-title">阈值区间</div>
+    <div class="kb-range-row"><div class="kb-range-label">理想区间</div><input class="kb-range-input" id="brTargetLow" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span><span class="kb-range-sep">~</span><input class="kb-range-input" id="brTargetHigh" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span></div>
+    <div class="kb-range-row"><div class="kb-range-label">预警区间</div><input class="kb-range-input" id="brWarnLow" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span><span class="kb-range-sep">~</span><input class="kb-range-input" id="brWarnHigh" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span></div>
+    <div class="kb-range-row"><div class="kb-range-label">干预区间</div><input class="kb-range-input" id="brInterventionLow" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span><span class="kb-range-sep">~</span><input class="kb-range-input" id="brInterventionHigh" type="number" onchange="markBrCustom()"><span class="kb-range-sep">%</span></div>
+    <div class="kb-advanced-toggle" id="brAdvancedToggle" onclick="toggleBrAdvanced()">展开高级设置</div>
+    <div id="brAdvancedBlock" style="display:none">
+      <div class="kb-rule-section-title">高级设置</div>
+      <div class="form-row"><label class="form-label">单次调整步长</label><input class="form-input" id="brStepSize" type="number" min="1" onchange="markBrCustom()"></div>
+      <div class="form-row"><label class="form-label">冷却时间（分钟）</label><input class="form-input" id="brCooldown" type="number" min="0" onchange="markBrCustom()"></div>
+      <div class="form-row"><label class="form-label">单小时累计上限（%）</label><input class="form-input" id="brHourlyLimit" type="number" min="0" onchange="markBrCustom()"></div>
+      <div class="form-row"><label class="form-label">单日累计上限（%）</label><input class="form-input" id="brDailyLimit" type="number" min="0" onchange="markBrCustom()"></div>
+      <div class="form-row" style="display:flex;align-items:center;justify-content:space-between"><label class="form-label" style="margin-bottom:0">学习期保护</label><label class="kb-switch"><input id="brLearningProtect" type="checkbox" onchange="markBrCustom()"><span class="kb-switch-slider"></span></label></div>
+    </div>
+    <div class="kb-rule-section-title">状态</div>
+    <div class="form-row"><div style="display:flex;gap:8px"><div class="strategy-scope-btn active" id="brStatusOn" onclick="setBrStatus('on')">启用</div><div class="strategy-scope-btn" id="brStatusOff" onclick="setBrStatus('off')">停用</div></div></div>
+  </div>
+  <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px"><button class="btn btn-default" onclick="closeBillingRuleDrawer()">取消</button><button class="btn btn-primary" onclick="saveBillingRule()">保存</button></div>
 </div>
 </body>
 </html>
