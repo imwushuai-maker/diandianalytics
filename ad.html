@@ -253,18 +253,20 @@
   .ai-loading-spinner { display:inline-block;width:28px;height:28px;border:3px solid #f0f0f0;border-top-color:#1890ff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px; }
   @keyframes spin { to { transform:rotate(360deg) } }
   /* 获客漏斗 */
-  .acq-step { margin-bottom:6px; }
-  .acq-bar-row { display:flex;align-items:center;gap:14px; }
-  .acq-bar { height:40px;border-radius:6px;display:flex;align-items:center;padding:0 14px;color:#fff;font-size:13px;font-weight:600;transition:opacity .15s; }
+  .acq-step { display:flex;flex-direction:row-reverse;align-items:center;gap:10px;margin-bottom:10px; }
+  .acq-bar-row { flex:1;display:flex;align-items:center;gap:10px;min-width:0; }
+  .acq-bar { height:28px;border-radius:4px;display:flex;align-items:center;padding:0 10px;color:#fff;font-size:12px;font-weight:600;transition:opacity .15s;box-shadow:inset 0 -1px 0 rgba(0,0,0,.08); }
   .acq-bar:hover { opacity:.85; }
-  .acq-meta { flex:1; }
-  .acq-label { font-size:13px;color:#595959; }
+  .acq-meta { width:86px;flex:0 0 86px;min-width:0; }
+  .acq-step .acq-meta { margin-top:0 !important; }
+  .acq-label { font-size:12px;color:#595959;line-height:1.35;white-space:normal; }
+  .acq-label span { display:block;margin-top:1px;line-height:1.25; }
   .acq-nums { display:flex;gap:14px;margin-top:2px; }
   .acq-num { font-size:12px;color:#8c8c8c; }
   .acq-num strong { color:#262626;font-weight:600; }
   .acq-rate { font-size:12px;font-weight:600;color:#ff7a45; }
-  .acq-arrow { padding:3px 0 3px 168px;color:#d9d9d9;font-size:12px;display:flex;flex-direction:column;gap:2px; }
-  .acq-arrow .acq-rate-plan { color:#595959;font-weight:600;font-size:12px; }
+  .acq-arrow { padding:0 0 0 96px;color:#d9d9d9;font-size:11px;line-height:16px;display:flex;align-items:center;gap:8px;margin:1px 0 7px;white-space:nowrap; }
+  .acq-arrow .acq-rate-plan { color:#595959;font-weight:600;font-size:11px; }
   .acq-arrow .acq-rate-avg { color:#8c8c8c;font-size:11px; }
   /* 预警中心 */
   .alert-th-row { display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f5f5f5; }
@@ -278,6 +280,11 @@
   .hist-table th:first-child { text-align:left; }
   .hist-table td { padding:10px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;text-align:right; }
   .hist-table td:first-child { text-align:left;color:#595959; }
+  .plan-daily-table { border-collapse:collapse; }
+  .plan-daily-table th,
+  .plan-daily-table td { border-right:1px solid #f0f0f0; }
+  .plan-daily-table th:first-child,
+  .plan-daily-table td:first-child { border-left:1px solid #f0f0f0; }
   .hist-table td.today { font-weight:600;color:#262626; }
   .hist-table td.warn-val { color:#d46b08;font-weight:600; }
   /* 报告卡片 */
@@ -589,9 +596,9 @@
             <div style="font-size:12px;color:#8c8c8c;margin-top:4px">↑ 2.8% vs 昨日</div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:16px;align-items:stretch">
           <!-- 获客漏斗 -->
-          <div class="card" style="margin-bottom:0">
+          <div class="card" style="margin-bottom:0;height:100%">
             <div class="card-title" style="margin-bottom:14px">获客转化漏斗 <span class="tag">今日</span></div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -602,8 +609,8 @@
               </div>
             </div>
             <div class="acq-arrow">
-              <div>↓ CTR <span class="acq-rate-plan">2.93%</span></div>
-              <div class="acq-rate-avg">大盘均值 3.8% <span style="color:#ff4d4f">▼低</span></div>
+              <div>↓ 转化率 <span class="acq-rate-plan">2.93%</span></div>
+              <div class="acq-rate-avg">均值 3.8% <span style="color:#ff4d4f">▼低</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -612,8 +619,8 @@
               <div class="acq-meta" style="margin-top:4px"><div class="acq-label">点击数</div></div>
             </div>
             <div class="acq-arrow">
-              <div>↓ 激活率 <span class="acq-rate-plan">50%</span></div>
-              <div class="acq-rate-avg">大盘均值 45% <span style="color:#52c41a">▲高</span></div>
+              <div>↓ 转化率 <span class="acq-rate-plan">50%</span></div>
+              <div class="acq-rate-avg">均值 45% <span style="color:#52c41a">▲高</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -622,8 +629,8 @@
               <div class="acq-meta" style="margin-top:4px"><div class="acq-label">端内激活</div></div>
             </div>
             <div class="acq-arrow">
-              <div>↓ 有效用户率 <span class="acq-rate-plan">50%</span></div>
-              <div class="acq-rate-avg">大盘均值 52% <span style="color:#fa8c16">▼低</span></div>
+              <div>↓ 转化率 <span class="acq-rate-plan">50%</span></div>
+              <div class="acq-rate-avg">均值 52% <span style="color:#fa8c16">▼低</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -632,8 +639,8 @@
               <div class="acq-meta" style="margin-top:4px"><div class="acq-label">有效用户量 <span style="font-size:11px;color:#8c8c8c">（应用管理中设置打点事件）</span></div></div>
             </div>
             <div class="acq-arrow">
-              <div>↓ 订阅率 <span class="acq-rate-plan">8.98%</span></div>
-              <div class="acq-rate-avg">大盘均值 7.2% <span style="color:#52c41a">▲高</span></div>
+              <div>↓ 转化率 <span class="acq-rate-plan">8.98%</span></div>
+              <div class="acq-rate-avg">均值 7.2% <span style="color:#52c41a">▲高</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -642,8 +649,8 @@
               <div class="acq-meta" style="margin-top:4px"><div class="acq-label">订阅量</div></div>
             </div>
             <div class="acq-arrow">
-              <div>↓ 10分钟存活率 <span class="acq-rate-plan">73.9%</span></div>
-              <div class="acq-rate-avg">大盘均值 68% <span style="color:#52c41a">▲高</span></div>
+              <div>↓ 转化率 <span class="acq-rate-plan">73.9%</span></div>
+              <div class="acq-rate-avg">均值 68% <span style="color:#52c41a">▲高</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -655,7 +662,7 @@
             </div>
             <div class="acq-arrow" style="color:#ff4d4f">
               <div>↓ 首日取消率 <span class="acq-rate-plan" style="color:#ff4d4f">28% <span style="font-weight:600">⚠</span></span></div>
-              <div class="acq-rate-avg">大盘均值 18% <span style="color:#ff4d4f">▲高</span></div>
+              <div class="acq-rate-avg">均值 18% <span style="color:#ff4d4f">▲高</span></div>
             </div>
             <div class="acq-step">
               <div class="acq-bar-row">
@@ -668,7 +675,7 @@
           </div>
 
           <!-- 历史对比 -->
-          <div class="card" style="margin-bottom:0">
+          <div class="card" style="margin-bottom:0;height:100%">
             <div class="card-title">历史数据对比</div>
             <div class="table-wrap">
               <table class="hist-table">
@@ -718,7 +725,7 @@
             <div style="font-size:12px;color:#8c8c8c">按自然日汇总 · 当前账户</div>
           </div>
           <div class="table-wrap">
-            <table class="hist-table">
+            <table class="hist-table plan-daily-table">
               <thead>
                 <tr>
                   <th>日期</th>
