@@ -287,6 +287,45 @@
   .plan-daily-table td:first-child { border-left:1px solid #f0f0f0; }
   .hist-table td.today { font-weight:600;color:#262626; }
   .hist-table td.warn-val { color:#d46b08;font-weight:600; }
+  .ad-plan-tabs { display:flex;align-items:center;gap:4px;border-bottom:1px solid #f0f0f0;margin:-4px 0 16px; }
+  .ad-plan-tab { padding:10px 18px;border:0;background:transparent;color:#595959;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent; }
+  .ad-plan-tab.active { color:#1890ff;border-bottom-color:#1890ff; }
+  .ad-plan-tab-panel { display:none; }
+  .ad-plan-tab-panel.active { display:block; }
+  .material-table-wrap { border:1px solid #f0f0f0;border-radius:8px;overflow:auto;background:#fff; }
+  .material-table { width:max-content;min-width:100%;border-collapse:separate;border-spacing:0; }
+  .material-table th { position:sticky;top:0;z-index:2;background:#f5f7fb;color:#595959;font-size:12px;font-weight:600;text-align:right;padding:12px 16px;border-bottom:1px solid #e8e8e8;white-space:nowrap; }
+  .material-table td { padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#262626;text-align:right;white-space:nowrap;background:#fff; }
+  .material-table td.warn-val { color:#d46b08;font-weight:600; }
+  .material-table tbody tr:hover td { background:#f7fbff; }
+  .material-table .material-name-col { position:sticky;left:0;z-index:3;width:360px;min-width:360px;text-align:left;box-shadow:1px 0 0 #f0f0f0;background:#fff; }
+  .material-table th.material-name-col { background:#f5f7fb;z-index:4; }
+  .material-table .material-action-col { position:sticky;left:360px;z-index:3;width:92px;min-width:92px;text-align:left;box-shadow:1px 0 0 #f0f0f0;background:#fff; }
+  .material-table th.material-action-col { background:#f5f7fb;z-index:4; }
+  .material-info { display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer; }
+  .material-info:hover .material-title { color:#1890ff; }
+  .material-thumb { width:52px;height:64px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); }
+  .material-title { font-size:13px;font-weight:600;color:#262626;margin-bottom:4px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .material-id { font-size:12px;color:#8c8c8c;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; }
+  .material-delete { color:#ff4d4f;cursor:pointer;font-size:13px;font-weight:500; }
+  .material-delete:hover { color:#cf1322;text-decoration:underline; }
+  .material-summary { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px; }
+  .material-summary .summary-text { font-size:13px;color:#595959; }
+  .material-preview-modal { width:760px;max-width:92vw;padding:0;overflow:hidden; }
+  .material-preview-header { padding:18px 22px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:16px; }
+  .material-preview-title { font-size:16px;font-weight:600;color:#262626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .material-preview-close { width:30px;height:30px;border-radius:6px;border:0;background:#f5f5f5;color:#595959;font-size:20px;line-height:1;cursor:pointer; }
+  .material-preview-body { padding:22px;display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start; }
+  .material-player { height:420px;border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28); }
+  .material-player::after { content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.36));pointer-events:none; }
+  .material-play-btn { position:relative;z-index:1;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:rgba(0,0,0,.28);color:#fff;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px); }
+  .material-player.playing .material-play-btn { font-size:20px; }
+  .material-player-caption { position:absolute;z-index:1;left:16px;right:16px;bottom:16px;font-size:13px;line-height:1.5; }
+  .material-preview-meta { border:1px solid #f0f0f0;border-radius:8px;overflow:hidden; }
+  .material-preview-meta-row { display:flex;justify-content:space-between;gap:16px;padding:11px 14px;border-bottom:1px solid #f5f5f5;font-size:13px; }
+  .material-preview-meta-row:last-child { border-bottom:0; }
+  .material-preview-meta-row span:first-child { color:#8c8c8c; }
+  .material-preview-meta-row span:last-child { color:#262626;font-weight:600;text-align:right; }
   /* 报告卡片 */
   .report-card { background:#fff;border:1px solid #f0f0f0;border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .2s; }
   .report-card:hover { box-shadow:0 2px 14px rgba(0,0,0,.08);border-color:#d9d9d9; }
@@ -563,6 +602,43 @@
           </div>
         </div>
 
+        <div class="ad-plan-tabs">
+          <button class="ad-plan-tab active" id="adPlanTabBtnMaterial" onclick="switchAdPlanTab('material')">素材数据</button>
+          <button class="ad-plan-tab" id="adPlanTabBtnPlan" onclick="switchAdPlanTab('plan')">计划数据</button>
+        </div>
+
+        <div class="ad-plan-tab-panel active" id="adPlanTabMaterial">
+          <div class="card">
+            <div class="material-summary">
+              <div>
+                <div class="card-title" style="margin-bottom:4px">素材数据</div>
+                <div class="summary-text">当前计划素材表现明细，右侧指标支持横向滚动查看</div>
+              </div>
+              <div class="summary-text" id="materialSummaryCount">共 0 条</div>
+            </div>
+            <div class="material-table-wrap">
+              <table class="material-table">
+                <thead>
+                  <tr>
+                    <th class="material-name-col">素材名称与 ID</th>
+                    <th class="material-action-col">操作</th>
+                    <th>激活</th>
+                    <th>激活成本</th>
+                    <th>订阅用户</th>
+                    <th>订阅成本</th>
+                    <th>订阅率</th>
+                    <th>订成用户</th>
+                    <th>订成成本</th>
+                    <th>订成率</th>
+                  </tr>
+                </thead>
+                <tbody id="materialDataBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="ad-plan-tab-panel" id="adPlanTabPlan">
         <!-- 核心指标 -->
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px">
           <div class="ad-stat-card">
@@ -742,6 +818,7 @@
               <tbody id="planDailyDataBody"></tbody>
             </table>
           </div>
+        </div>
         </div>
       </div>
 
@@ -1629,8 +1706,9 @@ function showPage(id, el) {
   document.getElementById('breadcrumb').innerHTML = breadcrumbs[id]
   if (el) el.classList.add('active')
   if (id === 'ad-plan') {
+    renderMaterialData()
     renderPlanDailyData()
-    setTimeout(initPlanTrendChart, 80)
+    switchAdPlanTab('material')
   }
   if (id === 'ad-overview') {
     filterAdByProduct(document.getElementById('adProductFilter').value || '健康追踪仪')
@@ -1678,6 +1756,98 @@ const adPlanData = {
   '健康管家_精准用户_F':  { cost: 24, cancelRate: 12, survival: 92, spend: 4800, validSub: 201 },
   '健康管家_兴趣扩展_G':  { cost: 20, cancelRate: 16, survival: 88, spend: 3200, validSub: 160 },
   '运动助手_运动人群_H':  { cost: 25, cancelRate: 14, survival: 86, spend: 2100, validSub: 84 },
+}
+
+let materialDataRows = [
+  { name:'MPC-YYL-leibian-5.05-8', id:'763661917658512', theme:'linear-gradient(135deg,#1d39c4,#f759ab)', active:68, activeCost:12.8, subscribe:18, subscribeCost:48.3, subscribeRate:26.5, validSub:13, validSubCost:66.9, validSubRate:72.2 },
+  { name:'MPC-YYL-4.30-16', id:'763475845412298', theme:'linear-gradient(135deg,#13c2c2,#ffc53d)', active:92, activeCost:10.5, subscribe:31, subscribeCost:31.2, subscribeRate:33.7, validSub:24, validSubCost:40.3, validSubRate:77.4 },
+  { name:'MPC-lm-0429-5', id:'763438166902287', theme:'linear-gradient(135deg,#722ed1,#ffd6e7)', active:74, activeCost:13.9, subscribe:21, subscribeCost:49.1, subscribeRate:28.4, validSub:15, validSubCost:68.7, validSubRate:71.4 },
+  { name:'MPC-lm-0428-11', id:'763400745902718', theme:'linear-gradient(135deg,#ad6800,#ffe7ba)', active:58, activeCost:15.1, subscribe:16, subscribeCost:54.8, subscribeRate:27.6, validSub:11, validSubCost:79.7, validSubRate:68.8 },
+  { name:'MPC-LJL-4.28-10', id:'763400740804742', theme:'linear-gradient(135deg,#08979c,#95de64)', active:143, activeCost:8.4, subscribe:46, subscribeCost:26.1, subscribeRate:32.2, validSub:37, validSubCost:32.5, validSubRate:80.4 },
+  { name:'MPC-ljl-0427-20', id:'763363643970126', theme:'linear-gradient(135deg,#eb2f96,#ffadd2)', active:81, activeCost:11.7, subscribe:23, subscribeCost:41.2, subscribeRate:28.4, validSub:17, validSubCost:55.7, validSubRate:73.9 },
+  { name:'MPC-ljl-0427-19', id:'763363643403059', theme:'linear-gradient(135deg,#2f54eb,#adc6ff)', active:49, activeCost:18.5, subscribe:12, subscribeCost:75.5, subscribeRate:24.5, validSub:8, validSubCost:113.3, validSubRate:66.7 },
+  { name:'脉拍查-测体质-4.25-3', id:'763254998536401', theme:'linear-gradient(135deg,#52c41a,#bae637)', active:126, activeCost:9.6, subscribe:39, subscribeCost:31.0, subscribeRate:31.0, validSub:30, validSubCost:40.3, validSubRate:76.9 },
+  { name:'AI舌诊-刘江林-改50-2026.4.25-21', id:'763248526347083', theme:'linear-gradient(135deg,#fa8c16,#ffd591)', active:37, activeCost:21.2, subscribe:8, subscribeCost:98.0, subscribeRate:21.6, validSub:5, validSubCost:156.8, validSubRate:62.5 },
+  { name:'AI舌诊-尹永利-改善材-2026.4.25-40', id:'763248516344972', theme:'linear-gradient(135deg,#262626,#8c8c8c)', active:64, activeCost:14.3, subscribe:17, subscribeCost:53.8, subscribeRate:26.6, validSub:12, validSubCost:76.2, validSubRate:70.6 },
+]
+
+function switchAdPlanTab(tab) {
+  const isMaterial = tab === 'material'
+  document.getElementById('adPlanTabBtnMaterial')?.classList.toggle('active', isMaterial)
+  document.getElementById('adPlanTabBtnPlan')?.classList.toggle('active', !isMaterial)
+  document.getElementById('adPlanTabMaterial')?.classList.toggle('active', isMaterial)
+  document.getElementById('adPlanTabPlan')?.classList.toggle('active', !isMaterial)
+  if (isMaterial) {
+    renderMaterialData()
+  } else {
+    renderPlanDailyData()
+    setTimeout(initPlanTrendChart, 80)
+  }
+}
+
+function renderMaterialData() {
+  const body = document.getElementById('materialDataBody')
+  if (!body) return
+  document.getElementById('materialSummaryCount').textContent = `共 ${materialDataRows.length} 条`
+  body.innerHTML = materialDataRows.map((m, idx) => `
+    <tr>
+      <td class="material-name-col">
+        <div class="material-info" onclick="openMaterialPreview(${idx})" title="点击播放素材内容">
+          <div class="material-thumb" style="background:${m.theme}">${idx + 1}</div>
+          <div>
+            <div class="material-title">${m.name}</div>
+            <div class="material-id">ID: ${m.id}</div>
+          </div>
+        </div>
+      </td>
+      <td class="material-action-col"><span class="material-delete" onclick="deleteMaterialRow(${idx})">删除</span></td>
+      <td>${m.active.toLocaleString('zh-CN')}</td>
+      <td>${formatMoney(m.activeCost, 1)}</td>
+      <td>${m.subscribe.toLocaleString('zh-CN')}</td>
+      <td>${formatMoney(m.subscribeCost, 1)}</td>
+      <td>${m.subscribeRate.toFixed(1)}%</td>
+      <td>${m.validSub.toLocaleString('zh-CN')}</td>
+      <td class="${m.validSubCost > 60 ? 'warn-val' : ''}">${formatMoney(m.validSubCost, 1)}</td>
+      <td>${m.validSubRate.toFixed(1)}%</td>
+    </tr>
+  `).join('') || '<tr><td class="material-name-col" colspan="10" style="text-align:center;color:#8c8c8c;padding:36px">暂无素材数据</td></tr>'
+}
+
+function deleteMaterialRow(idx) {
+  if (!confirm('确认删除该素材？')) return
+  materialDataRows.splice(idx, 1)
+  renderMaterialData()
+}
+
+function openMaterialPreview(idx) {
+  const m = materialDataRows[idx]
+  if (!m) return
+  document.getElementById('materialPreviewTitle').textContent = m.name
+  document.getElementById('materialPreviewId').textContent = 'ID: ' + m.id
+  document.getElementById('materialPreviewPlayer').style.background = m.theme
+  document.getElementById('materialPreviewPlayer').classList.remove('playing')
+  document.getElementById('materialPreviewPlayBtn').textContent = '▶'
+  document.getElementById('materialPreviewNameMeta').textContent = m.name
+  document.getElementById('materialPreviewActiveMeta').textContent = m.active.toLocaleString('zh-CN')
+  document.getElementById('materialPreviewActiveCostMeta').textContent = formatMoney(m.activeCost, 1)
+  document.getElementById('materialPreviewSubscribeMeta').textContent = m.subscribe.toLocaleString('zh-CN')
+  document.getElementById('materialPreviewSubscribeCostMeta').textContent = formatMoney(m.subscribeCost, 1)
+  document.getElementById('materialPreviewValidSubMeta').textContent = m.validSub.toLocaleString('zh-CN')
+  document.getElementById('materialPreviewValidSubCostMeta').textContent = formatMoney(m.validSubCost, 1)
+  document.getElementById('materialPreviewModal').classList.add('open')
+}
+
+function closeMaterialPreview() {
+  document.getElementById('materialPreviewModal').classList.remove('open')
+  document.getElementById('materialPreviewPlayer').classList.remove('playing')
+  document.getElementById('materialPreviewPlayBtn').textContent = '▶'
+}
+
+function toggleMaterialPlayback() {
+  const player = document.getElementById('materialPreviewPlayer')
+  const btn = document.getElementById('materialPreviewPlayBtn')
+  const playing = player.classList.toggle('playing')
+  btn.textContent = playing ? 'Ⅱ' : '▶'
 }
 
 function formatMoney(num, digits = 0) {
@@ -1739,6 +1909,7 @@ function renderPlanDailyData() {
 
 function openAdPlan(name) {
   document.getElementById('adPlanName').textContent = name
+  renderMaterialData()
   renderPlanDailyData()
   showPage('ad-plan', document.querySelector('.nav-item[onclick*="openAdPlan"]'))
 }
@@ -3138,6 +3309,37 @@ function saveBillingRule() {
   <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:10px">
     <button class="btn btn-default" onclick="closeStrategyDrawer()">取消</button>
     <button class="btn btn-primary" onclick="saveStrategy()">保存</button>
+  </div>
+</div>
+
+<!-- 素材播放预览弹窗 -->
+<div class="modal-overlay" id="materialPreviewModal">
+  <div class="modal material-preview-modal" onclick="event.stopPropagation()">
+    <div class="material-preview-header">
+      <div style="min-width:0">
+        <div class="material-preview-title" id="materialPreviewTitle">素材预览</div>
+        <div id="materialPreviewId" style="font-size:12px;color:#8c8c8c;margin-top:4px">ID: --</div>
+      </div>
+      <button class="material-preview-close" onclick="closeMaterialPreview()">×</button>
+    </div>
+    <div class="material-preview-body">
+      <div class="material-player" id="materialPreviewPlayer">
+        <button class="material-play-btn" id="materialPreviewPlayBtn" onclick="toggleMaterialPlayback()">▶</button>
+        <div class="material-player-caption">素材内容预览 · 点击播放 / 暂停</div>
+      </div>
+      <div>
+        <div class="card-title" style="margin-bottom:12px">素材表现</div>
+        <div class="material-preview-meta">
+          <div class="material-preview-meta-row"><span>素材名称</span><span id="materialPreviewNameMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>激活</span><span id="materialPreviewActiveMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>激活成本</span><span id="materialPreviewActiveCostMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>订阅用户</span><span id="materialPreviewSubscribeMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>订阅成本</span><span id="materialPreviewSubscribeCostMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>订成用户</span><span id="materialPreviewValidSubMeta">--</span></div>
+          <div class="material-preview-meta-row"><span>订成成本</span><span id="materialPreviewValidSubCostMeta">--</span></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
